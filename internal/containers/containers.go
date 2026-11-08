@@ -41,7 +41,11 @@ func (c Container) Running() bool {
 }
 
 func (c Container) StateClass() string {
-	switch c.State {
+	return stateClass(c.State)
+}
+
+func stateClass(state string) string {
+	switch state {
 	case "running":
 		return "success"
 	case "paused", "restarting":
@@ -145,6 +149,16 @@ func Start(id string) error {
 
 func Stop(id string) error {
 	_, err := run("stop", id)
+	return err
+}
+
+func Restart(id string) error {
+	_, err := run("restart", id)
+	return err
+}
+
+func Remove(id string) error {
+	_, err := run("rm", id)
 	return err
 }
 

@@ -71,7 +71,10 @@ func main() {
 	mux.Handle("GET /containers", protected(h.ContainersIndex))
 	mux.Handle("GET /containers/list", protected(h.ContainersList))
 	mux.Handle("POST /containers/{id}/start", protected(h.ContainersStart))
+	mux.Handle("GET /containers/{id}", protected(h.ContainersShow))
 	mux.Handle("POST /containers/{id}/stop", protected(h.ContainersStop))
+	mux.Handle("POST /containers/{id}/restart", protected(h.ContainersRestart))
+	mux.Handle("POST /containers/{id}/delete", protected(h.ContainersRemove))
 	mux.Handle("GET /containers/{id}/logs", protected(h.ContainersLogs))
 	mux.Handle("GET /containers/{id}/shell", protected(h.ContainersShell))
 

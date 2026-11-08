@@ -1,0 +1,276 @@
+{{template "header" .}}
+    <main class="container py-5">
+        <a href="/containers" class="link-secondary text-decoration-none small">&larr; Back to containers</a>
+
+        {{with .Data}}
+        {{if .DockerMissing}}
+        <div class="card shadow-sm border-0 mt-3">
+            <div class="card-body text-center py-5">
+                <p class="text-warning mb-0">Docker is not installed on this server.</p>
+            </div>
+        </div>
+        {{else}}
+        {{$c := .Container}}
+        <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mt-2 mb-4">
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+                <h1 class="h3 mb-0 text-break">{{$c.Name}}</h1>
+                <span class="badge text-bg-{{$c.StateClass}}">{{$c.State.Status}}</span>
+                {{with $c.State.Health}}<span class="badge text-bg-{{$c.HealthClass}}">{{.Status}}</span>{{end}}
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                {{if $c.Running}}
+                <button type="button" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#shell-modal" data-container-id="{{$c.ID}}" data-container-name="{{$c.Name}}">Shell</button>
+                {{end}}
+                {{with $.Data.FilesURL}}
+                <a href="{{.}}" class="btn btn-outline-secondary">Open files</a>
+                {{else}}
+                <button type="button" class="btn btn-outline-secondary" disabled title="{{if $c.Running}}The container folder is outside the file manager root.{{else}}Start the container to browse its files.{{end}}">Open files</button>
+                {{end}}
+                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#logs-modal" data-container-id="{{$c.ID}}" data-container-name="{{$c.Name}}">Logs</button>
+                {{if $c.Running}}
+                <form method="post" action="/containers/{{$c.ID}}/restart" class="js-operation" data-busy="Restarting…" data-confirm="Restart this container?">
+                    <input type="hidden" name="return" value="show" autocomplete="off">
+                    <button type="submit" class="btn btn-outline-primary">Restart</button>
+                </form>
+                <form method="post" action="/containers/{{$c.ID}}/stop" class="js-operation" data-busy="Stopping…" data-confirm="Stop this container?">
+                    <input type="hidden" name="return" value="show" autocomplete="off">
+                    <button type="submit" class="btn btn-outline-warning">Stop</button>
+                </form>
+                {{else}}
+                <form method="post" action="/containers/{{$c.ID}}/start" class="js-operation" data-busy="Starting…">
+                    <input type="hidden" name="return" value="show" autocomplete="off">
+                    <button type="submit" class="btn btn-outline-success">Start</button>
+                </form>
+                <form method="post" action="/containers/{{$c.ID}}/delete" class="js-operation" data-busy="Removing…" data-confirm="Remove this container? This cannot be undone.">
+                    <input type="hidden" name="return" value="show" autocomplete="off">
+                    <button type="submit" class="btn btn-outline-danger">Remove</button>
+                </form>
+                {{end}}
+            </div>
+        </div>
+
+        {{with .Flash}}
+        <div class="alert alert-{{$.Data.FlashType}} alert-dismissible fade show" role="alert">
+            {{.}}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {{end}}
+
+        {{with $c.State.Error}}
+        <div class="alert alert-danger text-break" role="alert">{{.}}</div>
+        {{end}}
+
+        <div class="row g-4">
+            <div class="col-lg-5 order-lg-2">
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body p-4">
+                        <h2 class="h5 mb-3">Details</h2>
+                        <dl class="row mb-0">
+                            <dt class="col-sm-4">ID</dt>
+                            <dd class="col-sm-8"><code class="text-break" title="{{$c.ID}}">{{$c.ShortID}}</code></dd>
+                            <dt class="col-sm-4">Image</dt>
+                            <dd class="col-sm-8">
+                                <code class="text-break">{{$c.Config.Image}}</code>
+                                {{with $c.ImageID}}<div class="small text-body-secondary text-break">{{.}}</div>{{end}}
+                            </dd>
+                            <dt class="col-sm-4">Command</dt>
+                            <dd class="col-sm-8">{{with $c.CommandLine}}<code class="text-break">{{.}}</code>{{else}}<span class="text-body-secondary">—</span>{{end}}</dd>
+                            {{with $.Data.Stats}}
+                            <dt class="col-sm-4">CPU</dt>
+                            <dd class="col-sm-8">{{.CPUPerc}}</dd>
+                            <dt class="col-sm-4">RAM</dt>
+                            <dd class="col-sm-8">{{.MemUsage}} <span class="small text-body-secondary">({{.MemPerc}})</span></dd>
+                            {{end}}
+                            <dt class="col-sm-4">Created</dt>
+                            <dd class="col-sm-8 text-body-secondary">{{with $c.CreatedLabel}}{{.}}{{else}}—{{end}}</dd>
+                            <dt class="col-sm-4">Started</dt>
+                            <dd class="col-sm-8 text-body-secondary">{{with $c.StartedLabel}}{{.}}{{else}}—{{end}}</dd>
+                            {{if not $c.Running}}
+                            <dt class="col-sm-4">Finished</dt>
+                            <dd class="col-sm-8 text-body-secondary">{{with $c.FinishedLabel}}{{.}}{{else}}—{{end}}</dd>
+                            <dt class="col-sm-4">Exit code</dt>
+                            <dd class="col-sm-8"><span class="badge {{if eq $c.State.ExitCode 0}}text-bg-secondary{{else}}text-bg-danger{{end}}">{{$c.State.ExitCode}}</span></dd>
+                            {{end}}
+                            <dt class="col-sm-4">Restart policy</dt>
+                            <dd class="col-sm-8">{{$c.RestartPolicyLabel}} <span class="small text-body-secondary">· restarted {{$c.RestartCount}} times</span></dd>
+                            {{with $c.ComposeProject}}
+                            <dt class="col-sm-4">Compose</dt>
+                            <dd class="col-sm-8 text-break">{{.}}{{with $c.ComposeService}} <span class="small text-body-secondary">/ {{.}}</span>{{end}}</dd>
+                            {{end}}
+                            <dt class="col-sm-4">Hostname</dt>
+                            <dd class="col-sm-8 text-break">{{with $c.Config.Hostname}}{{.}}{{else}}<span class="text-body-secondary">—</span>{{end}}</dd>
+                            <dt class="col-sm-4">User</dt>
+                            <dd class="col-sm-8 text-break">{{with $c.Config.User}}{{.}}{{else}}<span class="text-body-secondary">default</span>{{end}}</dd>
+                            <dt class="col-sm-4">Working dir</dt>
+                            <dd class="col-sm-8">{{with $c.Config.WorkingDir}}<code class="text-break">{{.}}</code>{{else}}<span class="text-body-secondary">—</span>{{end}}</dd>
+                            <dt class="col-sm-4">Network mode</dt>
+                            <dd class="col-sm-8 text-break">{{with $c.HostConfig.NetworkMode}}{{.}}{{else}}<span class="text-body-secondary">—</span>{{end}}</dd>
+                            <dt class="col-sm-4">Privileged</dt>
+                            <dd class="col-sm-8 mb-0">{{if $c.HostConfig.Privileged}}<span class="badge text-bg-warning">Yes</span>{{else}}<span class="badge text-bg-secondary">No</span>{{end}}</dd>
+                        </dl>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-4">
+                        <h2 class="h5 mb-3">Network</h2>
+                        <h3 class="h6 text-body-secondary">Ports</h3>
+                        {{with $c.PortList}}
+                        <ul class="list-unstyled mb-3">
+                            {{range .}}<li><code class="text-break">{{.}}</code></li>{{end}}
+                        </ul>
+                        {{else}}
+                        <p class="text-body-secondary mb-3">No ports exposed.</p>
+                        {{end}}
+                        <h3 class="h6 text-body-secondary">Networks</h3>
+                        {{with $c.NetworkList}}
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>IP</th>
+                                        <th>Gateway</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{range .}}
+                                    <tr>
+                                        <td class="text-break">{{.Name}}{{with .MacAddress}}<div class="small text-body-secondary">{{.}}</div>{{end}}</td>
+                                        <td class="text-nowrap">{{with .IPAddress}}{{.}}{{else}}<span class="text-body-secondary">—</span>{{end}}</td>
+                                        <td class="text-nowrap">{{with .Gateway}}{{.}}{{else}}<span class="text-body-secondary">—</span>{{end}}</td>
+                                    </tr>
+                                    {{end}}
+                                </tbody>
+                            </table>
+                        </div>
+                        {{else}}
+                        <p class="text-body-secondary mb-0">Not connected to any network.</p>
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-7 order-lg-1">
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body p-4">
+                        <h2 class="h5 mb-3">Volumes &amp; mounts</h2>
+                        {{if $.Data.Mounts}}
+                        <div class="table-responsive">
+                            <table class="table align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Source</th>
+                                        <th>Destination</th>
+                                        <th>Mode</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{range $.Data.Mounts}}
+                                    <tr>
+                                        <td>
+                                            <span class="badge text-bg-{{.TypeClass}} mb-1">{{.Type}}</span>
+                                            {{if .IsVolume}}<div class="fw-medium text-break"><a href="/volumes" class="link-body-emphasis text-decoration-none">{{.Name}}</a></div>{{end}}
+                                            {{with .Source}}<code class="small text-break">{{.}}</code>{{end}}
+                                        </td>
+                                        <td><code class="text-break">{{.Destination}}</code></td>
+                                        <td class="text-nowrap">{{if .RW}}<span class="badge text-bg-success">RW</span>{{else}}<span class="badge text-bg-secondary">RO</span>{{end}}</td>
+                                        <td class="text-end text-nowrap">
+                                            {{with .FilesURL}}<a href="{{.}}" class="btn btn-outline-secondary btn-sm">Browse</a>{{else}}<span class="text-body-secondary">—</span>{{end}}
+                                        </td>
+                                    </tr>
+                                    {{end}}
+                                </tbody>
+                            </table>
+                        </div>
+                        {{else}}
+                        <p class="text-body-secondary mb-0">No volumes mounted.</p>
+                        {{end}}
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body p-4">
+                        <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
+                            <h2 class="h5 mb-0">Environment</h2>
+                            {{if $c.EnvList}}
+                            <button type="button" class="btn btn-outline-secondary btn-sm" id="env-toggle">Show values</button>
+                            {{end}}
+                        </div>
+                        {{with $c.EnvList}}
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <tbody>
+                                    {{range .}}
+                                    <tr>
+                                        <td class="fw-medium text-break w-50"><code>{{.Key}}</code></td>
+                                        <td class="text-break"><span class="env-mask text-body-secondary">••••••</span><code class="env-value d-none">{{.Value}}</code></td>
+                                    </tr>
+                                    {{end}}
+                                </tbody>
+                            </table>
+                        </div>
+                        {{else}}
+                        <p class="text-body-secondary mb-0">No environment variables.</p>
+                        {{end}}
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-4">
+                        <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+                            <h2 class="h5 mb-0">Labels</h2>
+                            {{if $c.LabelList}}
+                            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#labels-table" aria-expanded="false" aria-controls="labels-table">Toggle</button>
+                            {{end}}
+                        </div>
+                        {{with $c.LabelList}}
+                        <div class="collapse" id="labels-table">
+                            <div class="table-responsive mt-3">
+                                <table class="table table-sm align-middle mb-0">
+                                    <tbody>
+                                        {{range .}}
+                                        <tr>
+                                            <td class="text-break w-50"><code>{{.Key}}</code></td>
+                                            <td class="text-break small">{{.Value}}</td>
+                                        </tr>
+                                        {{end}}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        {{else}}
+                        <p class="text-body-secondary mt-3 mb-0">No labels.</p>
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{end}}
+        {{end}}
+{{template "containers_terminals"}}
+    </main>
+{{template "footer" .}}
+{{template "containers_terminals_script"}}
+    <script>
+        $(function () {
+            $('form.js-operation').on('submit', function (event) {
+                var form = $(this);
+                var message = form.data('confirm');
+                if (message && !confirm(message)) {
+                    event.preventDefault();
+                    return;
+                }
+                $('form.js-operation button[type="submit"]').prop('disabled', true);
+                form.find('button[type="submit"]').html('<span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>' + $('<div>').text(form.data('busy')).html());
+            });
+
+            $('#env-toggle').on('click', function () {
+                var hidden = $('.env-value').first().hasClass('d-none');
+                $('.env-value').toggleClass('d-none', !hidden);
+                $('.env-mask').toggleClass('d-none', hidden);
+                $(this).text(hidden ? 'Hide values' : 'Show values');
+            });
+        });
+    </script>
