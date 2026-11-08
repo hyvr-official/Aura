@@ -1,0 +1,33 @@
+{{define "checks_results"}}
+            {{if .Checks}}
+            <div class="table-responsive">
+                <table class="table align-middle mb-0" data-failed="{{if .Failed}}1{{else}}0{{end}}">
+                    <thead>
+                        <tr>
+                            <th>Check</th>
+                            <th>Status</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .Checks}}
+                        <tr>
+                            <td class="fw-medium text-nowrap">{{.Name}}</td>
+                            <td>
+                                {{if .OK}}
+                                <span class="badge text-bg-success">OK</span>
+                                {{else}}
+                                <span class="badge text-bg-danger">Failed</span>
+                                {{end}}
+                            </td>
+                            <td class="small text-break{{if not .OK}} text-danger{{else}} text-body-secondary{{end}}">{{.Message}}</td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
+            <p class="small text-body-secondary mt-2 mb-0">Last run: {{.RanAt.Format "2006-01-02 15:04:05"}}</p>
+            {{else}}
+            <p class="text-body-secondary mb-0">Checks have not been run yet.</p>
+            {{end}}
+{{end}}

@@ -14,7 +14,6 @@ import (
 	"aura/internal/handlers"
 	"aura/internal/projects"
 	"aura/internal/repositories"
-	"aura/internal/startup"
 	"aura/web"
 )
 
@@ -40,8 +39,6 @@ func main() {
 		return
 	}
 
-	startup.Run()
-
 	sessions := auth.NewSessionStore(db)
 	passwords := auth.NewPasswordStore(db)
 	if !passwords.IsSet() {
@@ -56,6 +53,7 @@ func main() {
 	mux.HandleFunc("POST /logout", h.Logout)
 	mux.HandleFunc("GET /setup", h.SetupForm)
 	mux.HandleFunc("POST /setup", h.Setup)
+	mux.HandleFunc("POST /setup/checks", h.SetupChecks)
 	mux.Handle("GET /{$}", protected(h.Dashboard))
 	mux.Handle("GET /dashboard/stats", protected(h.DashboardStats))
 
@@ -130,6 +128,9 @@ func main() {
 	mux.Handle("POST /console/commands", protected(h.ConsoleCommandsStore))
 	mux.Handle("POST /console/commands/{id}", protected(h.ConsoleCommandsUpdate))
 	mux.Handle("POST /console/commands/{id}/delete", protected(h.ConsoleCommandsDelete))
+
+	mux.Handle("GET /settings", protected(h.SettingsIndex))
+	mux.Handle("POST /settings/checks", protected(h.SettingsChecks))
 
 	addr := ":" + cfg.Port
 	log.Printf("Aura %s listening on http://localhost%s", version, addr)

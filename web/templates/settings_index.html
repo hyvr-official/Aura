@@ -1,0 +1,53 @@
+{{template "header" .}}
+    <main class="container py-5">
+        <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-4">
+            <h1 class="h3 mb-0">Settings</h1>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-2 align-items-start justify-content-between mb-3">
+                    <div>
+                        <h2 class="h5 mb-1">System checks</h2>
+                        <p class="text-body-secondary small mb-0">Checks required packages, installs any that are missing, sets the backup cron and makes sure nginx is running. These also run during the initial setup.</p>
+                    </div>
+                    <button type="button" class="btn btn-primary btn-sm" id="run-checks">
+                        <span class="spinner-border spinner-border-sm me-1 d-none" id="run-checks-spinner" aria-hidden="true"></span>
+                        <span id="run-checks-label">Run checks</span>
+                    </button>
+                </div>
+                <div class="alert alert-danger py-2 d-none" id="checks-error" role="alert">Could not run checks. Check the server logs.</div>
+                <div id="checks-results">
+                    {{template "checks_results" .Data.Report}}
+                </div>
+            </div>
+        </div>
+    </main>
+{{template "footer" .}}
+    <script>
+        $(function () {
+            var $btn = $('#run-checks');
+            $btn.on('click', function () {
+                $btn.prop('disabled', true);
+                $('#run-checks-spinner').removeClass('d-none');
+                $('#run-checks-label').text('Running…');
+                $('#checks-error').addClass('d-none');
+                $.ajax({ url: '/settings/checks', method: 'POST', cache: false })
+                    .done(function (html, status, xhr) {
+                        if (!xhr.getResponseHeader('X-Checks-Results')) {
+                            location.reload();
+                            return;
+                        }
+                        $('#checks-results').html(html);
+                    })
+                    .fail(function () {
+                        $('#checks-error').removeClass('d-none');
+                    })
+                    .always(function () {
+                        $btn.prop('disabled', false);
+                        $('#run-checks-spinner').addClass('d-none');
+                        $('#run-checks-label').text('Run checks');
+                    });
+            });
+        });
+    </script>

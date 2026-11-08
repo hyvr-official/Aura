@@ -6,6 +6,8 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"sync"
+	"time"
 
 	"aura/internal/backups"
 	"aura/internal/proxy"
@@ -14,6 +16,26 @@ import (
 type requirement struct {
 	pkgs     []string
 	commands []string
+}
+
+type Check struct {
+	Name    string
+	OK      bool
+	Message string
+}
+
+type Report struct {
+	Checks []Check
+	RanAt  time.Time
+}
+
+func (r Report) Failed() bool {
+	for _, c := range r.Checks {
+		if !c.OK {
+			return true
+		}
+	}
+	return false
 }
 
 var requirements = []requirement{
@@ -25,37 +47,80 @@ var requirements = []requirement{
 	{pkgs: []string{"openssh-client"}, commands: []string{"ssh-keygen"}},
 }
 
-func Run() {
+var (
+	runMu   sync.Mutex
+	stateMu sync.RWMutex
+	last    Report
+)
+
+func Last() Report {
+	stateMu.RLock()
+	defer stateMu.RUnlock()
+	return last
+}
+
+func Run() Report {
+	runMu.Lock()
+	defer runMu.Unlock()
+
 	log.Printf("startup: checking requirements")
 
+	checks := make([]Check, len(requirements))
 	var missing []string
-	for _, r := range requirements {
+	var missingIdx []int
+	for i, r := range requirements {
+		name := strings.Join(r.pkgs, ", ")
 		if installed(r) {
-			log.Printf("startup: %s found", strings.Join(r.pkgs, ", "))
+			log.Printf("startup: %s found", name)
+			checks[i] = Check{Name: name, OK: true, Message: "Found"}
 			continue
 		}
 		missing = append(missing, r.pkgs...)
+		missingIdx = append(missingIdx, i)
 	}
 	if len(missing) > 0 {
 		log.Printf("startup: installing %s", strings.Join(missing, ", "))
-		if err := aptInstall(missing); err != nil {
-			log.Printf("startup: install packages: %v", err)
+		installErr := aptInstall(missing)
+		if installErr != nil {
+			log.Printf("startup: install packages: %v", installErr)
 		} else {
 			log.Printf("startup: installed %s", strings.Join(missing, ", "))
+		}
+		for _, i := range missingIdx {
+			r := requirements[i]
+			name := strings.Join(r.pkgs, ", ")
+			switch {
+			case installed(r):
+				checks[i] = Check{Name: name, OK: true, Message: "Installed"}
+			case installErr != nil:
+				checks[i] = Check{Name: name, Message: "Install failed: " + installErr.Error()}
+			default:
+				checks[i] = Check{Name: name, Message: "Not found after install"}
+			}
 		}
 	}
 
 	if err := backups.EnsureCron(); err != nil {
 		log.Printf("startup: backup cron: %v", err)
+		checks = append(checks, Check{Name: "Backup cron", Message: err.Error()})
 	} else {
 		log.Printf("startup: backup cron is set (daily at 00:00)")
+		checks = append(checks, Check{Name: "Backup cron", OK: true, Message: "Set (daily at 00:00)"})
 	}
 
 	if err := proxy.EnsureRunning(); err != nil {
 		log.Printf("startup: nginx: %v", err)
+		checks = append(checks, Check{Name: "Nginx service", Message: err.Error()})
 	} else {
 		log.Printf("startup: nginx is running")
+		checks = append(checks, Check{Name: "Nginx service", OK: true, Message: "Running"})
 	}
+
+	report := Report{Checks: checks, RanAt: time.Now()}
+	stateMu.Lock()
+	last = report
+	stateMu.Unlock()
+	return report
 }
 
 func installed(r requirement) bool {

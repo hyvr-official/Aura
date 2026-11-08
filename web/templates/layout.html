@@ -26,6 +26,7 @@
                 <li class="nav-item"><a class="nav-link{{if eq .Active "repositories"}} active{{end}}" href="/repositories">Repositories</a></li>
                 <li class="nav-item"><a class="nav-link{{if eq .Active "projects"}} active{{end}}" href="/projects">Projects</a></li>
                 <li class="nav-item"><a class="nav-link{{if eq .Active "console"}} active{{end}}" href="/console">Console</a></li>
+                <li class="nav-item"><a class="nav-link{{if eq .Active "settings"}} active{{end}}" href="/settings">Settings</a></li>
             </ul>
             <form method="post" action="/logout" class="d-flex py-2 py-lg-0">
                 <button type="submit" class="btn btn-outline-secondary btn-sm">Log out</button>

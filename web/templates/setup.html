@@ -9,31 +9,93 @@
 </head>
 <body class="bg-body-tertiary">
     <main class="d-flex align-items-center justify-content-center min-vh-100 p-3">
-        <div class="card shadow-sm border-0" style="width: 100%; max-width: 380px;">
+        <div class="card shadow-sm border-0" style="width: 100%; max-width: 560px;">
             <div class="card-body p-4">
                 <h1 class="h3 fw-bold text-center mb-1">Aura</h1>
-                <p class="text-body-secondary text-center mb-4">Set an admin password to get started</p>
 
-                {{if .Error}}
-                <div class="alert alert-danger py-2" role="alert">{{.Error}}</div>
-                {{end}}
+                <div id="step-checks"{{if .Error}} class="d-none"{{end}}>
+                    <p class="text-body-secondary text-center mb-4">Step 1 of 2 · Checking system requirements</p>
 
-                <form method="post" action="/setup">
-                    <div class="form-floating mb-3">
-                        <input type="text" class="form-control" id="password" name="password" placeholder="Password" autocomplete="off" required autofocus>
-                        <label for="password">Password</label>
+                    <div class="text-center py-4" id="checks-loading">
+                        <div class="spinner-border text-primary mb-3" role="status" aria-hidden="true"></div>
+                        <p class="text-body-secondary small mb-0">Checking requirements and installing missing packages. This may take a few minutes…</p>
                     </div>
-                    <div class="form-floating mb-3">
-                        <input type="text" class="form-control" id="password_confirm" name="password_confirm" placeholder="Confirm password" autocomplete="off" required>
-                        <label for="password_confirm">Confirm password</label>
+                    <div class="alert alert-danger py-2 d-none" id="checks-error" role="alert">Could not run checks. Check the server logs.</div>
+                    <div class="alert alert-warning py-2 d-none" id="checks-warning" role="alert">Some checks failed. Aura may not work fully until they are fixed.</div>
+                    <div id="checks-results" class="mb-3"></div>
+
+                    <div class="d-flex flex-column flex-sm-row gap-2 d-none" id="checks-actions">
+                        <button type="button" class="btn btn-outline-secondary flex-fill" id="checks-rerun">Run again</button>
+                        <button type="button" class="btn btn-primary flex-fill" id="checks-continue">Continue</button>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100 py-2">Save password</button>
-                </form>
+                </div>
+
+                <div id="step-password"{{if not .Error}} class="d-none"{{end}}>
+                    <p class="text-body-secondary text-center mb-4">Step 2 of 2 · Set an admin password to get started</p>
+
+                    {{if .Error}}
+                    <div class="alert alert-danger py-2" role="alert">{{.Error}}</div>
+                    {{end}}
+
+                    <form method="post" action="/setup" autocomplete="off">
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control" id="password" name="password" placeholder="Password" autocomplete="off" required{{if .Error}} autofocus{{end}}>
+                            <label for="password">Password</label>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control" id="password_confirm" name="password_confirm" placeholder="Confirm password" autocomplete="off" required>
+                            <label for="password_confirm">Confirm password</label>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 py-2">Save password</button>
+                    </form>
+                </div>
             </div>
         </div>
     </main>
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(function () {
+            function runChecks() {
+                $('#checks-loading').removeClass('d-none');
+                $('#checks-actions, #checks-error, #checks-warning').addClass('d-none');
+                $('#checks-results').empty();
+                $.ajax({ url: '/setup/checks', method: 'POST', cache: false })
+                    .done(function (html, status, xhr) {
+                        if (!xhr.getResponseHeader('X-Checks-Results')) {
+                            location.href = '/login';
+                            return;
+                        }
+                        $('#checks-results').html(html);
+                        if ($('#checks-results [data-failed="1"]').length) {
+                            $('#checks-warning').removeClass('d-none');
+                        }
+                    })
+                    .fail(function (xhr) {
+                        if (xhr.status === 403) {
+                            location.href = '/login';
+                            return;
+                        }
+                        $('#checks-error').removeClass('d-none');
+                    })
+                    .always(function () {
+                        $('#checks-loading').addClass('d-none');
+                        $('#checks-actions').removeClass('d-none');
+                    });
+            }
+
+            $('#checks-rerun').on('click', runChecks);
+            $('#checks-continue').on('click', function () {
+                $('#step-checks').addClass('d-none');
+                $('#step-password').removeClass('d-none');
+                $('#password').trigger('focus');
+            });
+
+            if (!$('#step-checks').hasClass('d-none')) {
+                runChecks();
+            }
+        });
+    </script>
 </body>
 </html>

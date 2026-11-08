@@ -54,6 +54,14 @@ func (h *Handlers) SetupForm(w http.ResponseWriter, r *http.Request) {
 	h.render(w, http.StatusOK, "setup.html", setupData{})
 }
 
+func (h *Handlers) SetupChecks(w http.ResponseWriter, r *http.Request) {
+	if h.passwords.IsSet() {
+		http.Error(w, "Setup is already complete", http.StatusForbidden)
+		return
+	}
+	h.renderChecks(w)
+}
+
 func (h *Handlers) Setup(w http.ResponseWriter, r *http.Request) {
 	if h.passwords.IsSet() {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
