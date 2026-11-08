@@ -1,5 +1,4 @@
 {{template "header" .}}
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/theme/material-darker.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/addon/dialog/dialog.min.css" rel="stylesheet">
@@ -15,8 +14,8 @@
         <div class="d-flex align-items-center justify-content-between mb-4">
             <h1 class="h3 mb-0">File Manager</h1>
             <div class="d-flex gap-2">
-                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#create-modal" data-type="file"><i class="bi bi-file-earmark-plus me-1"></i>New file</button>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#create-modal" data-type="folder"><i class="bi bi-folder-plus me-1"></i>New folder</button>
+                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#create-modal" data-type="file"><i class="ri-file-add-line me-1"></i>New file</button>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#create-modal" data-type="folder"><i class="ri-folder-add-line me-1"></i>New folder</button>
             </div>
         </div>
 
@@ -55,18 +54,18 @@
                     <tbody>
                         {{with .Data.Parent}}
                         <tr>
-                            <td colspan="5"><a href="/files?path={{.}}" class="link-body-emphasis text-decoration-none"><i class="bi bi-arrow-90deg-up me-2 text-body-secondary"></i>..</a></td>
+                            <td colspan="5"><a href="/files?path={{.}}" class="link-body-emphasis text-decoration-none"><i class="ri-corner-left-up-line me-2 text-body-secondary"></i>..</a></td>
                         </tr>
                         {{end}}
                         {{range .Data.Entries}}
                         <tr>
                             <td class="fw-medium text-break">
                                 {{if .IsDir}}
-                                <a href="/files?path={{.Path}}" class="link-body-emphasis text-decoration-none"><i class="bi bi-folder-fill text-warning me-2"></i>{{.Name}}</a>
+                                <a href="/files?path={{.Path}}" class="link-body-emphasis text-decoration-none"><i class="ri-folder-fill text-warning me-2"></i>{{.Name}}</a>
                                 {{else}}
-                                <a href="/files?path={{.Path}}" class="link-body-emphasis text-decoration-none file-open" data-path="{{.Path}}"><i class="bi bi-file-earmark-text text-body-secondary me-2"></i>{{.Name}}</a>
+                                <a href="/files?path={{.Path}}" class="link-body-emphasis text-decoration-none file-open" data-path="{{.Path}}"><i class="ri-file-text-line text-body-secondary me-2"></i>{{.Name}}</a>
                                 {{end}}
-                                {{if .IsLink}}<i class="bi bi-link-45deg text-info ms-1" title="Symbolic link"></i>{{end}}
+                                {{if .IsLink}}<i class="ri-link text-info ms-1" title="Symbolic link"></i>{{end}}
                             </td>
                             <td class="text-body-secondary text-nowrap">{{.SizeLabel}}</td>
                             <td class="text-nowrap"><code>{{.Mode}}</code></td>
@@ -74,7 +73,7 @@
                             <td class="text-end text-nowrap">
                                 {{if not .IsDir}}
                                 <a href="/files?path={{.Path}}" class="btn btn-outline-primary btn-sm file-open" data-path="{{.Path}}">Edit</a>
-                                <a href="/files/download?path={{.Path}}" class="btn btn-outline-info btn-sm" title="Download" download><i class="bi bi-download"></i></a>
+                                <a href="/files/download?path={{.Path}}" class="btn btn-outline-info btn-sm" title="Download" download><i class="ri-download-2-line"></i></a>
                                 {{end}}
                                 <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#rename-modal" data-path="{{.Path}}" data-name="{{.Name}}">Rename</button>
                                 <form method="post" action="/files/delete" class="d-inline file-delete-form" data-name="{{.Name}}" data-dir="{{if .IsDir}}1{{end}}">
@@ -161,9 +160,9 @@
                     <div class="modal-footer justify-content-between">
                         <div class="small text-body-secondary">Ctrl+S to save · Ctrl+F to search · Shift+Ctrl+F to replace</div>
                         <div class="d-flex gap-2">
-                            <a href="#" class="btn btn-outline-info" id="editor-download" download><i class="bi bi-download me-1"></i>Download</a>
+                            <a href="#" class="btn btn-outline-info" id="editor-download" download><i class="ri-download-2-line me-1"></i>Download</a>
                             <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-                            <button type="button" class="btn btn-primary" id="editor-save" disabled><i class="bi bi-floppy me-1"></i>Save</button>
+                            <button type="button" class="btn btn-primary" id="editor-save" disabled><i class="ri-save-3-line me-1"></i>Save</button>
                         </div>
                     </div>
                 </div>

@@ -25,3 +25,14 @@ func (h *Handlers) DashboardStats(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(usage)
 }
+
+func (h *Handlers) SystemUsage(w http.ResponseWriter, r *http.Request) {
+	summary, err := system.ReadSummary()
+	if err != nil {
+		serverError(w, "read system usage", err)
+		return
+	}
+	w.Header().Set("X-System-Usage", "1")
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(summary)
+}

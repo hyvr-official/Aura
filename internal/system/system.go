@@ -40,6 +40,13 @@ type Process struct {
 	MemPercent float64 `json:"memPercent"`
 }
 
+type Summary struct {
+	CPU        float64 `json:"cpu"`
+	MemUsed    uint64  `json:"memUsed"`
+	MemTotal   uint64  `json:"memTotal"`
+	MemPercent float64 `json:"memPercent"`
+}
+
 type memInfo struct {
 	total     uint64
 	available uint64
@@ -100,6 +107,33 @@ func Read(sortBy string) (Usage, error) {
 	usage.DiskPercent = round(diskPercent)
 	usage.Processes = topProcesses(procs1, procs2, totalDelta, mem.total, sortBy)
 	return usage, nil
+}
+
+func ReadSummary() (Summary, error) {
+	var summary Summary
+	idle1, total1, err := readCPU()
+	if err != nil {
+		return summary, err
+	}
+	time.Sleep(500 * time.Millisecond)
+	idle2, total2, err := readCPU()
+	if err != nil {
+		return summary, err
+	}
+	mem, err := memory()
+	if err != nil {
+		return summary, err
+	}
+	if total2 > total1 {
+		summary.CPU = round((1 - float64(idle2-idle1)/float64(total2-total1)) * 100)
+	}
+	if mem.available > mem.total {
+		mem.available = mem.total
+	}
+	summary.MemTotal = mem.total
+	summary.MemUsed = mem.total - mem.available
+	summary.MemPercent = percent(summary.MemUsed, summary.MemTotal)
+	return summary, nil
 }
 
 func round(v float64) float64 {
