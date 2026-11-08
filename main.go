@@ -8,6 +8,7 @@ import (
 	"aura/internal/auth"
 	"aura/internal/backups"
 	"aura/internal/config"
+	"aura/internal/console"
 	"aura/internal/database"
 	"aura/internal/files"
 	"aura/internal/handlers"
@@ -46,7 +47,7 @@ func main() {
 	if !passwords.IsSet() {
 		log.Printf("No password set, open /setup to create one")
 	}
-	h := handlers.New(cfg, sessions, passwords, web.Templates(), store, runner, files.New(cfg.FilesRoot), repositories.NewStore(db), repositories.NewGit(), projects.NewStore(db), projects.NewDocker())
+	h := handlers.New(cfg, sessions, passwords, web.Templates(), store, runner, files.New(cfg.FilesRoot), repositories.NewStore(db), repositories.NewGit(), projects.NewStore(db), projects.NewDocker(), console.NewStore(db))
 	protected := func(fn http.HandlerFunc) http.Handler { return auth.RequireAuth(sessions, fn) }
 
 	mux := http.NewServeMux()
@@ -115,6 +116,13 @@ func main() {
 	mux.Handle("POST /projects/{id}/deploy", protected(h.ProjectsDeploy))
 	mux.Handle("POST /projects/{id}/down", protected(h.ProjectsDown))
 	mux.Handle("POST /projects/{id}/delete", protected(h.ProjectsDelete))
+
+	mux.Handle("GET /console", protected(h.ConsoleIndex))
+	mux.Handle("GET /console/shell", protected(h.ConsoleShell))
+	mux.Handle("GET /console/commands", protected(h.ConsoleCommandsIndex))
+	mux.Handle("POST /console/commands", protected(h.ConsoleCommandsStore))
+	mux.Handle("POST /console/commands/{id}", protected(h.ConsoleCommandsUpdate))
+	mux.Handle("POST /console/commands/{id}/delete", protected(h.ConsoleCommandsDelete))
 
 	addr := ":" + cfg.Port
 	log.Printf("Aura %s listening on http://localhost%s", version, addr)

@@ -1,0 +1,586 @@
+{{template "header" .}}
+    <link href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/theme/material-darker.min.css" rel="stylesheet">
+    <style>
+        .console-box { height: calc(100vh - 200px); min-height: 360px; background: #000; padding: .5rem; border: 1px solid var(--bs-border-color); border-radius: var(--bs-border-radius); overflow: hidden; }
+        .command-editor { border: 1px solid var(--bs-border-color); border-radius: var(--bs-border-radius); overflow: hidden; }
+        .command-editor.is-invalid { border-color: var(--bs-form-invalid-border-color); }
+        .command-editor .CodeMirror { height: 180px; font-size: .875rem; font-family: Menlo, Consolas, "DejaVu Sans Mono", monospace; }
+        .saved-panel { height: calc(100vh - 200px); min-height: 360px; }
+        .saved-commands { overflow-y: auto; min-height: 0; }
+        .saved-command-code { font-family: Menlo, Consolas, "DejaVu Sans Mono", monospace; font-size: .8rem; white-space: pre; overflow: hidden; text-overflow: ellipsis; max-height: 3.9em; color: var(--bs-secondary-color); margin: 0; }
+        .saved-command-title { min-width: 0; }
+        @media (max-width: 1199.98px) {
+            .console-box { height: 60vh; }
+            .saved-panel { height: auto; min-height: 0; }
+        }
+        @media (max-width: 575.98px) {
+            .console-box { height: 55vh; min-height: 280px; padding: .25rem; }
+        }
+    </style>
+    <main class="container-fluid px-3 px-lg-4 py-4">
+        <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
+            <div class="d-flex align-items-center gap-2">
+                <h1 class="h3 mb-0">Console</h1>
+                <span class="badge text-bg-secondary" id="console-status">Connecting</span>
+            </div>
+            <button type="button" class="btn btn-outline-secondary btn-sm d-none" id="console-reconnect">Reconnect</button>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-xl-8">
+                <div class="console-box" id="console-terminal"></div>
+            </div>
+            <div class="col-xl-4">
+                <div class="card shadow-sm border-0 saved-panel d-flex flex-column">
+                    <div class="card-header bg-transparent d-flex align-items-center justify-content-between gap-2">
+                        <div class="d-flex align-items-center flex-wrap gap-2">
+                            <h2 class="h6 mb-0">Saved commands</h2>
+                            <span class="badge text-bg-secondary" id="saved-count">0</span>
+                            <span class="badge text-bg-warning d-none" id="command-progress"></span>
+                        </div>
+                        <div class="d-flex flex-shrink-0 gap-2">
+                            <button type="button" class="btn btn-danger btn-sm d-none" id="command-stop">Stop</button>
+                            <button type="button" class="btn btn-primary btn-sm" id="command-new" aria-expanded="false" aria-controls="command-form">New command</button>
+                        </div>
+                    </div>
+                    <div class="collapse flex-shrink-0" id="command-form">
+                        <div class="p-3 border-bottom">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <h3 class="h6 mb-0" id="command-form-title">New command</h3>
+                                <button type="button" class="btn-close btn-sm" id="command-close" aria-label="Close"></button>
+                            </div>
+                            <div class="mb-2">
+                                <input type="text" class="form-control form-control-sm" id="command-name" placeholder="Name (optional)" maxlength="100" autocomplete="off">
+                                <div class="invalid-feedback" id="command-name-error"></div>
+                            </div>
+                            <div class="command-editor" id="command-editor-box">
+                                <textarea id="command-input" autocomplete="off"></textarea>
+                            </div>
+                            <div class="invalid-feedback d-block small" id="command-error"></div>
+                            <div class="form-text mb-2">Ctrl+Enter to run. Multiple lines run one by one.</div>
+                            <div class="d-flex flex-wrap gap-2">
+                                <button type="button" class="btn btn-primary btn-sm" id="command-run">Run</button>
+                                <button type="button" class="btn btn-outline-success btn-sm" id="command-save">Save</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="command-copy">Copy</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm ms-auto" id="command-cancel">Cancel</button>
+                            </div>
+                            <div class="small mt-2 d-none" id="form-feedback"></div>
+                        </div>
+                    </div>
+                    <div class="small px-3 pt-2 d-none" id="list-feedback"></div>
+                    <div class="list-group list-group-flush saved-commands flex-grow-1" id="saved-commands">
+                        <div class="list-group-item text-body-secondary small">Loading…</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+{{template "footer" .}}
+    <script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/shell/shell.min.js"></script>
+    <script>
+        $(function () {
+            var socket = null;
+            var lastOutputAt = 0;
+            var commands = {};
+            var editingId = null;
+            var run = { queue: [], total: 0, timer: null, sentAt: 0 };
+            var idleDelay = 400;
+            var minDelay = 150;
+
+            var term = new Terminal({
+                cursorBlink: true,
+                scrollback: 10000,
+                fontSize: 14,
+                fontFamily: 'Menlo, Consolas, "DejaVu Sans Mono", monospace',
+                theme: { background: '#000000', foreground: '#e5e5e5' }
+            });
+            var fit = new FitAddon.FitAddon();
+            term.loadAddon(fit);
+            term.open(document.getElementById('console-terminal'));
+            fit.fit();
+            term.focus();
+
+            var editor = CodeMirror.fromTextArea(document.getElementById('command-input'), {
+                mode: 'shell',
+                theme: 'material-darker',
+                lineNumbers: true,
+                lineWrapping: true,
+                indentUnit: 4,
+                extraKeys: {
+                    'Ctrl-Enter': function () { runFromForm(); },
+                    'Cmd-Enter': function () { runFromForm(); }
+                }
+            });
+            editor.getInputField().setAttribute('autocomplete', 'off');
+
+            var formEl = document.getElementById('command-form');
+            var form = bootstrap.Collapse.getOrCreateInstance(formEl, { toggle: false });
+
+            function setStatus(text, style) {
+                $('#console-status')
+                    .removeClass('text-bg-secondary text-bg-success text-bg-danger')
+                    .addClass('text-bg-' + style)
+                    .text(text);
+            }
+
+            function isConnected() {
+                return socket && socket.readyState === WebSocket.OPEN;
+            }
+
+            function send(message) {
+                if (isConnected()) {
+                    socket.send(JSON.stringify(message));
+                }
+            }
+
+            function sendResize() {
+                send({ type: 'resize', cols: term.cols, rows: term.rows });
+            }
+
+            function connect() {
+                var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+                setStatus('Connecting', 'secondary');
+                $('#console-reconnect').addClass('d-none');
+                socket = new WebSocket(protocol + '://' + location.host + '/console/shell');
+                socket.binaryType = 'arraybuffer';
+                socket.onopen = function () {
+                    setStatus('Connected', 'success');
+                    fit.fit();
+                    sendResize();
+                    term.focus();
+                };
+                socket.onmessage = function (event) {
+                    lastOutputAt = Date.now();
+                    if (typeof event.data === 'string') {
+                        term.write(event.data);
+                    } else {
+                        term.write(new Uint8Array(event.data));
+                    }
+                };
+                socket.onclose = function () {
+                    socket = null;
+                    stopRun();
+                    setStatus('Disconnected', 'danger');
+                    $('#console-reconnect').removeClass('d-none');
+                    term.write('\r\n\x1b[90m[session closed]\x1b[0m\r\n');
+                };
+            }
+
+            function feedback(text, style, target) {
+                var box = $(target === 'form' ? '#form-feedback' : '#list-feedback');
+                box.removeClass('d-none text-success text-danger text-body-secondary').addClass('text-' + style).text(text);
+                clearTimeout(box.data('timer'));
+                box.data('timer', setTimeout(function () { box.addClass('d-none'); }, 4000));
+            }
+
+            function splitCommands(text) {
+                var lines = text.replace(/\r\n?/g, '\n').split('\n');
+                var units = [];
+                var buffer = [];
+                lines.forEach(function (line) {
+                    if (buffer.length === 0 && $.trim(line) === '') {
+                        return;
+                    }
+                    buffer.push(line);
+                    if (!/\\$/.test(line)) {
+                        units.push(buffer.join('\r'));
+                        buffer = [];
+                    }
+                });
+                if (buffer.length) {
+                    units.push(buffer.join('\r'));
+                }
+                return units;
+            }
+
+            function updateProgress() {
+                var active = run.total > 0;
+                $('#command-stop').toggleClass('d-none', !active);
+                $('#command-run').prop('disabled', active);
+                $('#saved-commands .saved-run').prop('disabled', active);
+                $('#command-progress')
+                    .toggleClass('d-none', !active)
+                    .text(active ? 'Running ' + (run.total - run.queue.length) + '/' + run.total : '');
+            }
+
+            function stopRun() {
+                clearInterval(run.timer);
+                run.timer = null;
+                run.queue = [];
+                run.total = 0;
+                updateProgress();
+            }
+
+            function sendNext() {
+                if (!isConnected()) {
+                    stopRun();
+                    return;
+                }
+                if (run.queue.length === 0) {
+                    stopRun();
+                    return;
+                }
+                send({ type: 'input', data: run.queue.shift() + '\r' });
+                run.sentAt = Date.now();
+                lastOutputAt = run.sentAt;
+                updateProgress();
+            }
+
+            function runText(text, target) {
+                if (!isConnected()) {
+                    feedback('Console is not connected.', 'danger', target);
+                    return false;
+                }
+                if (run.total > 0) {
+                    feedback('Wait for the current commands to finish or stop them.', 'danger', target);
+                    return false;
+                }
+                var units = splitCommands(text);
+                if (units.length === 0) {
+                    feedback('Nothing to run.', 'danger', target);
+                    return false;
+                }
+                run.queue = units;
+                run.total = units.length;
+                term.focus();
+                sendNext();
+                if (run.total === 0) {
+                    return true;
+                }
+                if (run.queue.length === 0) {
+                    stopRun();
+                    return true;
+                }
+                run.timer = setInterval(function () {
+                    var now = Date.now();
+                    if (now - run.sentAt >= minDelay && now - lastOutputAt >= idleDelay) {
+                        if (run.queue.length === 0) {
+                            stopRun();
+                            return;
+                        }
+                        sendNext();
+                    }
+                }, 100);
+                return true;
+            }
+
+            function runFromForm() {
+                runText(editor.getValue(), 'form');
+            }
+
+            function copyText(text, button) {
+                function done(ok) {
+                    var original = button.data('label') || button.text();
+                    button.data('label', original).text(ok ? 'Copied' : 'Failed');
+                    clearTimeout(button.data('timer'));
+                    button.data('timer', setTimeout(function () { button.text(original); }, 1500));
+                }
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(fallbackCopy(text)); });
+                    return;
+                }
+                done(fallbackCopy(text));
+            }
+
+            function fallbackCopy(text) {
+                var area = $('<textarea readonly autocomplete="off"></textarea>')
+                    .val(text)
+                    .css({ position: 'fixed', top: 0, left: 0, opacity: 0 })
+                    .appendTo('body');
+                area[0].select();
+                var ok = false;
+                try {
+                    ok = document.execCommand('copy');
+                } catch (e) {
+                    ok = false;
+                }
+                area.remove();
+                return ok;
+            }
+
+            function clearErrors() {
+                $('#command-name').removeClass('is-invalid');
+                $('#command-name-error').text('');
+                $('#command-editor-box').removeClass('is-invalid');
+                $('#command-error').text('');
+            }
+
+            function showErrors(errors) {
+                clearErrors();
+                if (errors.name) {
+                    $('#command-name').addClass('is-invalid');
+                    $('#command-name-error').text(errors.name);
+                }
+                if (errors.command) {
+                    $('#command-editor-box').addClass('is-invalid');
+                    $('#command-error').text(errors.command);
+                }
+            }
+
+            function isFormOpen() {
+                return formEl.classList.contains('show');
+            }
+
+            function highlightEditing() {
+                $('#saved-commands .list-group-item').removeClass('border-start border-3 border-success');
+                if (editingId !== null) {
+                    $('#saved-commands [data-id="' + editingId + '"]').addClass('border-start border-3 border-success');
+                }
+            }
+
+            function focusForm() {
+                editor.refresh();
+                if (editingId === null) {
+                    $('#command-name').trigger('focus');
+                } else {
+                    editor.focus();
+                    editor.setCursor(editor.lineCount(), 0);
+                }
+            }
+
+            function openForm(id) {
+                var c = id ? commands[id] : null;
+                if (id && !c) {
+                    return;
+                }
+                editingId = c ? id : null;
+                $('#command-name').val(c ? c.name : '');
+                editor.setValue(c ? c.command : '');
+                editor.clearHistory();
+                clearErrors();
+                $('#form-feedback').addClass('d-none');
+                $('#command-form-title').text(c ? 'Edit command' : 'New command');
+                $('#command-save').text(c ? 'Update' : 'Save');
+                highlightEditing();
+                if (isFormOpen()) {
+                    focusForm();
+                } else {
+                    form.show();
+                }
+            }
+
+            function closeForm() {
+                form.hide();
+            }
+
+            function titleFor(c) {
+                if (c.name) {
+                    return c.name;
+                }
+                var first = $.trim(c.command.split('\n')[0]);
+                return first || 'Untitled';
+            }
+
+            function renderList() {
+                var list = $('#saved-commands').empty();
+                var ids = Object.keys(commands).map(Number).sort(function (a, b) { return b - a; });
+                $('#saved-count').text(ids.length);
+                if (ids.length === 0) {
+                    list.append($('<div class="list-group-item text-body-secondary small"></div>').text('No saved commands yet.'));
+                    return;
+                }
+                ids.forEach(function (id) {
+                    var c = commands[id];
+                    var lines = c.command.split('\n').length;
+                    var item = $('<div class="list-group-item"></div>').attr('data-id', id);
+                    var head = $('<div class="d-flex align-items-start justify-content-between gap-2 mb-1"></div>');
+                    var title = $('<div class="saved-command-title"></div>');
+                    title.append($('<div class="fw-semibold text-truncate"></div>').text(titleFor(c)));
+                    if (lines > 1) {
+                        title.append($('<span class="badge text-bg-secondary"></span>').text(lines + ' lines'));
+                    }
+                    var actions = $('<div class="d-flex flex-shrink-0 gap-1"></div>')
+                        .append($('<button type="button" class="btn btn-primary btn-sm saved-run">Run</button>'))
+                        .append($('<button type="button" class="btn btn-outline-secondary btn-sm saved-copy">Copy</button>'))
+                        .append($('<button type="button" class="btn btn-outline-secondary btn-sm saved-edit">Edit</button>'))
+                        .append($('<button type="button" class="btn btn-outline-danger btn-sm saved-delete">Delete</button>'));
+                    head.append(title).append(actions);
+                    item.append(head).append($('<pre class="saved-command-code"></pre>').text(c.command));
+                    list.append(item);
+                });
+                highlightEditing();
+                updateProgress();
+            }
+
+            function loadCommands() {
+                $.ajax({ url: '/console/commands', dataType: 'json', cache: false })
+                    .done(function (list) {
+                        commands = {};
+                        (list || []).forEach(function (c) { commands[c.id] = c; });
+                        renderList();
+                    })
+                    .fail(function () {
+                        $('#saved-commands').empty().append($('<div class="list-group-item text-danger small"></div>').text('Failed to load saved commands.'));
+                    });
+            }
+
+            function errorMessage(xhr, fallback) {
+                return (xhr.responseJSON && xhr.responseJSON.error) || fallback;
+            }
+
+            $('#command-new').on('click', function () {
+                if (isFormOpen() && editingId === null) {
+                    closeForm();
+                    return;
+                }
+                openForm(null);
+            });
+
+            $('#command-cancel, #command-close').on('click', function () {
+                closeForm();
+            });
+
+            formEl.addEventListener('shown.bs.collapse', function () {
+                $('#command-new').attr('aria-expanded', 'true');
+                focusForm();
+            });
+
+            formEl.addEventListener('hidden.bs.collapse', function () {
+                $('#command-new').attr('aria-expanded', 'false');
+                editingId = null;
+                highlightEditing();
+                term.focus();
+            });
+
+            $('#command-run').on('click', function () {
+                runFromForm();
+            });
+
+            $('#command-stop').on('click', function () {
+                stopRun();
+                feedback('Remaining commands cancelled.', 'body-secondary', 'list');
+            });
+
+            $('#command-copy').on('click', function () {
+                copyText(editor.getValue(), $(this));
+            });
+
+            $('#command-save').on('click', function () {
+                var button = $(this).prop('disabled', true);
+                var url = editingId ? '/console/commands/' + editingId : '/console/commands';
+                $.ajax({
+                    url: url,
+                    method: 'POST',
+                    dataType: 'json',
+                    data: { name: $('#command-name').val(), command: editor.getValue() }
+                })
+                    .done(function (res) {
+                        if (!res || !res.command) {
+                            location.reload();
+                            return;
+                        }
+                        var updated = editingId !== null;
+                        commands[res.command.id] = res.command;
+                        renderList();
+                        closeForm();
+                        feedback(updated ? 'Command updated.' : 'Command saved.', 'success', 'list');
+                    })
+                    .fail(function (xhr) {
+                        if (xhr.responseJSON && xhr.responseJSON.errors) {
+                            showErrors(xhr.responseJSON.errors);
+                            return;
+                        }
+                        if (xhr.status === 404 && editingId) {
+                            delete commands[editingId];
+                            renderList();
+                            closeForm();
+                            feedback(errorMessage(xhr, 'Saved command not found.'), 'danger', 'list');
+                            return;
+                        }
+                        feedback(errorMessage(xhr, 'Failed to save command.'), 'danger', 'form');
+                    })
+                    .always(function () {
+                        button.prop('disabled', false);
+                    });
+            });
+
+            $('#saved-commands').on('click', '.saved-run', function () {
+                var c = commands[$(this).closest('[data-id]').data('id')];
+                if (c) {
+                    runText(c.command, 'list');
+                }
+            });
+
+            $('#saved-commands').on('click', '.saved-copy', function () {
+                var c = commands[$(this).closest('[data-id]').data('id')];
+                if (c) {
+                    copyText(c.command, $(this));
+                }
+            });
+
+            $('#saved-commands').on('click', '.saved-edit', function () {
+                openForm($(this).closest('[data-id]').data('id'));
+            });
+
+            $('#saved-commands').on('click', '.saved-delete', function () {
+                var id = $(this).closest('[data-id]').data('id');
+                if (!commands[id] || !confirm('Delete this saved command?')) {
+                    return;
+                }
+                $.ajax({ url: '/console/commands/' + id + '/delete', method: 'POST', dataType: 'json' })
+                    .done(function () {
+                        delete commands[id];
+                        if (editingId === id) {
+                            closeForm();
+                        }
+                        renderList();
+                        feedback('Command deleted.', 'success', 'list');
+                    })
+                    .fail(function (xhr) {
+                        if (xhr.status === 404) {
+                            delete commands[id];
+                            renderList();
+                        }
+                        feedback(errorMessage(xhr, 'Failed to delete command.'), 'danger', 'list');
+                    });
+            });
+
+            term.onData(function (data) {
+                if (data === '\x03' && run.total > 0) {
+                    stopRun();
+                }
+                send({ type: 'input', data: data });
+            });
+            term.onResize(sendResize);
+
+            $('#console-terminal').on('contextmenu', function (event) {
+                event.preventDefault();
+                term.focus();
+                if (!navigator.clipboard || !navigator.clipboard.readText || !window.isSecureContext) {
+                    feedback('Right click paste needs HTTPS. Use Ctrl+V to paste.', 'danger', 'list');
+                    return;
+                }
+                navigator.clipboard.readText().then(function (text) {
+                    if (text) {
+                        term.paste(text);
+                    }
+                }, function () {
+                    feedback('Clipboard access was blocked. Allow it in the browser or use Ctrl+V.', 'danger', 'list');
+                });
+            });
+
+            $(window).on('resize', function () {
+                fit.fit();
+            });
+
+            $('#console-reconnect').on('click', function () {
+                term.reset();
+                connect();
+            });
+
+            $(window).on('beforeunload', function () {
+                if (socket) {
+                    socket.onclose = null;
+                    socket.close();
+                }
+            });
+
+            connect();
+            loadCommands();
+        });
+    </script>

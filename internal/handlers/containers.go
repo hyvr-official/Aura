@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"os/exec"
 	"time"
 
 	"aura/internal/containers"
@@ -156,9 +157,13 @@ func (h *Handlers) ContainersShell(w http.ResponseWriter, r *http.Request) {
 		conn.WriteMessage(websocket.BinaryMessage, []byte(err.Error()+"\r\n"))
 		return
 	}
+	servePTY(conn, cmd, id)
+}
+
+func servePTY(conn *websocket.Conn, cmd *exec.Cmd, label string) {
 	ptmx, err := pty.StartWithSize(cmd, &pty.Winsize{Rows: 24, Cols: 80})
 	if err != nil {
-		log.Printf("shell start %s: %v", id, err)
+		log.Printf("shell start %s: %v", label, err)
 		conn.WriteMessage(websocket.BinaryMessage, []byte("Failed to start shell: "+err.Error()+"\r\n"))
 		return
 	}

@@ -87,6 +87,14 @@ func migrate(db *sql.DB) error {
 			updated_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 		);
 
+		CREATE TABLE IF NOT EXISTS console_commands (
+			id         INTEGER PRIMARY KEY AUTOINCREMENT,
+			name       TEXT     NOT NULL DEFAULT '',
+			command    TEXT     NOT NULL,
+			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+		);
+
 		CREATE TABLE IF NOT EXISTS sessions (
 			token      TEXT    PRIMARY KEY,
 			expires_at INTEGER NOT NULL
