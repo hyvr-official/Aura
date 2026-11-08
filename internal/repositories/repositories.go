@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"database/sql"
+	"fmt"
 	"path"
 	"regexp"
 	"strings"
@@ -65,6 +66,10 @@ func (r Repository) Slug() string {
 		return "repository"
 	}
 	return s
+}
+
+func (r Repository) KeyFileName() string {
+	return fmt.Sprintf("aura_%s_%d", r.Slug(), r.ID)
 }
 
 func (r Repository) LastActionLabel() string {

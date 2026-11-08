@@ -193,6 +193,23 @@ func (s *session) run(dir string, args ...string) (string, error) {
 	return string(out), nil
 }
 
+func (s *session) persistKey() (string, error) {
+	keyPath, err := SaveKeyFile(s.repo)
+	if err != nil {
+		return "", fmt.Errorf("save ssh key file: %w", err)
+	}
+	return keyPath, nil
+}
+
+func (s *session) configureSSH() error {
+	keyPath, err := s.persistKey()
+	if err != nil {
+		return err
+	}
+	_, err = s.run(s.repo.Path, "config", "core.sshCommand", SSHCommand(keyPath))
+	return err
+}
+
 func (s *session) finish(err error) (string, error) {
 	if err != nil {
 		fmt.Fprintf(&s.log, "Failed: %v\n", err)
@@ -215,7 +232,11 @@ func (g *Git) Clone(r Repository) (string, error) {
 	if err := os.MkdirAll(filepath.Dir(r.Path), 0o755); err != nil {
 		return s.finish(fmt.Errorf("create parent folder: %w", err))
 	}
-	_, err = s.run(filepath.Dir(r.Path), "clone", "--depth", "1", r.URL, r.Path)
+	keyPath, err := s.persistKey()
+	if err != nil {
+		return s.finish(err)
+	}
+	_, err = s.run(filepath.Dir(r.Path), "clone", "-c", "core.sshCommand="+SSHCommand(keyPath), "--depth", "1", r.URL, r.Path)
 	return s.finish(err)
 }
 
@@ -227,6 +248,9 @@ func (g *Git) Pull(r Repository) (string, error) {
 	defer done()
 	if !State(r.Path).IsRepo() {
 		return s.finish(fmt.Errorf("folder %s is not a git repository", r.Path))
+	}
+	if err := s.configureSSH(); err != nil {
+		return s.finish(err)
 	}
 	out, err := s.run(r.Path, "rev-parse", "--abbrev-ref", "HEAD")
 	if err != nil {
@@ -254,6 +278,9 @@ func (g *Git) Checkout(r Repository, branch string) (string, error) {
 	}
 	if branch == "" || strings.HasPrefix(branch, "-") {
 		return s.finish(errors.New("invalid branch name"))
+	}
+	if err := s.configureSSH(); err != nil {
+		return s.finish(err)
 	}
 	if _, err := s.run(r.Path, "check-ref-format", "--branch", branch); err != nil {
 		return s.finish(errors.New("invalid branch name"))
@@ -302,6 +329,25 @@ func (g *Git) SetRemote(r Repository) error {
 		return fmt.Errorf("%v: %s", err, lastLine(out))
 	}
 	return nil
+}
+
+func (g *Git) MoveKey(old, r Repository) error {
+	if old.KeyFileName() == r.KeyFileName() {
+		return nil
+	}
+	s, done, err := g.start(r, listTimeout, true)
+	if err != nil {
+		return err
+	}
+	defer done()
+	if State(r.Path).IsRepo() {
+		if err := s.configureSSH(); err != nil {
+			return err
+		}
+	} else if _, err := s.persistKey(); err != nil {
+		return err
+	}
+	return RemoveKeyFile(old)
 }
 
 func ReadInfo(r Repository) (Info, error) {

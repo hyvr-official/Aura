@@ -132,6 +132,7 @@
                                 <button type="submit" class="btn btn-outline-danger">Regenerate key</button>
                             </form>
                         </div>
+                        <p class="small text-body-secondary mt-3 mb-0 text-break">The private key is also stored at <code>~/.ssh/{{.Repository.KeyFileName}}</code> and set as <code>core.sshCommand</code> of the cloned folder, so you can run <code>git pull</code> from the command line inside <code>{{.Repository.Path}}</code>.</p>
                     </div>
                 </div>
             </div>

@@ -40,26 +40,28 @@ type repositoriesUpsertData struct {
 }
 
 var repositoryFlashes = map[string]string{
-	"created":        "Repository created. Add the deploy key below to GitHub before cloning.",
-	"updated":        "Repository updated.",
-	"remote_failed":  "Repository updated, but changing the remote URL of the cloned folder failed. Check the server logs.",
-	"deleted":        "Repository deleted. The files on disk were not removed.",
-	"key_generated":  "A new SSH key was generated. Update the deploy key in GitHub.",
-	"key_failed":     "Generating a new SSH key failed. Check the server logs.",
-	"cloned":         "Repository cloned.",
-	"pulled":         "Latest changes pulled.",
-	"switched":       "Branch changed.",
-	"failed":         "Operation failed. See the output below.",
-	"busy":           "Another operation is already running for this repository.",
-	"invalid_branch": "Select a valid branch.",
+	"created":         "Repository created. Add the deploy key below to GitHub before cloning.",
+	"updated":         "Repository updated.",
+	"remote_failed":   "Repository updated, but changing the remote URL of the cloned folder failed. Check the server logs.",
+	"deleted":         "Repository deleted. The files on disk were not removed.",
+	"key_generated":   "A new SSH key was generated. Update the deploy key in GitHub.",
+	"key_failed":      "Generating a new SSH key failed. Check the server logs.",
+	"key_file_failed": "The SSH key was saved, but writing it to ~/.ssh failed. Check the server logs.",
+	"cloned":          "Repository cloned.",
+	"pulled":          "Latest changes pulled.",
+	"switched":        "Branch changed.",
+	"failed":          "Operation failed. See the output below.",
+	"busy":            "Another operation is already running for this repository.",
+	"invalid_branch":  "Select a valid branch.",
 }
 
 var repositoryFlashTypes = map[string]string{
-	"remote_failed":  "warning",
-	"key_failed":     "danger",
-	"failed":         "danger",
-	"busy":           "warning",
-	"invalid_branch": "danger",
+	"remote_failed":   "warning",
+	"key_failed":      "danger",
+	"key_file_failed": "warning",
+	"failed":          "danger",
+	"busy":            "warning",
+	"invalid_branch":  "danger",
 }
 
 func (h *Handlers) RepositoriesIndex(w http.ResponseWriter, r *http.Request) {
@@ -149,7 +151,12 @@ func (h *Handlers) RepositoriesStore(w http.ResponseWriter, r *http.Request) {
 		serverError(w, "create repository", err)
 		return
 	}
-	http.Redirect(w, r, fmt.Sprintf("/repositories/%d?status=created", repo.ID), http.StatusSeeOther)
+	status := "created"
+	if _, err := repositories.SaveKeyFile(repo); err != nil {
+		log.Printf("save ssh key file for repository %q: %v", repo.Name, err)
+		status = "key_file_failed"
+	}
+	http.Redirect(w, r, fmt.Sprintf("/repositories/%d?status=%s", repo.ID, status), http.StatusSeeOther)
 }
 
 func (h *Handlers) RepositoriesEdit(w http.ResponseWriter, r *http.Request) {
@@ -180,13 +187,17 @@ func (h *Handlers) RepositoriesUpdate(w http.ResponseWriter, r *http.Request) {
 		serverError(w, "update repository", err)
 		return
 	}
+	repo.PrivateKey = existing.PrivateKey
 	status := "updated"
 	if repo.URL != existing.URL && repositories.State(repo.Path).IsRepo() {
-		repo.PrivateKey = existing.PrivateKey
 		if err := h.git.SetRemote(repo); err != nil {
 			log.Printf("set remote for repository %q: %v", repo.Name, err)
 			status = "remote_failed"
 		}
+	}
+	if err := h.git.MoveKey(existing, repo); err != nil {
+		log.Printf("move ssh key file for repository %q: %v", repo.Name, err)
+		status = "key_file_failed"
 	}
 	http.Redirect(w, r, fmt.Sprintf("/repositories/%d?status=%s", repo.ID, status), http.StatusSeeOther)
 }
@@ -207,7 +218,13 @@ func (h *Handlers) RepositoriesKey(w http.ResponseWriter, r *http.Request) {
 		serverError(w, "update repository key", err)
 		return
 	}
-	http.Redirect(w, r, target+"?status=key_generated", http.StatusSeeOther)
+	status := "key_generated"
+	repo.PublicKey, repo.PrivateKey = public, private
+	if _, err := repositories.SaveKeyFile(repo); err != nil {
+		log.Printf("save ssh key file for repository %q: %v", repo.Name, err)
+		status = "key_file_failed"
+	}
+	http.Redirect(w, r, target+"?status="+status, http.StatusSeeOther)
 }
 
 func (h *Handlers) RepositoriesClone(w http.ResponseWriter, r *http.Request) {
@@ -233,11 +250,11 @@ func (h *Handlers) RepositoriesCheckout(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *Handlers) RepositoriesDelete(w http.ResponseWriter, r *http.Request) {
-	id, ok := repositoryID(w, r)
+	repo, ok := h.findRepository(w, r)
 	if !ok {
 		return
 	}
-	err := h.repos.Delete(id)
+	err := h.repos.Delete(repo.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		http.NotFound(w, r)
 		return
@@ -245,6 +262,9 @@ func (h *Handlers) RepositoriesDelete(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		serverError(w, "delete repository", err)
 		return
+	}
+	if err := repositories.RemoveKeyFile(repo); err != nil {
+		log.Printf("remove ssh key file for repository %q: %v", repo.Name, err)
 	}
 	http.Redirect(w, r, "/repositories?status=deleted", http.StatusSeeOther)
 }
