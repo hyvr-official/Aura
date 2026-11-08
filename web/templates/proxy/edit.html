@@ -7,7 +7,7 @@
 
         {{with .Data}}
         <div class="d-flex align-items-center gap-2 mt-2 mb-4">
-            <h1 class="h3 mb-0">{{.Site.Name}}</h1>
+            <h1 class="h5 mb-0">{{.Site.Name}}</h1>
             {{if .Site.Enabled}}<span class="badge text-bg-success">Enabled</span>{{else}}<span class="badge text-bg-secondary">Disabled</span>{{end}}
             {{if .Site.SSL}}<span class="badge text-bg-success">SSL</span>{{end}}
         </div>

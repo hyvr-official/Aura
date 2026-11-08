@@ -24,7 +24,7 @@
                 <button class="btn btn-link link-body-emphasis p-1 d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-controls="sidebar" aria-label="Toggle navigation">
                     <i class="ri-menu-line fs-4"></i>
                 </button>
-                <a class="navbar-brand fw-bold d-flex align-items-center gap-2 me-0" href="/"><i class="ri-shining-2-fill text-primary"></i>Aura</a>
+                <a class="navbar-brand d-flex align-items-center me-0" href="/"><img src="/static/images/aura-logo.svg" alt="Aura" class="aura-logo"></a>
             </div>
             <div class="ms-auto d-flex align-items-center gap-2 gap-sm-3">
                 <div class="d-flex align-items-center" id="nav-gauge-cpu" title="CPU usage">
@@ -50,7 +50,7 @@
     <div class="d-flex">
         <aside class="offcanvas-lg offcanvas-start app-sidebar border-end" tabindex="-1" id="sidebar" aria-labelledby="sidebar-label">
             <div class="offcanvas-header border-bottom">
-                <h5 class="offcanvas-title fw-bold d-flex align-items-center gap-2" id="sidebar-label"><i class="ri-shining-2-fill text-primary"></i>Aura</h5>
+                <h5 class="offcanvas-title d-flex align-items-center" id="sidebar-label"><img src="/static/images/aura-logo.svg" alt="Aura" class="aura-logo"></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebar" aria-label="Close"></button>
             </div>
             <div class="offcanvas-body p-2">
@@ -98,8 +98,8 @@
                     colors: [color],
                     plotOptions: {
                         radialBar: {
-                            hollow: { size: '45%' },
-                            track: { background: '#2b3035', strokeWidth: '100%' },
+                            hollow: { size: '42%', margin: 0 },
+                            track: { background: '#2b3035', strokeWidth: '100%', margin: 0 },
                             dataLabels: { show: false }
                         }
                     },

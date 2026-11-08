@@ -7,7 +7,7 @@
 
         {{with .Data}}
         <div class="d-flex align-items-center justify-content-between mt-2 mb-4">
-            <h1 class="h3 mb-0">{{.Backup.Name}}</h1>
+            <h1 class="h5 mb-0">{{.Backup.Name}}</h1>
             <div class="d-flex gap-2">
                 <a href="/backups/{{.Backup.ID}}/edit" class="btn btn-outline-secondary">Edit</a>
                 <form method="post" action="/backups/{{.Backup.ID}}/run">
