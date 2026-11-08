@@ -75,6 +75,10 @@ func main() {
 	mux.Handle("GET /containers/{id}/logs", protected(h.ContainersLogs))
 	mux.Handle("GET /containers/{id}/shell", protected(h.ContainersShell))
 
+	mux.Handle("GET /volumes", protected(h.VolumesIndex))
+	mux.Handle("POST /volumes", protected(h.VolumesStore))
+	mux.Handle("POST /volumes/{name}/delete", protected(h.VolumesDelete))
+
 	mux.Handle("GET /files", protected(h.FilesIndex))
 	mux.Handle("GET /files/content", protected(h.FilesContent))
 	mux.Handle("GET /files/download", protected(h.FilesDownload))

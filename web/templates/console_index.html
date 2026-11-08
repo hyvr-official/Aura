@@ -11,6 +11,7 @@
         .saved-commands { overflow-y: auto; min-height: 0; }
         .saved-command-code { font-family: Menlo, Consolas, "DejaVu Sans Mono", monospace; font-size: .8rem; white-space: pre; overflow: hidden; text-overflow: ellipsis; max-height: 3.9em; color: var(--bs-secondary-color); margin: 0; }
         .saved-command-title { min-width: 0; }
+        .empty-hide:empty { display: none; }
         @media (max-width: 1199.98px) {
             .console-box { height: 60vh; }
             .saved-panel { height: auto; min-height: 0; }
@@ -69,7 +70,7 @@
                             <div class="small mt-2 d-none" id="form-feedback"></div>
                         </div>
                     </div>
-                    <div class="small px-3 pt-2 d-none" id="list-feedback"></div>
+                    <div class="px-3 pt-2 empty-hide" id="list-feedback"></div>
                     <div class="list-group list-group-flush saved-commands flex-grow-1" id="saved-commands">
                         <div class="list-group-item text-body-secondary small">Loading…</div>
                     </div>
@@ -172,10 +173,30 @@
             }
 
             function feedback(text, style, target) {
-                var box = $(target === 'form' ? '#form-feedback' : '#list-feedback');
+                if (target !== 'form') {
+                    listAlert(text, style);
+                    return;
+                }
+                var box = $('#form-feedback');
                 box.removeClass('d-none text-success text-danger text-body-secondary').addClass('text-' + style).text(text);
                 clearTimeout(box.data('timer'));
                 box.data('timer', setTimeout(function () { box.addClass('d-none'); }, 4000));
+            }
+
+            function listAlert(text, style) {
+                var box = $('#list-feedback');
+                var type = style === 'body-secondary' ? 'secondary' : style;
+                box.empty();
+                var alert = $('<div class="alert alert-dismissible fade show small py-2 mb-0" role="alert"></div>')
+                    .addClass('alert-' + type)
+                    .append($('<span></span>').text(text))
+                    .append($('<button type="button" class="btn-close btn-sm py-2" data-bs-dismiss="alert" aria-label="Close"></button>'));
+                box.append(alert);
+                setTimeout(function () {
+                    if (alert.parent().length) {
+                        bootstrap.Alert.getOrCreateInstance(alert[0]).close();
+                    }
+                }, 4000);
             }
 
             function splitCommands(text) {

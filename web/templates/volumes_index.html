@@ -1,0 +1,112 @@
+{{template "header" .}}
+    <main class="container py-5">
+        <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-4">
+            <h1 class="h3 mb-0">Volumes</h1>
+            {{if not .Data.DockerMissing}}
+            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#create-volume-modal">Create volume</button>
+            {{end}}
+        </div>
+
+        {{with .Data.Flash}}
+        <div class="alert alert-{{$.Data.FlashType}} alert-dismissible fade show" role="alert">
+            {{.}}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {{end}}
+
+        <div class="card shadow-sm border-0">
+            {{if .Data.DockerMissing}}
+            <div class="card-body text-center py-5">
+                <p class="text-warning mb-0">Docker is not installed on this server.</p>
+            </div>
+            {{else if .Data.Volumes}}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Driver</th>
+                            <th>Scope</th>
+                            <th>Used by</th>
+                            <th>Mountpoint</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .Data.Volumes}}
+                        <tr>
+                            <td class="fw-medium text-break">{{.Name}}</td>
+                            <td><code>{{.Driver}}</code></td>
+                            <td class="text-body-secondary">{{.Scope}}</td>
+                            <td>
+                                {{range .UsedBy}}
+                                <span class="badge text-bg-info me-1">{{.}}</span>
+                                {{else}}
+                                <span class="text-body-secondary">—</span>
+                                {{end}}
+                            </td>
+                            <td class="small text-break"><code>{{.Mountpoint}}</code></td>
+                            <td class="text-end text-nowrap">
+                                {{if .FilesURL}}
+                                <a href="{{.FilesURL}}" class="btn btn-outline-info btn-sm">Open</a>
+                                {{else}}
+                                <span class="d-inline-block" tabindex="0" title="Folder is outside the File Manager root">
+                                    <button type="button" class="btn btn-outline-info btn-sm" disabled>Open</button>
+                                </span>
+                                {{end}}
+                                <form method="post" action="/volumes/{{.Name}}/delete" class="d-inline" onsubmit="return confirm('Delete this volume? All data in it will be lost.');">
+                                    {{if .InUse}}
+                                    <span class="d-inline-block" tabindex="0" title="Volume is in use by a container">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm" disabled>Delete</button>
+                                    </span>
+                                    {{else}}
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+                                    {{end}}
+                                </form>
+                            </td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
+            {{else}}
+            <div class="card-body text-center py-5">
+                <p class="text-body-secondary mb-0">No volumes found.</p>
+            </div>
+            {{end}}
+        </div>
+
+        <div class="modal fade" id="create-volume-modal" tabindex="-1" aria-labelledby="create-volume-modal-label" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <form method="post" action="/volumes" class="modal-content" autocomplete="off">
+                    <div class="modal-header">
+                        <h2 class="modal-title h5" id="create-volume-modal-label">Create volume</h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="volume-name" class="form-label">Name</label>
+                            <input type="text" class="form-control" id="volume-name" name="name" required pattern="[a-zA-Z0-9][a-zA-Z0-9_.\-]+" autocomplete="off">
+                            <div class="form-text">At least 2 characters. Letters, numbers, dots, dashes and underscores.</div>
+                        </div>
+                        <div>
+                            <label for="volume-driver" class="form-label">Driver</label>
+                            <input type="text" class="form-control" id="volume-driver" name="driver" value="local" pattern="[a-zA-Z0-9][a-zA-Z0-9_.\-]+" autocomplete="off">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Create</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+{{template "footer" .}}
+    <script>
+        $(function () {
+            $('#create-volume-modal').on('shown.bs.modal', function () {
+                $('#volume-name').trigger('focus');
+            });
+        });
+    </script>
