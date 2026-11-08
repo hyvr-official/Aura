@@ -18,17 +18,18 @@
     gap: .75rem;
     color: var(--bs-body-color);
     padding: 8px 10px 8px 10px;
-    border-radius: 6px;
+    border-radius: 8px;
     font-weight: 600;
     font-size: 14px;
     text-decoration: none;
     letter-spacing: 0.015em;
 }
 
-.app-sidebar .nav-link i {
+.app-sidebar .nav-link i{
     font-size: 1.15rem;
     line-height: 1;
     color: var(--bs-secondary-color);
+    font-weight: normal;
 }
 
 .app-sidebar .nav-link:hover {
@@ -36,12 +37,12 @@
 }
 
 .app-sidebar .nav-link.active {
-    background-color: rgba(var(--bs-primary-rgb), .15);
-    color: var(--bs-primary-text-emphasis);
+    background-color: #ffffff;
+    color: #070707;
 }
 
 .app-sidebar .nav-link.active i {
-    color: var(--bs-primary-text-emphasis);
+    color: #070707;
 }
 
 .app-content {

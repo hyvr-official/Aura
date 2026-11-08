@@ -26,7 +26,7 @@
                 </button>
                 <a class="navbar-brand d-flex align-items-center me-0" href="/"><img src="/static/images/aura-logo.svg" alt="Aura" class="aura-logo"></a>
             </div>
-            <div class="ms-auto d-flex align-items-center gap-2 gap-sm-3">
+            <div class="ms-auto d-flex align-items-center gap-2">
                 <div class="d-flex align-items-center" id="nav-gauge-cpu" title="CPU usage">
                     <div class="nav-gauge-chart" id="nav-chart-cpu"></div>
                     <div class="nav-gauge-label small d-none d-sm-block">
@@ -54,16 +54,16 @@
                 <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebar" aria-label="Close"></button>
             </div>
             <div class="offcanvas-body p-2">
-                <ul class="nav nav-pills flex-column gap-1 w-100">
+                <ul class="nav nav-pills flex-column gap-2 w-100 mt-2">
                     <li class="nav-item"><a class="nav-link{{if eq .Active "dashboard"}} active{{end}}" href="/"><i class="ri-dashboard-3-line"></i>Dashboard</a></li>
-                    <li class="nav-item"><a class="nav-link{{if eq .Active "backups"}} active{{end}}" href="/backups"><i class="ri-archive-line"></i>Backups</a></li>
+                    <li class="nav-item"><a class="nav-link{{if eq .Active "projects"}} active{{end}}" href="/projects"><i class="ri-stack-line"></i>Projects</a></li>
+                    <li class="nav-item"><a class="nav-link{{if eq .Active "repositories"}} active{{end}}" href="/repositories"><i class="ri-git-repository-line"></i>Repositories</a></li>
                     <li class="nav-item"><a class="nav-link{{if eq .Active "containers"}} active{{end}}" href="/containers"><i class="ri-box-3-line"></i>Containers</a></li>
                     <li class="nav-item"><a class="nav-link{{if eq .Active "volumes"}} active{{end}}" href="/volumes"><i class="ri-hard-drive-3-line"></i>Volumes</a></li>
-                    <li class="nav-item"><a class="nav-link{{if eq .Active "files"}} active{{end}}" href="/files"><i class="ri-folder-3-line"></i>File Manager</a></li>
                     <li class="nav-item"><a class="nav-link{{if eq .Active "proxy"}} active{{end}}" href="/proxy"><i class="ri-global-line"></i>Reverse Proxy</a></li>
-                    <li class="nav-item"><a class="nav-link{{if eq .Active "repositories"}} active{{end}}" href="/repositories"><i class="ri-git-repository-line"></i>Repositories</a></li>
-                    <li class="nav-item"><a class="nav-link{{if eq .Active "projects"}} active{{end}}" href="/projects"><i class="ri-stack-line"></i>Projects</a></li>
                     <li class="nav-item"><a class="nav-link{{if eq .Active "console"}} active{{end}}" href="/console"><i class="ri-terminal-box-line"></i>Console</a></li>
+                    <li class="nav-item"><a class="nav-link{{if eq .Active "files"}} active{{end}}" href="/files"><i class="ri-folder-3-line"></i>File Manager</a></li>
+                    <li class="nav-item"><a class="nav-link{{if eq .Active "backups"}} active{{end}}" href="/backups"><i class="ri-archive-line"></i>Backups</a></li>
                     <li class="nav-item"><a class="nav-link{{if eq .Active "settings"}} active{{end}}" href="/settings"><i class="ri-settings-3-line"></i>Settings</a></li>
                 </ul>
             </div>
@@ -98,7 +98,7 @@
                     colors: [color],
                     plotOptions: {
                         radialBar: {
-                            hollow: { size: '42%', margin: 0 },
+                            hollow: { size: '43%', margin: 0 },
                             track: { background: '#2b3035', strokeWidth: '100%', margin: 0 },
                             dataLabels: { show: false }
                         }

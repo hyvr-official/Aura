@@ -85,6 +85,7 @@
                         type: 'radialBar',
                         height: 260,
                         background: 'transparent',
+                        fontFamily: '"Space Grotesk", sans-serif',
                         animations: { enabled: true, dynamicAnimation: { enabled: true, speed: 600 } }
                     },
                     theme: { mode: 'dark' },
@@ -92,7 +93,7 @@
                     colors: [color],
                     plotOptions: {
                         radialBar: {
-                            hollow: { size: '65%' },
+                            hollow: { size: '63%' },
                             track: { background: '#2b3035', strokeWidth: '100%' },
                             dataLabels: {
                                 name: { show: false },
@@ -100,10 +101,11 @@
                                     show: true,
                                     offsetY: 8,
                                     fontSize: '28px',
+                                    fontFamily: '"Space Grotesk", sans-serif',
                                     fontWeight: 600,
                                     color: '#dee2e6',
                                     formatter: function (val) {
-                                        return Number(val).toFixed(1) + '%';
+                                        return Math.round(Number(val)) + '%';
                                     }
                                 }
                             }
