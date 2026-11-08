@@ -73,6 +73,20 @@ func migrate(db *sql.DB) error {
 			updated_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 		);
 
+		CREATE TABLE IF NOT EXISTS projects (
+			id             INTEGER PRIMARY KEY AUTOINCREMENT,
+			name           TEXT     NOT NULL,
+			type           TEXT     NOT NULL,
+			path           TEXT     NOT NULL DEFAULT '',
+			repository_id  INTEGER  NOT NULL DEFAULT 0,
+			last_action    TEXT     NOT NULL DEFAULT '',
+			last_folder    TEXT     NOT NULL DEFAULT '',
+			last_output    TEXT     NOT NULL DEFAULT '',
+			last_action_at DATETIME,
+			created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+		);
+
 		CREATE TABLE IF NOT EXISTS sessions (
 			token      TEXT    PRIMARY KEY,
 			expires_at INTEGER NOT NULL

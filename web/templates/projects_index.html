@@ -1,0 +1,64 @@
+{{template "header" .}}
+    <main class="container py-5">
+        <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-4">
+            <h1 class="h3 mb-0">Projects</h1>
+            <a href="/projects/create" class="btn btn-primary">New project</a>
+        </div>
+
+        {{with .Data.Flash}}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{.}}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {{end}}
+
+        <div class="card shadow-sm border-0">
+            {{if .Data.Projects}}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Source</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .Data.Projects}}
+                        <tr>
+                            <td class="fw-medium"><a href="/projects/{{.Project.ID}}" class="link-body-emphasis text-decoration-none">{{.Project.Name}}</a></td>
+                            <td class="text-nowrap"><span class="badge {{if .Project.IsRepository}}text-bg-primary{{else}}text-bg-secondary{{end}}">{{.Project.TypeLabel}}</span></td>
+                            <td>
+                                {{if .Project.IsRepository}}
+                                {{if .RepositoryMissing}}
+                                <span class="badge text-bg-warning">Repository missing</span>
+                                {{else}}
+                                <a href="/repositories/{{.Repository.ID}}" class="link-body-emphasis">{{.Repository.Name}}</a>
+                                <div><code class="small text-break">{{.Repository.Path}}</code></div>
+                                {{end}}
+                                {{else}}
+                                <code class="text-break">{{.Project.Path}}</code>
+                                {{end}}
+                            </td>
+                            <td class="text-end text-nowrap">
+                                <a href="/projects/{{.Project.ID}}" class="btn btn-outline-primary btn-sm">View</a>
+                                <a href="/projects/{{.Project.ID}}/edit" class="btn btn-outline-secondary btn-sm">Edit</a>
+                                <form method="post" action="/projects/{{.Project.ID}}/delete" class="d-inline" onsubmit="return confirm('Delete this project? The files on disk and running containers will not be removed.');">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
+            {{else}}
+            <div class="card-body text-center py-5">
+                <p class="text-body-secondary mb-3">No projects yet.</p>
+                <a href="/projects/create" class="btn btn-primary">New project</a>
+            </div>
+            {{end}}
+        </div>
+    </main>
+{{template "footer" .}}

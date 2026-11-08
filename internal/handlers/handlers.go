@@ -9,6 +9,7 @@ import (
 	"aura/internal/backups"
 	"aura/internal/config"
 	"aura/internal/files"
+	"aura/internal/projects"
 	"aura/internal/repositories"
 )
 
@@ -22,10 +23,12 @@ type Handlers struct {
 	files     *files.Manager
 	repos     *repositories.Store
 	git       *repositories.Git
+	projects  *projects.Store
+	docker    *projects.Docker
 }
 
-func New(cfg *config.Config, sessions *auth.SessionStore, passwords *auth.PasswordStore, templates *template.Template, backups *backups.Store, runner *backups.Runner, files *files.Manager, repos *repositories.Store, git *repositories.Git) *Handlers {
-	return &Handlers{cfg: cfg, sessions: sessions, passwords: passwords, templates: templates, backups: backups, runner: runner, files: files, repos: repos, git: git}
+func New(cfg *config.Config, sessions *auth.SessionStore, passwords *auth.PasswordStore, templates *template.Template, backups *backups.Store, runner *backups.Runner, files *files.Manager, repos *repositories.Store, git *repositories.Git, projectStore *projects.Store, docker *projects.Docker) *Handlers {
+	return &Handlers{cfg: cfg, sessions: sessions, passwords: passwords, templates: templates, backups: backups, runner: runner, files: files, repos: repos, git: git, projects: projectStore, docker: docker}
 }
 
 func (h *Handlers) render(w http.ResponseWriter, status int, name string, data any) {

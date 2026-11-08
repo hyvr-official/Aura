@@ -1,0 +1,174 @@
+{{template "header" .}}
+    <style>
+        .operation-output { max-height: 50vh; overflow: auto; white-space: pre-wrap; word-break: break-word; font-size: .8125rem; }
+    </style>
+    <main class="container py-5">
+        <a href="/projects" class="link-secondary text-decoration-none small">&larr; Back to projects</a>
+
+        {{with .Data}}
+        <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mt-2 mb-4">
+            <h1 class="h3 mb-0 text-break">{{.Project.Name}}</h1>
+            <div class="d-flex flex-wrap gap-2">
+                <a href="/projects/{{.Project.ID}}/edit" class="btn btn-outline-secondary">Edit</a>
+                {{if and .Project.IsRepository .State.IsRepo}}
+                <form method="post" action="/projects/{{.Project.ID}}/pull" class="js-operation" data-busy="Pulling…" data-confirm="Discard all local changes to tracked files and pull the latest changes?">
+                    <button type="submit" class="btn btn-primary">Pull</button>
+                </form>
+                {{end}}
+            </div>
+        </div>
+
+        {{with .Flash}}
+        <div class="alert alert-{{$.Data.FlashType}} alert-dismissible fade show" role="alert">
+            {{.}}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {{end}}
+
+        {{if .RepositoryMissing}}
+        <div class="alert alert-warning" role="alert">
+            The repository linked to this project no longer exists. <a href="/projects/{{.Project.ID}}/edit" class="alert-link">Edit the project</a> to select another repository.
+        </div>
+        {{else if and .Project.IsRepository (not .State.IsRepo)}}
+        <div class="alert alert-warning" role="alert">
+            The repository <strong>{{.Repository.Name}}</strong> has not been cloned yet. <a href="/repositories/{{.Repository.ID}}" class="alert-link">Open the repository</a> to clone it.
+        </div>
+        {{end}}
+
+        <div class="row g-4">
+            <div class="col-lg-5 order-lg-2">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-4">
+                        <h2 class="h5 mb-3">Details</h2>
+                        <dl class="row mb-0">
+                            <dt class="col-sm-4">Type</dt>
+                            <dd class="col-sm-8"><span class="badge {{if .Project.IsRepository}}text-bg-primary{{else}}text-bg-secondary{{end}}">{{.Project.TypeLabel}}</span></dd>
+                            {{if .Project.IsRepository}}
+                            <dt class="col-sm-4">Repository</dt>
+                            <dd class="col-sm-8">
+                                {{if .RepositoryMissing}}<span class="badge text-bg-warning">Missing</span>{{else}}<a href="/repositories/{{.Repository.ID}}" class="link-body-emphasis text-break">{{.Repository.Name}}</a>{{end}}
+                            </dd>
+                            {{if not .RepositoryMissing}}
+                            <dt class="col-sm-4">Status</dt>
+                            <dd class="col-sm-8"><span class="badge {{.State.Badge}}">{{.State.Label}}</span></dd>
+                            {{end}}
+                            {{if .State.IsRepo}}
+                            <dt class="col-sm-4">Branch</dt>
+                            <dd class="col-sm-8">
+                                {{if .Info.Branch}}
+                                {{if .Info.Detached}}<span class="badge text-bg-warning">Detached HEAD</span>{{else}}<span class="badge text-bg-primary">{{.Info.Branch}}</span>{{end}}
+                                {{else}}<span class="text-body-secondary">—</span>{{end}}
+                            </dd>
+                            <dt class="col-sm-4">Last commit</dt>
+                            <dd class="col-sm-8">
+                                {{if .Info.Commit.Hash}}
+                                <div class="text-break">{{.Info.Commit.Subject}}</div>
+                                <div class="small text-body-secondary">
+                                    <code title="{{.Info.Commit.Hash}}">{{.Info.Commit.ShortHash}}</code>
+                                    by {{.Info.Commit.AuthorName}} on {{.Info.Commit.DateLabel}}
+                                </div>
+                                {{else}}<span class="text-body-secondary">—</span>{{end}}
+                            </dd>
+                            {{end}}
+                            {{end}}
+                            {{with .Dir}}
+                            <dt class="col-sm-4">Folder path</dt>
+                            <dd class="col-sm-8"><code class="text-break">{{.}}</code></dd>
+                            {{end}}
+                            <dt class="col-sm-4">Created</dt>
+                            <dd class="col-sm-8 mb-0 text-body-secondary">{{.Project.CreatedAt.Local.Format "2006-01-02 15:04"}}</dd>
+                        </dl>
+                        {{with .InfoError}}
+                        <div class="alert alert-warning small mt-3 mb-0 text-break" role="alert">{{.}}</div>
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-7 order-lg-1">
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body p-4">
+                        <h2 class="h5 mb-3">Docker folders</h2>
+                        {{with .FoldersError}}
+                        <div class="alert alert-warning small text-break" role="alert">Could not read the project folder: {{.}}</div>
+                        {{end}}
+                        {{if .Folders}}
+                        <div class="table-responsive">
+                            <table class="table align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Folder</th>
+                                        <th>Type</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{range .Folders}}
+                                    <tr>
+                                        <td>
+                                            <div class="fw-medium text-break">{{.Label}}</div>
+                                            <code class="small text-break">{{.Rel}}</code>
+                                        </td>
+                                        <td class="text-nowrap">
+                                            <span class="badge {{if .IsCompose}}text-bg-info{{else}}text-bg-secondary{{end}}">{{.Kind}}</span>
+                                            <div class="small text-body-secondary">{{.File}}</div>
+                                        </td>
+                                        <td class="text-end text-nowrap">
+                                            <form method="post" action="/projects/{{$.Data.Project.ID}}/deploy" class="d-inline js-operation" data-busy="Deploying…" data-confirm="{{if .IsCompose}}Run docker compose up -d --build in {{.Rel}}?{{else}}Build the image and run a container from {{.Rel}}?{{end}}">
+                                                <input type="hidden" name="folder" value="{{.Rel}}" autocomplete="off">
+                                                <button type="submit" class="btn btn-primary btn-sm">Deploy</button>
+                                            </form>
+                                            <form method="post" action="/projects/{{$.Data.Project.ID}}/down" class="d-inline js-operation" data-busy="Stopping…" data-confirm="{{if .IsCompose}}Run docker compose down in {{.Rel}}?{{else}}Stop and remove the container for {{.Rel}}?{{end}}">
+                                                <input type="hidden" name="folder" value="{{.Rel}}" autocomplete="off">
+                                                <button type="submit" class="btn btn-outline-danger btn-sm">Down</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {{end}}
+                                </tbody>
+                            </table>
+                        </div>
+                        {{else if .DirReady}}
+                        {{if not .FoldersError}}
+                        <p class="text-body-secondary mb-0">No folders with a compose file or Dockerfile were found.</p>
+                        {{end}}
+                        {{else}}
+                        <p class="text-body-secondary mb-0">The project folder is not available yet.</p>
+                        {{end}}
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-4">
+                        <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
+                            <h2 class="h5 mb-0">Last operation</h2>
+                            {{if .Project.LastAction}}
+                            <span class="small text-body-secondary">{{.Project.LastActionLabel}}{{with .Project.LastFolder}} · <code>{{.}}</code>{{end}} · {{.Project.LastActionAt.Local.Format "2006-01-02 15:04:05"}}</span>
+                            {{end}}
+                        </div>
+                        {{if .Project.LastOutput}}
+                        <pre class="operation-output bg-body-tertiary p-3 rounded mb-0">{{.Project.LastOutput}}</pre>
+                        {{else}}
+                        <p class="text-body-secondary mb-0">No operation has run yet.</p>
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{end}}
+    </main>
+{{template "footer" .}}
+    <script>
+        $(function () {
+            $('form.js-operation').on('submit', function (event) {
+                var form = $(this);
+                var message = form.data('confirm');
+                if (message && !confirm(message)) {
+                    event.preventDefault();
+                    return;
+                }
+                $('form.js-operation button[type="submit"]').prop('disabled', true);
+                form.find('button[type="submit"]').html('<span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>' + $('<div>').text(form.data('busy')).html());
+            });
+        });
+    </script>

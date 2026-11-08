@@ -11,6 +11,7 @@ import (
 	"aura/internal/database"
 	"aura/internal/files"
 	"aura/internal/handlers"
+	"aura/internal/projects"
 	"aura/internal/repositories"
 	"aura/internal/startup"
 	"aura/web"
@@ -45,7 +46,7 @@ func main() {
 	if !passwords.IsSet() {
 		log.Printf("No password set, open /setup to create one")
 	}
-	h := handlers.New(cfg, sessions, passwords, web.Templates(), store, runner, files.New(cfg.FilesRoot), repositories.NewStore(db), repositories.NewGit())
+	h := handlers.New(cfg, sessions, passwords, web.Templates(), store, runner, files.New(cfg.FilesRoot), repositories.NewStore(db), repositories.NewGit(), projects.NewStore(db), projects.NewDocker())
 	protected := func(fn http.HandlerFunc) http.Handler { return auth.RequireAuth(sessions, fn) }
 
 	mux := http.NewServeMux()
@@ -103,6 +104,17 @@ func main() {
 	mux.Handle("POST /repositories/{id}/pull", protected(h.RepositoriesPull))
 	mux.Handle("POST /repositories/{id}/checkout", protected(h.RepositoriesCheckout))
 	mux.Handle("POST /repositories/{id}/delete", protected(h.RepositoriesDelete))
+
+	mux.Handle("GET /projects", protected(h.ProjectsIndex))
+	mux.Handle("GET /projects/create", protected(h.ProjectsCreate))
+	mux.Handle("POST /projects", protected(h.ProjectsStore))
+	mux.Handle("GET /projects/{id}", protected(h.ProjectsShow))
+	mux.Handle("GET /projects/{id}/edit", protected(h.ProjectsEdit))
+	mux.Handle("POST /projects/{id}", protected(h.ProjectsUpdate))
+	mux.Handle("POST /projects/{id}/pull", protected(h.ProjectsPull))
+	mux.Handle("POST /projects/{id}/deploy", protected(h.ProjectsDeploy))
+	mux.Handle("POST /projects/{id}/down", protected(h.ProjectsDown))
+	mux.Handle("POST /projects/{id}/delete", protected(h.ProjectsDelete))
 
 	addr := ":" + cfg.Port
 	log.Printf("Aura %s listening on http://localhost%s", version, addr)
