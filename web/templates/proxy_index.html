@@ -1,4 +1,8 @@
 {{template "header" .}}
+    <link href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.min.css" rel="stylesheet">
+    <style>
+        .xterm-box { height: 65vh; background: #000; padding: .5rem; border: 1px solid var(--bs-border-color); border-radius: var(--bs-border-radius); }
+    </style>
     <main class="container py-5">
         <div class="d-flex align-items-center justify-content-between mb-4">
             <h1 class="h3 mb-0">Reverse Proxy</h1>
@@ -44,6 +48,7 @@
                             <td>{{if .Enabled}}<span class="badge text-bg-success">Enabled</span>{{else}}<span class="badge text-bg-secondary">Disabled</span>{{end}}</td>
                             <td class="text-body-secondary text-nowrap">{{.ModifiedLabel}}</td>
                             <td class="text-end text-nowrap">
+                                <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#logs-modal" data-site-name="{{.Name}}">Logs</button>
                                 <a href="/proxy/{{.Name}}/edit" class="btn btn-outline-secondary btn-sm">Edit</a>
                                 {{if .Enabled}}
                                 <form method="post" action="/proxy/{{.Name}}/disable" class="d-inline" onsubmit="return confirm('Disable this site?');">
@@ -70,6 +75,115 @@
             </div>
             {{end}}
         </div>
+
+        <div class="modal fade" id="logs-modal" tabindex="-1" aria-labelledby="logs-modal-label" aria-hidden="true">
+            <div class="modal-dialog modal-xl modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title h5" id="logs-modal-label">Logs <span class="text-body-secondary small ms-2" id="logs-modal-name"></span><span class="badge text-bg-success ms-2 d-none" id="logs-live">Live</span></h2>
+                        <div class="btn-group btn-group-sm ms-auto me-3" role="group" aria-label="Log type">
+                            <input type="radio" class="btn-check" name="log-type" id="log-type-access" value="access" autocomplete="off" checked>
+                            <label class="btn btn-outline-secondary" for="log-type-access">Access</label>
+                            <input type="radio" class="btn-check" name="log-type" id="log-type-error" value="error" autocomplete="off">
+                            <label class="btn btn-outline-secondary" for="log-type-error">Error</label>
+                        </div>
+                        <button type="button" class="btn-close ms-0" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="xterm-box" id="logs-terminal"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
         {{end}}
     </main>
 {{template "footer" .}}
+    <script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.min.js"></script>
+    <script>
+        $(function () {
+            var session = { name: null, term: null, fit: null, socket: null };
+
+            function socketUrl(path) {
+                var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+                return protocol + '://' + location.host + path;
+            }
+
+            function closeSocket() {
+                if (session.socket) {
+                    session.socket.onclose = null;
+                    session.socket.close();
+                    session.socket = null;
+                }
+                $('#logs-live').addClass('d-none');
+            }
+
+            function connect() {
+                closeSocket();
+                session.term.reset();
+                var type = $('input[name="log-type"]:checked').val();
+                var socket = new WebSocket(socketUrl('/proxy/' + encodeURIComponent(session.name) + '/logs?type=' + type));
+                socket.binaryType = 'arraybuffer';
+                socket.onopen = function () {
+                    $('#logs-live').removeClass('d-none');
+                };
+                socket.onmessage = function (event) {
+                    if (typeof event.data === 'string') {
+                        session.term.write(event.data);
+                    } else {
+                        session.term.write(new Uint8Array(event.data));
+                    }
+                };
+                socket.onclose = function () {
+                    $('#logs-live').addClass('d-none');
+                    if (session.term) {
+                        session.term.write('\r\n\x1b[90m[log stream ended]\x1b[0m\r\n');
+                    }
+                };
+                session.socket = socket;
+            }
+
+            $('#logs-modal').on('show.bs.modal', function (event) {
+                session.name = $(event.relatedTarget).data('site-name');
+                $('#logs-modal-name').text(session.name);
+                $('#log-type-access').prop('checked', true);
+            }).on('shown.bs.modal', function () {
+                session.term = new Terminal({
+                    disableStdin: true,
+                    convertEol: true,
+                    scrollback: 10000,
+                    fontSize: 14,
+                    fontFamily: 'Menlo, Consolas, "DejaVu Sans Mono", monospace',
+                    theme: { background: '#000000', foreground: '#e5e5e5' }
+                });
+                session.fit = new FitAddon.FitAddon();
+                session.term.loadAddon(session.fit);
+                session.term.open(document.getElementById('logs-terminal'));
+                session.fit.fit();
+                connect();
+            }).on('hidden.bs.modal', function () {
+                closeSocket();
+                if (session.term) {
+                    session.term.dispose();
+                    session.term = null;
+                }
+                session.fit = null;
+                $('#logs-terminal').empty();
+            });
+
+            $('input[name="log-type"]').on('change', function () {
+                if (session.term) {
+                    connect();
+                }
+            });
+
+            $(window).on('resize', function () {
+                if (session.term && session.fit) {
+                    session.fit.fit();
+                }
+            });
+        });
+    </script>

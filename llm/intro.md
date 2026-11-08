@@ -8,7 +8,8 @@
 
 ## Basic rules
 
-- Even its developed in Windows, this pogram is full only for Ubuntu.
-- Do not run or build the program, I will build and run and check it.
-- Use dark theme for the whole UI of the project.
+- Although the application may be developed on Windows, it is designed exclusively for Ubuntu. All features and functionality must be fully compatible with Ubuntu.
+- Do not build, compile, or run the application. I will handle building, running, and testing it myself.
+- Use a consistent dark theme throughout the entire application, including all pages, components, and UI elements.
 - Add autocomplete="off" for all form input elements.
+- Ensure the entire UI is fully responsive and works smoothly across desktop, tablet, and mobile devices.

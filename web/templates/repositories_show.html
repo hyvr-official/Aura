@@ -1,0 +1,171 @@
+{{template "header" .}}
+    <style>
+        .deploy-key { font-family: var(--bs-font-monospace); font-size: .8125rem; resize: none; word-break: break-all; }
+        .operation-output { max-height: 50vh; overflow: auto; white-space: pre-wrap; word-break: break-word; font-size: .8125rem; }
+    </style>
+    <main class="container py-5">
+        <a href="/repositories" class="link-secondary text-decoration-none small">&larr; Back to repositories</a>
+
+        {{with .Data}}
+        <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mt-2 mb-4">
+            <h1 class="h3 mb-0 text-break">{{.Repository.Name}}</h1>
+            <div class="d-flex flex-wrap gap-2">
+                <a href="/repositories/{{.Repository.ID}}/edit" class="btn btn-outline-secondary">Edit</a>
+                {{if .State.CanClone}}
+                <form method="post" action="/repositories/{{.Repository.ID}}/clone" class="js-operation" data-busy="Cloning…">
+                    <button type="submit" class="btn btn-primary">Clone</button>
+                </form>
+                {{end}}
+                {{if .State.IsRepo}}
+                <form method="post" action="/repositories/{{.Repository.ID}}/pull" class="js-operation" data-busy="Pulling…" data-confirm="Discard all local changes to tracked files and pull the latest changes?">
+                    <button type="submit" class="btn btn-primary">Pull</button>
+                </form>
+                {{end}}
+            </div>
+        </div>
+
+        {{with .Flash}}
+        <div class="alert alert-{{$.Data.FlashType}} alert-dismissible fade show" role="alert">
+            {{.}}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {{end}}
+
+        {{if .State.IsBlocked}}
+        <div class="alert alert-warning" role="alert">
+            The folder <code>{{.Repository.Path}}</code> {{if eq .State "not_dir"}}is a file, not a folder{{else}}is not empty and is not a git repository{{end}}. Empty it or change the folder path to clone this repository.
+        </div>
+        {{end}}
+
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body p-4">
+                        <h2 class="h5 mb-3">Details</h2>
+                        <dl class="row mb-0">
+                            <dt class="col-sm-4">Repository URL</dt>
+                            <dd class="col-sm-8"><code class="text-break">{{.Repository.URL}}</code></dd>
+                            <dt class="col-sm-4">Folder path</dt>
+                            <dd class="col-sm-8"><code class="text-break">{{.Repository.Path}}</code></dd>
+                            <dt class="col-sm-4">Status</dt>
+                            <dd class="col-sm-8"><span class="badge {{.State.Badge}}">{{.State.Label}}</span></dd>
+                            {{if .State.IsRepo}}
+                            <dt class="col-sm-4">Branch</dt>
+                            <dd class="col-sm-8">
+                                {{if .Info.Branch}}
+                                {{if .Info.Detached}}<span class="badge text-bg-warning">Detached HEAD</span>{{else}}<span class="badge text-bg-primary">{{.Info.Branch}}</span>{{end}}
+                                {{else}}<span class="text-body-secondary">—</span>{{end}}
+                            </dd>
+                            <dt class="col-sm-4">Last commit</dt>
+                            <dd class="col-sm-8">
+                                {{if .Info.Commit.Hash}}
+                                <div class="text-break">{{.Info.Commit.Subject}}</div>
+                                <div class="small text-body-secondary">
+                                    <code title="{{.Info.Commit.Hash}}">{{.Info.Commit.ShortHash}}</code>
+                                    by {{.Info.Commit.AuthorName}}{{with .Info.Commit.AuthorEmail}} &lt;{{.}}&gt;{{end}}
+                                    on {{.Info.Commit.DateLabel}}
+                                </div>
+                                {{else}}<span class="text-body-secondary">—</span>{{end}}
+                            </dd>
+                            {{end}}
+                            <dt class="col-sm-4">Created</dt>
+                            <dd class="col-sm-8 mb-0 text-body-secondary">{{.Repository.CreatedAt.Local.Format "2006-01-02 15:04"}}</dd>
+                        </dl>
+                        {{with .InfoError}}
+                        <div class="alert alert-warning small mt-3 mb-0 text-break" role="alert">{{.}}</div>
+                        {{end}}
+                    </div>
+                </div>
+
+                {{if .State.IsRepo}}
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body p-4">
+                        <h2 class="h5 mb-3">Change branch</h2>
+                        {{with .BranchError}}
+                        <div class="alert alert-warning small text-break" role="alert">Could not list remote branches: {{.}}</div>
+                        {{end}}
+                        {{if .Branches}}
+                        <form method="post" action="/repositories/{{.Repository.ID}}/checkout" class="js-operation" data-busy="Switching…" data-confirm="Discard all local changes to tracked files and switch to the selected branch?">
+                            <div class="d-flex flex-column flex-sm-row gap-2">
+                                <select class="form-select" id="branch" name="branch" autocomplete="off" aria-label="Branch">
+                                    {{range .Branches}}
+                                    <option value="{{.}}"{{if eq . $.Data.Info.Branch}} selected{{end}}>{{.}}</option>
+                                    {{end}}
+                                </select>
+                                <button type="submit" class="btn btn-outline-primary text-nowrap">Switch branch</button>
+                            </div>
+                            <div class="form-text">Local changes to tracked files are discarded when switching.</div>
+                        </form>
+                        {{else}}
+                        <p class="text-body-secondary mb-0">No branches found.</p>
+                        {{end}}
+                    </div>
+                </div>
+                {{end}}
+
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-4">
+                        <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
+                            <h2 class="h5 mb-0">Last operation</h2>
+                            {{if .Repository.LastAction}}
+                            <span class="small text-body-secondary">{{.Repository.LastActionLabel}} · {{.Repository.LastActionAt.Local.Format "2006-01-02 15:04:05"}}</span>
+                            {{end}}
+                        </div>
+                        {{if .Repository.LastOutput}}
+                        <pre class="operation-output bg-body-tertiary p-3 rounded mb-0">{{.Repository.LastOutput}}</pre>
+                        {{else}}
+                        <p class="text-body-secondary mb-0">No operation has run yet.</p>
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-4">
+                        <h2 class="h5 mb-3">Deploy key</h2>
+                        <p class="small text-body-secondary">Add this public key in GitHub under <strong>Repository → Settings → Deploy keys → Add deploy key</strong>. Aura uses it to clone and pull this repository.</p>
+                        <textarea class="form-control deploy-key mb-3" id="deploy-key" rows="4" readonly autocomplete="off">{{.Repository.PublicKey}}</textarea>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="button" class="btn btn-outline-primary" id="copy-key">Copy key</button>
+                            <form method="post" action="/repositories/{{.Repository.ID}}/key" class="js-operation" data-busy="Generating…" data-confirm="Generate a new SSH key? The current key stops working and you must update the deploy key in GitHub.">
+                                <button type="submit" class="btn btn-outline-danger">Regenerate key</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{end}}
+    </main>
+{{template "footer" .}}
+    <script>
+        $(function () {
+            $('#copy-key').on('click', function () {
+                var button = $(this);
+                var field = $('#deploy-key');
+                var done = function () {
+                    button.text('Copied');
+                    setTimeout(function () { button.text('Copy key'); }, 2000);
+                };
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(field.val()).then(done);
+                } else {
+                    field.trigger('select');
+                    document.execCommand('copy');
+                    done();
+                }
+            });
+
+            $('form.js-operation').on('submit', function (event) {
+                var form = $(this);
+                var message = form.data('confirm');
+                if (message && !confirm(message)) {
+                    event.preventDefault();
+                    return;
+                }
+                $('form.js-operation button[type="submit"]').prop('disabled', true);
+                form.find('button[type="submit"]').html('<span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>' + $('<div>').text(form.data('busy')).html());
+            });
+        });
+    </script>

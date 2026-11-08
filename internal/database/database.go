@@ -59,6 +59,20 @@ func migrate(db *sql.DB) error {
 
 		CREATE INDEX IF NOT EXISTS idx_backup_runs_backup_id ON backup_runs (backup_id, id);
 
+		CREATE TABLE IF NOT EXISTS repositories (
+			id             INTEGER PRIMARY KEY AUTOINCREMENT,
+			name           TEXT     NOT NULL,
+			url            TEXT     NOT NULL,
+			path           TEXT     NOT NULL,
+			public_key     TEXT     NOT NULL DEFAULT '',
+			private_key    TEXT     NOT NULL DEFAULT '',
+			last_action    TEXT     NOT NULL DEFAULT '',
+			last_output    TEXT     NOT NULL DEFAULT '',
+			last_action_at DATETIME,
+			created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+		);
+
 		CREATE TABLE IF NOT EXISTS sessions (
 			token      TEXT    PRIMARY KEY,
 			expires_at INTEGER NOT NULL

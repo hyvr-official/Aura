@@ -6,8 +6,12 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"syscall"
+	"time"
 
 	"aura/internal/proxy"
+
+	"github.com/gorilla/websocket"
 )
 
 type proxyIndexData struct {
@@ -150,6 +154,48 @@ func (h *Handlers) ProxySSL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.Redirect(w, r, "/proxy?status=ssl_issued", http.StatusSeeOther)
+}
+
+func (h *Handlers) ProxyLogs(w http.ResponseWriter, r *http.Request) {
+	site, ok := h.findSite(w, r)
+	if !ok {
+		return
+	}
+	logPath, own := site.LogPath(r.URL.Query().Get("type"))
+	if logPath == "" {
+		http.NotFound(w, r)
+		return
+	}
+	conn, err := shellUpgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Printf("site logs upgrade %s: %v", site.Name, err)
+		return
+	}
+	defer conn.Close()
+	header := "\x1b[90m==> " + logPath
+	if !own {
+		header += " (shared nginx log, this site has no own log file)"
+	}
+	conn.WriteMessage(websocket.BinaryMessage, []byte(header+" <==\x1b[0m\r\n"))
+	cmd := proxy.TailLog(logPath, 1000)
+	out := &wsWriter{conn: conn}
+	cmd.Stdout = out
+	cmd.Stderr = out
+	if err := cmd.Start(); err != nil {
+		log.Printf("site logs start %s: %v", site.Name, err)
+		conn.WriteMessage(websocket.BinaryMessage, []byte("Failed to read logs: "+err.Error()+"\r\n"))
+		return
+	}
+	go func() {
+		for {
+			if _, _, err := conn.ReadMessage(); err != nil {
+				cmd.Process.Signal(syscall.SIGTERM)
+				return
+			}
+		}
+	}()
+	cmd.Wait()
+	conn.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""), time.Now().Add(time.Second))
 }
 
 func (h *Handlers) ProxyEnable(w http.ResponseWriter, r *http.Request) {

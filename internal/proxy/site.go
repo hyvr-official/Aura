@@ -103,6 +103,9 @@ var configTemplate = template.Must(template.New("site").Parse(`server {
     listen [::]:{{.Port}};
     server_name {{.Domains}};
 
+    access_log /var/log/nginx/{{.Name}}.access.log;
+    error_log /var/log/nginx/{{.Name}}.error.log;
+
     client_max_body_size 64m;
 
     location / {

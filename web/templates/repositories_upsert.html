@@ -1,0 +1,43 @@
+{{template "header" .}}
+    <main class="container py-5" style="max-width: 640px;">
+        <a href="{{if .Data.Repository.ID}}/repositories/{{.Data.Repository.ID}}{{else}}/repositories{{end}}" class="link-secondary text-decoration-none small">&larr; {{if .Data.Repository.ID}}Back to repository{{else}}Back to repositories{{end}}</a>
+        <h1 class="h3 mt-2 mb-4">{{.Title}}</h1>
+
+        {{with .Data}}
+        {{with index .Errors "General"}}
+        <div class="alert alert-danger" role="alert">{{.}}</div>
+        {{end}}
+
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <form method="post" action="{{if .Repository.ID}}/repositories/{{.Repository.ID}}{{else}}/repositories{{end}}" novalidate>
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control{{if index .Errors "Name"}} is-invalid{{end}}" id="name" name="name" autocomplete="off" value="{{.Repository.Name}}" required autofocus>
+                        {{with index .Errors "Name"}}<div class="invalid-feedback">{{.}}</div>{{end}}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="url" class="form-label">Repository URL <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control{{if index .Errors "URL"}} is-invalid{{end}}" id="url" name="url" autocomplete="off" value="{{.Repository.URL}}" placeholder="git@github.com:owner/repo.git" required>
+                        {{with index .Errors "URL"}}<div class="invalid-feedback">{{.}}</div>{{end}}
+                        <div class="form-text">Use the SSH URL, deploy keys only work over SSH.</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="path" class="form-label">Folder path <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control{{if index .Errors "Path"}} is-invalid{{end}}" id="path" name="path" autocomplete="off" value="{{.Repository.Path}}" placeholder="/var/www/app" required>
+                        {{with index .Errors "Path"}}<div class="invalid-feedback">{{.}}</div>{{end}}
+                        <div class="form-text">{{if .Repository.ID}}Changing the path does not move existing files.{{else}}The repository is cloned into this folder. It must be empty or not exist yet.{{end}}</div>
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2">
+                        <button type="submit" class="btn btn-primary">{{if .Repository.ID}}Save changes{{else}}Create repository{{end}}</button>
+                        <a href="{{if .Repository.ID}}/repositories/{{.Repository.ID}}{{else}}/repositories{{end}}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {{end}}
+    </main>
+{{template "footer" .}}

@@ -21,6 +21,8 @@ var requirements = []requirement{
 	{pkgs: []string{"p7zip-full"}, commands: []string{"7z", "7zz", "7za"}},
 	{pkgs: []string{"nginx"}, commands: []string{"nginx"}},
 	{pkgs: []string{"certbot", "python3-certbot-nginx"}, commands: []string{"certbot"}},
+	{pkgs: []string{"git"}, commands: []string{"git"}},
+	{pkgs: []string{"openssh-client"}, commands: []string{"ssh-keygen"}},
 }
 
 func Run() {

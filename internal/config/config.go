@@ -16,14 +16,11 @@ func Load() (*Config, error) {
 	_ = godotenv.Load()
 
 	cfg := &Config{
-		Port:      os.Getenv("APP_PORT"),
+		Port:      "8445",
 		DBPath:    os.Getenv("AURA_DB_PATH"),
 		FilesRoot: os.Getenv("AURA_FILES_ROOT"),
 	}
 
-	if cfg.Port == "" {
-		cfg.Port = "8080"
-	}
 	if cfg.DBPath == "" {
 		cfg.DBPath = "aura.db"
 	}

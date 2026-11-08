@@ -10,13 +10,22 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
 
 const (
-	AvailableDir = "/etc/nginx/sites-available"
-	EnabledDir   = "/etc/nginx/sites-enabled"
+	AvailableDir     = "/etc/nginx/sites-available"
+	EnabledDir       = "/etc/nginx/sites-enabled"
+	LogDir           = "/var/log/nginx"
+	DefaultAccessLog = LogDir + "/access.log"
+	DefaultErrorLog  = LogDir + "/error.log"
+)
+
+const (
+	LogAccess = "access"
+	LogError  = "error"
 )
 
 var (
@@ -35,14 +44,32 @@ func (e *TestError) Error() string {
 }
 
 type Site struct {
-	Name     string
-	Enabled  bool
-	Domains  []string
-	Listen   string
-	Upstream string
-	SSL      bool
-	ModTime  time.Time
-	Config   string
+	Name      string
+	Enabled   bool
+	Domains   []string
+	Listen    string
+	Upstream  string
+	SSL       bool
+	AccessLog string
+	ErrorLog  string
+	ModTime   time.Time
+	Config    string
+}
+
+func (s Site) LogPath(kind string) (string, bool) {
+	switch kind {
+	case LogAccess:
+		if s.AccessLog != "" {
+			return s.AccessLog, true
+		}
+		return DefaultAccessLog, false
+	case LogError:
+		if s.ErrorLog != "" {
+			return s.ErrorLog, true
+		}
+		return DefaultErrorLog, false
+	}
+	return "", false
 }
 
 func (s Site) DomainsLabel() string {
@@ -166,6 +193,14 @@ func parse(s *Site) {
 			}
 		case "ssl_certificate":
 			s.SSL = true
+		case "access_log":
+			if s.AccessLog == "" && strings.HasPrefix(args[0], "/") {
+				s.AccessLog = args[0]
+			}
+		case "error_log":
+			if s.ErrorLog == "" && strings.HasPrefix(args[0], "/") {
+				s.ErrorLog = args[0]
+			}
 		}
 	}
 }
@@ -289,6 +324,10 @@ func IssueSSL(domains []string, email string) error {
 	}
 	_, err := run(args...)
 	return err
+}
+
+func TailLog(path string, lines int) *exec.Cmd {
+	return command("tail", "-n", strconv.Itoa(lines), "-F", path)
 }
 
 func EnsureRunning() error {

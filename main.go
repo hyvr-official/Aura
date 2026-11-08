@@ -11,6 +11,7 @@ import (
 	"aura/internal/database"
 	"aura/internal/files"
 	"aura/internal/handlers"
+	"aura/internal/repositories"
 	"aura/internal/startup"
 	"aura/web"
 )
@@ -44,7 +45,7 @@ func main() {
 	if !passwords.IsSet() {
 		log.Printf("No password set, open /setup to create one")
 	}
-	h := handlers.New(cfg, sessions, passwords, web.Templates(), store, runner, files.New(cfg.FilesRoot))
+	h := handlers.New(cfg, sessions, passwords, web.Templates(), store, runner, files.New(cfg.FilesRoot), repositories.NewStore(db), repositories.NewGit())
 	protected := func(fn http.HandlerFunc) http.Handler { return auth.RequireAuth(sessions, fn) }
 
 	mux := http.NewServeMux()
@@ -89,6 +90,19 @@ func main() {
 	mux.Handle("POST /proxy/{name}/disable", protected(h.ProxyDisable))
 	mux.Handle("POST /proxy/{name}/delete", protected(h.ProxyDelete))
 	mux.Handle("POST /proxy/{name}/ssl", protected(h.ProxySSL))
+	mux.Handle("GET /proxy/{name}/logs", protected(h.ProxyLogs))
+
+	mux.Handle("GET /repositories", protected(h.RepositoriesIndex))
+	mux.Handle("GET /repositories/create", protected(h.RepositoriesCreate))
+	mux.Handle("POST /repositories", protected(h.RepositoriesStore))
+	mux.Handle("GET /repositories/{id}", protected(h.RepositoriesShow))
+	mux.Handle("GET /repositories/{id}/edit", protected(h.RepositoriesEdit))
+	mux.Handle("POST /repositories/{id}", protected(h.RepositoriesUpdate))
+	mux.Handle("POST /repositories/{id}/key", protected(h.RepositoriesKey))
+	mux.Handle("POST /repositories/{id}/clone", protected(h.RepositoriesClone))
+	mux.Handle("POST /repositories/{id}/pull", protected(h.RepositoriesPull))
+	mux.Handle("POST /repositories/{id}/checkout", protected(h.RepositoriesCheckout))
+	mux.Handle("POST /repositories/{id}/delete", protected(h.RepositoriesDelete))
 
 	addr := ":" + cfg.Port
 	log.Printf("Aura %s listening on http://localhost%s", version, addr)
