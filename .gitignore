@@ -1,0 +1,7 @@
+.env
+/aura
+/aura.exe
+/tmp
+/dist
+*.db
+backups.log

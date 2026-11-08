@@ -1,0 +1,57 @@
+{{template "header" .}}
+    <main class="container py-5">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <h1 class="h3 mb-0">Backups</h1>
+            <a href="/backups/create" class="btn btn-primary">New backup</a>
+        </div>
+
+        {{with .Data.Flash}}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{.}}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {{end}}
+
+        <div class="card shadow-sm border-0">
+            {{if .Data.Backups}}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Path</th>
+                            <th>Frequency</th>
+                            <th>Source</th>
+                            <th>Last run on</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .Data.Backups}}
+                        <tr>
+                            <td class="fw-medium"><a href="/backups/{{.ID}}" class="link-body-emphasis text-decoration-none">{{.Name}}</a></td>
+                            <td><code>{{.Path}}</code></td>
+                            <td>{{.FrequencyLabel}}</td>
+                            <td>{{.SourceLabel}}</td>
+                            <td class="text-body-secondary text-nowrap"{{if not .LastRunAt.IsZero}} title="{{.LastRunAt.Local.Format "2006-01-02 15:04"}}"{{end}}>{{.LastRunLabel}}</td>
+                            <td class="text-end text-nowrap">
+                                <a href="/backups/{{.ID}}" class="btn btn-outline-primary btn-sm">View</a>
+                                <a href="/backups/{{.ID}}/edit" class="btn btn-outline-secondary btn-sm">Edit</a>
+                                <form method="post" action="/backups/{{.ID}}/delete" class="d-inline" onsubmit="return confirm('Delete this backup task?');">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
+            {{else}}
+            <div class="card-body text-center py-5">
+                <p class="text-body-secondary mb-3">No backup tasks yet.</p>
+                <a href="/backups/create" class="btn btn-primary">Create your first backup</a>
+            </div>
+            {{end}}
+        </div>
+    </main>
+{{template "footer" .}}

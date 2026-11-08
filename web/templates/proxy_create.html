@@ -1,0 +1,84 @@
+{{template "header" .}}
+    <main class="container py-5" style="max-width: 640px;">
+        <a href="/proxy" class="link-secondary text-decoration-none small">&larr; Back to reverse proxy</a>
+        <h1 class="h3 mt-2 mb-4">{{.Title}}</h1>
+
+        {{with .Data}}
+        {{with .TestOutput}}
+        <div class="alert alert-danger" role="alert">
+            <div class="fw-medium mb-2">The site could not be created.</div>
+            <pre class="mb-0 small text-wrap">{{.}}</pre>
+        </div>
+        {{end}}
+
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <form method="post" action="/proxy" novalidate>
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control{{if index .Errors "Name"}} is-invalid{{end}}" id="name" name="name" autocomplete="off" value="{{.Input.Name}}" placeholder="example.com" required autofocus>
+                        {{with index .Errors "Name"}}<div class="invalid-feedback">{{.}}</div>{{end}}
+                        <div class="form-text">File name in <code>/etc/nginx/sites-available</code>.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="domains" class="form-label">Domains <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control{{if index .Errors "Domains"}} is-invalid{{end}}" id="domains" name="domains" autocomplete="off" value="{{.Input.Domains}}" placeholder="example.com www.example.com" required>
+                        {{with index .Errors "Domains"}}<div class="invalid-feedback">{{.}}</div>{{end}}
+                        <div class="form-text">Separate multiple domains with spaces or commas.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="upstream" class="form-label">Upstream URL <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control{{if index .Errors "Upstream"}} is-invalid{{end}}" id="upstream" name="upstream" autocomplete="off" value="{{.Input.Upstream}}" placeholder="http://127.0.0.1:3000" required>
+                        {{with index .Errors "Upstream"}}<div class="invalid-feedback">{{.}}</div>{{end}}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="port" class="form-label">Listen port <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control{{if index .Errors "Port"}} is-invalid{{end}}" id="port" name="port" autocomplete="off" value="{{if .Input.Port}}{{.Input.Port}}{{end}}" min="1" max="65535" step="1" required>
+                        {{with index .Errors "Port"}}<div class="invalid-feedback">{{.}}</div>{{end}}
+                    </div>
+
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" role="switch" id="websocket" name="websocket" value="1"{{if .Input.WebSocket}} checked{{end}} autocomplete="off">
+                        <label class="form-check-label" for="websocket">WebSocket support</label>
+                    </div>
+
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input{{if index .Errors "SSL"}} is-invalid{{end}}" type="checkbox" role="switch" id="ssl" name="ssl" value="1"{{if .Input.SSL}} checked{{end}} autocomplete="off">
+                        <label class="form-check-label" for="ssl">Enable SSL (Let's Encrypt)</label>
+                        {{with index .Errors "SSL"}}<div class="invalid-feedback">{{.}}</div>{{end}}
+                    </div>
+
+                    <div id="ssl-fields" class="mb-4{{if not .Input.SSL}} d-none{{end}}">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control{{if index .Errors "Email"}} is-invalid{{end}}" id="email" name="email" autocomplete="off" value="{{.Input.Email}}" placeholder="admin@example.com">
+                        {{with index .Errors "Email"}}<div class="invalid-feedback">{{.}}</div>{{end}}
+                        <div class="form-text">Used by Let's Encrypt for expiry notices. The domains must already point to this server.</div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">Create site</button>
+                        <a href="/proxy" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {{end}}
+    </main>
+{{template "footer" .}}
+    <script>
+        $(function () {
+            $('#ssl').on('change', function () {
+                $('#ssl-fields').toggleClass('d-none', !this.checked);
+                if (this.checked) {
+                    $('#email').trigger('focus');
+                }
+            });
+
+            $('form').on('submit', function () {
+                $(this).find('button[type="submit"]').prop('disabled', true).text('Creating...');
+            });
+        });
+    </script>

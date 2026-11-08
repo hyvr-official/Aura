@@ -1,0 +1,96 @@
+package main
+
+import (
+	"log"
+	"net/http"
+	"os"
+
+	"aura/internal/auth"
+	"aura/internal/backups"
+	"aura/internal/config"
+	"aura/internal/database"
+	"aura/internal/files"
+	"aura/internal/handlers"
+	"aura/internal/startup"
+	"aura/web"
+)
+
+var version = "dev"
+
+func main() {
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatalf("config: %v", err)
+	}
+
+	db, err := database.Open(cfg.DBPath)
+	if err != nil {
+		log.Fatalf("database: %v", err)
+	}
+	defer db.Close()
+
+	store := backups.NewStore(db)
+	runner := backups.NewRunner(store)
+
+	if len(os.Args) > 1 && os.Args[1] == "backup" {
+		runner.RunAll(backups.TriggerCron)
+		return
+	}
+
+	startup.Run()
+
+	sessions := auth.NewSessionStore(db)
+	passwords := auth.NewPasswordStore(db)
+	if !passwords.IsSet() {
+		log.Printf("No password set, open /setup to create one")
+	}
+	h := handlers.New(cfg, sessions, passwords, web.Templates(), store, runner, files.New(cfg.FilesRoot))
+	protected := func(fn http.HandlerFunc) http.Handler { return auth.RequireAuth(sessions, fn) }
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /login", h.LoginForm)
+	mux.HandleFunc("POST /login", h.Login)
+	mux.HandleFunc("POST /logout", h.Logout)
+	mux.HandleFunc("GET /setup", h.SetupForm)
+	mux.HandleFunc("POST /setup", h.Setup)
+	mux.Handle("GET /{$}", protected(h.Dashboard))
+	mux.Handle("GET /dashboard/stats", protected(h.DashboardStats))
+
+	mux.Handle("GET /backups", protected(h.BackupsIndex))
+	mux.Handle("GET /backups/create", protected(h.BackupsCreate))
+	mux.Handle("POST /backups", protected(h.BackupsStore))
+	mux.Handle("GET /backups/{id}", protected(h.BackupsShow))
+	mux.Handle("POST /backups/{id}/run", protected(h.BackupsRun))
+	mux.Handle("GET /backups/{id}/edit", protected(h.BackupsEdit))
+	mux.Handle("POST /backups/{id}", protected(h.BackupsUpdate))
+	mux.Handle("POST /backups/{id}/delete", protected(h.BackupsDelete))
+
+	mux.Handle("GET /containers", protected(h.ContainersIndex))
+	mux.Handle("GET /containers/list", protected(h.ContainersList))
+	mux.Handle("POST /containers/{id}/start", protected(h.ContainersStart))
+	mux.Handle("POST /containers/{id}/stop", protected(h.ContainersStop))
+	mux.Handle("GET /containers/{id}/logs", protected(h.ContainersLogs))
+	mux.Handle("GET /containers/{id}/shell", protected(h.ContainersShell))
+
+	mux.Handle("GET /files", protected(h.FilesIndex))
+	mux.Handle("GET /files/content", protected(h.FilesContent))
+	mux.Handle("GET /files/download", protected(h.FilesDownload))
+	mux.Handle("POST /files/create", protected(h.FilesCreate))
+	mux.Handle("POST /files/rename", protected(h.FilesRename))
+	mux.Handle("POST /files/delete", protected(h.FilesDelete))
+	mux.Handle("POST /files/save", protected(h.FilesSave))
+
+	mux.Handle("GET /proxy", protected(h.ProxyIndex))
+	mux.Handle("GET /proxy/create", protected(h.ProxyCreate))
+	mux.Handle("POST /proxy", protected(h.ProxyStore))
+	mux.Handle("GET /proxy/{name}/edit", protected(h.ProxyEdit))
+	mux.Handle("POST /proxy/{name}", protected(h.ProxyUpdate))
+	mux.Handle("POST /proxy/{name}/enable", protected(h.ProxyEnable))
+	mux.Handle("POST /proxy/{name}/disable", protected(h.ProxyDisable))
+	mux.Handle("POST /proxy/{name}/delete", protected(h.ProxyDelete))
+	mux.Handle("POST /proxy/{name}/ssl", protected(h.ProxySSL))
+
+	addr := ":" + cfg.Port
+	log.Printf("Aura %s listening on http://localhost%s", version, addr)
+	log.Fatal(http.ListenAndServe(addr, mux))
+}

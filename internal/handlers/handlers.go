@@ -1,0 +1,40 @@
+package handlers
+
+import (
+	"html/template"
+	"log"
+	"net/http"
+
+	"aura/internal/auth"
+	"aura/internal/backups"
+	"aura/internal/config"
+	"aura/internal/files"
+)
+
+type Handlers struct {
+	cfg       *config.Config
+	sessions  *auth.SessionStore
+	passwords *auth.PasswordStore
+	templates *template.Template
+	backups   *backups.Store
+	runner    *backups.Runner
+	files     *files.Manager
+}
+
+func New(cfg *config.Config, sessions *auth.SessionStore, passwords *auth.PasswordStore, templates *template.Template, backups *backups.Store, runner *backups.Runner, files *files.Manager) *Handlers {
+	return &Handlers{cfg: cfg, sessions: sessions, passwords: passwords, templates: templates, backups: backups, runner: runner, files: files}
+}
+
+func (h *Handlers) render(w http.ResponseWriter, status int, name string, data any) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(status)
+	if err := h.templates.ExecuteTemplate(w, name, data); err != nil {
+		log.Printf("render %s: %v", name, err)
+	}
+}
+
+type page struct {
+	Title  string
+	Active string
+	Data   any
+}

@@ -1,0 +1,166 @@
+{{template "header" .}}
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css" rel="stylesheet">
+    <style>
+        .pre-run-editor { border: 1px solid var(--bs-border-color); border-radius: var(--bs-border-radius); overflow: hidden; }
+        .pre-run-editor.is-invalid { border-color: var(--bs-form-invalid-border-color); }
+        .pre-run-editor .CodeMirror { height: 220px; font-size: .875rem; }
+    </style>
+    <main class="container py-5" style="max-width: 640px;">
+        <a href="/backups" class="link-secondary text-decoration-none small">&larr; Back to backups</a>
+        <h1 class="h3 mt-2 mb-4">{{.Title}}</h1>
+
+        {{with .Data}}
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <form method="post" action="{{if .Backup.ID}}/backups/{{.Backup.ID}}{{else}}/backups{{end}}" novalidate>
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control{{if index .Errors "Name"}} is-invalid{{end}}" id="name" name="name" autocomplete="off" value="{{.Backup.Name}}" required autofocus>
+                        {{with index .Errors "Name"}}<div class="invalid-feedback">{{.}}</div>{{end}}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="path" class="form-label">Path <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control{{if index .Errors "Path"}} is-invalid{{end}}" id="path" name="path" autocomplete="off" value="{{.Backup.Path}}" placeholder="/var/www/html" required>
+                        {{with index .Errors "Path"}}<div class="invalid-feedback">{{.}}</div>{{end}}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="frequency" class="form-label">Frequency <span class="text-danger">*</span></label>
+                        <select class="form-select{{if index .Errors "Frequency"}} is-invalid{{end}}" id="frequency" name="frequency" autocomplete="off" required>
+                            <option value="">Select frequency</option>
+                            {{range .Frequencies}}
+                            <option value="{{.Value}}"{{if eq .Value $.Data.Backup.Frequency}} selected{{end}}>{{.Label}}</option>
+                            {{end}}
+                        </select>
+                        {{with index .Errors "Frequency"}}<div class="invalid-feedback">{{.}}</div>{{end}}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="source" class="form-label">Source <span class="text-danger">*</span></label>
+                        <select class="form-select{{if index .Errors "Source"}} is-invalid{{end}}" id="source" name="source" autocomplete="off" required>
+                            <option value="">Select source</option>
+                            {{range .Sources}}
+                            <option value="{{.Value}}"{{if eq .Value $.Data.Backup.Source}} selected{{end}}>{{.Label}}</option>
+                            {{end}}
+                        </select>
+                        {{with index .Errors "Source"}}<div class="invalid-feedback">{{.}}</div>{{end}}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="source_folder" class="form-label">Source folder</label>
+                        <input type="text" class="form-control" id="source_folder" name="source_folder" autocomplete="off" value="{{.Backup.SourceFolder}}" placeholder="backups/server-1">
+                    </div>
+
+                    <div id="local-fields" class="mb-3{{if not .Backup.IsLocal}} d-none{{end}}">
+                        <label for="local_path" class="form-label">Local path <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control{{if index .Errors "LocalPath"}} is-invalid{{end}}" id="local_path" name="local_path" autocomplete="off" value="{{.Backup.LocalPath}}" placeholder="/mnt/backups">
+                        {{with index .Errors "LocalPath"}}<div class="invalid-feedback">{{.}}</div>{{end}}
+                        <div class="form-text">The archive is moved to this folder, inside the source folder if one is given.</div>
+                    </div>
+
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" role="switch" id="limit_enabled" name="limit_enabled" value="1"{{if .Backup.LimitEnabled}} checked{{end}} autocomplete="off">
+                        <label class="form-check-label" for="limit_enabled">Limit backups count</label>
+                    </div>
+
+                    <div id="limit-fields" class="mb-4{{if not .Backup.LimitEnabled}} d-none{{end}}">
+                        <label for="limit_count" class="form-label">Limit count <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control{{if index .Errors "LimitCount"}} is-invalid{{end}}" id="limit_count" name="limit_count" autocomplete="off" value="{{if .Backup.LimitCount}}{{.Backup.LimitCount}}{{end}}" min="1" step="1">
+                        {{with index .Errors "LimitCount"}}<div class="invalid-feedback">{{.}}</div>{{end}}
+                        <div class="form-text">Oldest backups of this task in the source folder are deleted after each run, keeping only this many.</div>
+                    </div>
+
+                    <div id="s3-fields" class="{{if not .Backup.IsAWSS3}}d-none{{end}}">
+                        <div class="mb-3">
+                            <label for="s3_access_key" class="form-label">AWS access key <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control{{if index .Errors "S3AccessKey"}} is-invalid{{end}}" id="s3_access_key" name="s3_access_key" autocomplete="off" value="{{.Backup.S3AccessKey}}" required>
+                            {{with index .Errors "S3AccessKey"}}<div class="invalid-feedback">{{.}}</div>{{end}}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="s3_secret" class="form-label">AWS secret <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control{{if index .Errors "S3Secret"}} is-invalid{{end}}" id="s3_secret" name="s3_secret" autocomplete="off" value="{{.Backup.S3Secret}}" required>
+                            {{with index .Errors "S3Secret"}}<div class="invalid-feedback">{{.}}</div>{{end}}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="s3_region" class="form-label">S3 region <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control{{if index .Errors "S3Region"}} is-invalid{{end}}" id="s3_region" name="s3_region" autocomplete="off" value="{{.Backup.S3Region}}" placeholder="us-east-1" required>
+                            {{with index .Errors "S3Region"}}<div class="invalid-feedback">{{.}}</div>{{end}}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="s3_bucket" class="form-label">S3 bucket name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control{{if index .Errors "S3Bucket"}} is-invalid{{end}}" id="s3_bucket" name="s3_bucket" autocomplete="off" value="{{.Backup.S3Bucket}}" required>
+                            {{with index .Errors "S3Bucket"}}<div class="invalid-feedback">{{.}}</div>{{end}}
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="s3_storage_class" class="form-label">S3 storage class <span class="text-danger">*</span></label>
+                            <select class="form-select{{if index .Errors "S3StorageClass"}} is-invalid{{end}}" id="s3_storage_class" name="s3_storage_class" autocomplete="off" required>
+                                <option value="">Select storage class</option>
+                                {{range .StorageClasses}}
+                                <option value="{{.Value}}"{{if eq .Value $.Data.Backup.S3StorageClass}} selected{{end}}>{{.Label}}</option>
+                                {{end}}
+                            </select>
+                            {{with index .Errors "S3StorageClass"}}<div class="invalid-feedback">{{.}}</div>{{end}}
+                        </div>
+                    </div>
+
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" role="switch" id="pre_run_enabled" name="pre_run_enabled" value="1"{{if .Backup.PreRunEnabled}} checked{{end}} autocomplete="off">
+                        <label class="form-check-label" for="pre_run_enabled">Pre run script</label>
+                    </div>
+
+                    <div id="pre-run-fields" class="mb-4{{if not .Backup.PreRunEnabled}} d-none{{end}}">
+                        <div class="pre-run-editor{{if index .Errors "PreRunScript"}} is-invalid{{end}}">
+                            <textarea id="pre_run_script" name="pre_run_script">{{.Backup.PreRunScript}}</textarea>
+                        </div>
+                        {{with index .Errors "PreRunScript"}}<div class="invalid-feedback d-block">{{.}}</div>{{end}}
+                        <div class="form-text">Bash commands run inside the backup path before the archive is created. The backup fails if any command fails.</div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">{{if .Backup.ID}}Save changes{{else}}Create backup{{end}}</button>
+                        <a href="/backups" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {{end}}
+    </main>
+{{template "footer" .}}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/shell/shell.min.js"></script>
+    <script>
+        $(function () {
+            $('#source').on('change', function () {
+                $('#s3-fields').toggleClass('d-none', $(this).val() !== 'aws_s3');
+                $('#local-fields').toggleClass('d-none', $(this).val() !== 'local');
+            });
+
+            $('#limit_enabled').on('change', function () {
+                $('#limit-fields').toggleClass('d-none', !this.checked);
+                if (this.checked) {
+                    $('#limit_count').trigger('focus');
+                }
+            });
+
+            var editor = CodeMirror.fromTextArea(document.getElementById('pre_run_script'), {
+                mode: 'shell',
+                theme: 'material-darker',
+                lineNumbers: true,
+                indentUnit: 4
+            });
+
+            $('#pre_run_enabled').on('change', function () {
+                $('#pre-run-fields').toggleClass('d-none', !this.checked);
+                if (this.checked) {
+                    editor.refresh();
+                    editor.focus();
+                }
+            });
+        });
+    </script>

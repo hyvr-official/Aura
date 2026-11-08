@@ -1,0 +1,56 @@
+{{define "containers_list"}}
+            {{if .DockerMissing}}
+            <div class="card-body text-center py-5">
+                <p class="text-warning mb-0">Docker is not installed on this server.</p>
+            </div>
+            {{else if .Containers}}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Image</th>
+                            <th>State</th>
+                            <th>Status</th>
+                            <th>CPU</th>
+                            <th>RAM</th>
+                            <th>Ports</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .Containers}}
+                        <tr>
+                            <td class="fw-medium" title="{{.ID}}">{{.Name}}</td>
+                            <td><code>{{.Image}}</code></td>
+                            <td><span class="badge text-bg-{{.StateClass}}">{{.State}}</span></td>
+                            <td class="text-body-secondary text-nowrap">{{.Status}}</td>
+                            <td class="text-nowrap">{{with .Stats}}{{.CPUPerc}}{{else}}<span class="text-body-secondary">—</span>{{end}}</td>
+                            <td class="text-nowrap">{{with .Stats}}{{.MemUsage}}<div class="small text-body-secondary">{{.MemPerc}}</div>{{else}}<span class="text-body-secondary">—</span>{{end}}</td>
+                            <td class="text-body-secondary small">{{.Ports}}</td>
+                            <td class="text-end text-nowrap">
+                                {{if .Running}}
+                                <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#shell-modal" data-container-id="{{.ID}}" data-container-name="{{.Name}}">Shell</button>
+                                {{end}}
+                                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#logs-modal" data-container-id="{{.ID}}" data-container-name="{{.Name}}">Logs</button>
+                                {{if .Running}}
+                                <form method="post" action="/containers/{{.ID}}/stop" class="d-inline" onsubmit="return confirm('Stop this container?');">
+                                    <button type="submit" class="btn btn-outline-warning btn-sm">Stop</button>
+                                </form>
+                                {{else}}
+                                <form method="post" action="/containers/{{.ID}}/start" class="d-inline">
+                                    <button type="submit" class="btn btn-outline-success btn-sm">Start</button>
+                                </form>
+                                {{end}}
+                            </td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
+            {{else}}
+            <div class="card-body text-center py-5">
+                <p class="text-body-secondary mb-0">No containers found.</p>
+            </div>
+            {{end}}
+{{end}}

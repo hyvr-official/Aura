@@ -1,0 +1,217 @@
+{{template "header" .}}
+    <link href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.min.css" rel="stylesheet">
+    <style>
+        .xterm-box { height: 65vh; background: #000; padding: .5rem; border: 1px solid var(--bs-border-color); border-radius: var(--bs-border-radius); }
+    </style>
+    <main class="container py-5">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <h1 class="h3 mb-0">Containers</h1>
+            <span class="badge text-bg-secondary" id="containers-live">Live</span>
+        </div>
+
+        {{with .Data.Flash}}
+        <div class="alert alert-{{$.Data.FlashType}} alert-dismissible fade show" role="alert">
+            {{.}}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {{end}}
+
+        <div class="card shadow-sm border-0" id="containers-list">
+{{template "containers_list" .Data.List}}
+        </div>
+
+        <div class="modal fade" id="logs-modal" tabindex="-1" aria-labelledby="logs-modal-label" aria-hidden="true">
+            <div class="modal-dialog modal-xl modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title h5" id="logs-modal-label">Logs <span class="text-body-secondary small ms-2" id="logs-modal-name"></span><span class="badge text-bg-success ms-2 d-none" id="logs-live">Live</span></h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="xterm-box" id="logs-terminal"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="shell-modal" tabindex="-1" aria-labelledby="shell-modal-label" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+            <div class="modal-dialog modal-xl modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title h5" id="shell-modal-label">Shell <span class="text-body-secondary small ms-2" id="shell-modal-name"></span></h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="xterm-box" id="shell-terminal"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+{{template "footer" .}}
+    <script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.min.js"></script>
+    <script>
+        $(function () {
+            function socketUrl(path) {
+                var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+                return protocol + '://' + location.host + path;
+            }
+
+            function bindSession(options) {
+                var session = { id: null, term: null, fit: null, socket: null };
+                var modal = $(options.modal);
+
+                function send(message) {
+                    if (session.socket && session.socket.readyState === WebSocket.OPEN) {
+                        session.socket.send(JSON.stringify(message));
+                    }
+                }
+
+                function sendResize() {
+                    if (options.interactive && session.term) {
+                        send({ type: 'resize', cols: session.term.cols, rows: session.term.rows });
+                    }
+                }
+
+                modal.on('show.bs.modal', function (event) {
+                    var button = $(event.relatedTarget);
+                    session.id = button.data('container-id');
+                    $(options.name).text(button.data('container-name'));
+                });
+
+                modal.on('shown.bs.modal', function () {
+                    session.term = new Terminal({
+                        cursorBlink: options.interactive,
+                        disableStdin: !options.interactive,
+                        convertEol: !options.interactive,
+                        scrollback: 10000,
+                        fontSize: 14,
+                        fontFamily: 'Menlo, Consolas, "DejaVu Sans Mono", monospace',
+                        theme: { background: '#000000', foreground: '#e5e5e5' }
+                    });
+                    session.fit = new FitAddon.FitAddon();
+                    session.term.loadAddon(session.fit);
+                    session.term.open(document.getElementById(options.terminal));
+                    session.fit.fit();
+                    if (options.interactive) {
+                        session.term.focus();
+                    }
+
+                    session.socket = new WebSocket(socketUrl('/containers/' + session.id + '/' + options.endpoint));
+                    session.socket.binaryType = 'arraybuffer';
+
+                    session.socket.onopen = function () {
+                        if (options.live) {
+                            $(options.live).removeClass('d-none');
+                        }
+                        sendResize();
+                    };
+                    session.socket.onmessage = function (event) {
+                        if (typeof event.data === 'string') {
+                            session.term.write(event.data);
+                        } else {
+                            session.term.write(new Uint8Array(event.data));
+                        }
+                    };
+                    session.socket.onclose = function () {
+                        if (options.live) {
+                            $(options.live).addClass('d-none');
+                        }
+                        if (session.term) {
+                            session.term.write('\r\n\x1b[90m[' + options.closedText + ']\x1b[0m\r\n');
+                        }
+                    };
+
+                    if (options.interactive) {
+                        session.term.onData(function (data) {
+                            send({ type: 'input', data: data });
+                        });
+                        session.term.onResize(sendResize);
+                    }
+                });
+
+                modal.on('hidden.bs.modal', function () {
+                    if (session.socket) {
+                        session.socket.onclose = null;
+                        session.socket.close();
+                        session.socket = null;
+                    }
+                    if (session.term) {
+                        session.term.dispose();
+                        session.term = null;
+                    }
+                    session.fit = null;
+                    if (options.live) {
+                        $(options.live).addClass('d-none');
+                    }
+                    $('#' + options.terminal).empty();
+                });
+
+                $(window).on('resize', function () {
+                    if (session.term && session.fit) {
+                        session.fit.fit();
+                    }
+                });
+            }
+
+            var listInterval = 3000;
+
+            function setListLive(ok) {
+                $('#containers-live')
+                    .toggleClass('text-bg-success', ok)
+                    .toggleClass('text-bg-danger', !ok)
+                    .removeClass('text-bg-secondary')
+                    .text(ok ? 'Live' : 'Offline');
+            }
+
+            function refreshList() {
+                if (document.hidden) {
+                    setTimeout(refreshList, listInterval);
+                    return;
+                }
+                $.ajax({ url: '/containers/list', cache: false })
+                    .done(function (html, status, xhr) {
+                        if (!xhr.getResponseHeader('X-Containers-List')) {
+                            location.reload();
+                            return;
+                        }
+                        $('#containers-list').html(html);
+                        setListLive(true);
+                    })
+                    .fail(function () {
+                        setListLive(false);
+                    })
+                    .always(function () {
+                        setTimeout(refreshList, listInterval);
+                    });
+            }
+
+            setTimeout(refreshList, listInterval);
+
+            bindSession({
+                modal: '#logs-modal',
+                name: '#logs-modal-name',
+                live: '#logs-live',
+                terminal: 'logs-terminal',
+                endpoint: 'logs',
+                interactive: false,
+                closedText: 'log stream ended'
+            });
+
+            bindSession({
+                modal: '#shell-modal',
+                name: '#shell-modal-name',
+                terminal: 'shell-terminal',
+                endpoint: 'shell',
+                interactive: true,
+                closedText: 'session closed'
+            });
+        });
+    </script>

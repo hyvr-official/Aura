@@ -1,0 +1,75 @@
+{{template "header" .}}
+    <main class="container py-5">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <h1 class="h3 mb-0">Reverse Proxy</h1>
+            {{if not .Data.NginxMissing}}
+            <a href="/proxy/create" class="btn btn-primary">New site</a>
+            {{end}}
+        </div>
+
+        {{with .Data.Flash}}
+        <div class="alert alert-{{$.Data.FlashType}} alert-dismissible fade show" role="alert">
+            {{.}}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {{end}}
+
+        {{if .Data.NginxMissing}}
+        <div class="alert alert-warning" role="alert">
+            nginx is not installed on this server. Restart Aura to install it automatically, or install it with <code>apt-get install nginx</code>.
+        </div>
+        {{else}}
+        <div class="card shadow-sm border-0">
+            {{if .Data.Sites}}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Domains</th>
+                            <th>Upstream</th>
+                            <th>SSL</th>
+                            <th>Status</th>
+                            <th>Modified</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .Data.Sites}}
+                        <tr>
+                            <td class="fw-medium"><a href="/proxy/{{.Name}}/edit" class="link-body-emphasis text-decoration-none">{{.Name}}</a></td>
+                            <td>{{.DomainsLabel}}</td>
+                            <td>{{if .Upstream}}<code>{{.Upstream}}</code>{{else}}<span class="text-body-secondary">—</span>{{end}}</td>
+                            <td>{{if .SSL}}<span class="badge text-bg-success">SSL</span>{{else}}<span class="badge text-bg-secondary">None</span>{{end}}</td>
+                            <td>{{if .Enabled}}<span class="badge text-bg-success">Enabled</span>{{else}}<span class="badge text-bg-secondary">Disabled</span>{{end}}</td>
+                            <td class="text-body-secondary text-nowrap">{{.ModifiedLabel}}</td>
+                            <td class="text-end text-nowrap">
+                                <a href="/proxy/{{.Name}}/edit" class="btn btn-outline-secondary btn-sm">Edit</a>
+                                {{if .Enabled}}
+                                <form method="post" action="/proxy/{{.Name}}/disable" class="d-inline" onsubmit="return confirm('Disable this site?');">
+                                    <button type="submit" class="btn btn-outline-warning btn-sm">Disable</button>
+                                </form>
+                                {{else}}
+                                <form method="post" action="/proxy/{{.Name}}/enable" class="d-inline">
+                                    <button type="submit" class="btn btn-outline-success btn-sm">Enable</button>
+                                </form>
+                                {{end}}
+                                <form method="post" action="/proxy/{{.Name}}/delete" class="d-inline" onsubmit="return confirm('Delete this site? Its config file will be removed.');">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
+            {{else}}
+            <div class="card-body text-center py-5">
+                <p class="text-body-secondary mb-3">No nginx sites yet.</p>
+                <a href="/proxy/create" class="btn btn-primary">Create your first site</a>
+            </div>
+            {{end}}
+        </div>
+        {{end}}
+    </main>
+{{template "footer" .}}

@@ -1,0 +1,162 @@
+{{template "header" .}}
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css" rel="stylesheet">
+    <style>
+        .run-log-viewer { border: 1px solid var(--bs-border-color); border-radius: var(--bs-border-radius); overflow: hidden; }
+        .run-log-viewer .CodeMirror { height: 60vh; font-size: .875rem; }
+    </style>
+    <main class="container py-5">
+        <a href="/backups" class="link-secondary text-decoration-none small">&larr; Back to backups</a>
+
+        {{with .Data}}
+        <div class="d-flex align-items-center justify-content-between mt-2 mb-4">
+            <h1 class="h3 mb-0">{{.Backup.Name}}</h1>
+            <div class="d-flex gap-2">
+                <a href="/backups/{{.Backup.ID}}/edit" class="btn btn-outline-secondary">Edit</a>
+                <form method="post" action="/backups/{{.Backup.ID}}/run">
+                    {{if .Running}}
+                    <button type="submit" class="btn btn-primary" disabled>
+                        <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+                        Running…
+                    </button>
+                    {{else}}
+                    <button type="submit" class="btn btn-primary">Run now</button>
+                    {{end}}
+                </form>
+            </div>
+        </div>
+
+        {{with .Flash}}
+        <div class="alert alert-{{$.Data.FlashType}} alert-dismissible fade show" role="alert">
+            {{.}}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {{end}}
+
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body p-4">
+                <dl class="row mb-0">
+                    <dt class="col-sm-3">Path</dt>
+                    <dd class="col-sm-9"><code>{{.Backup.Path}}</code></dd>
+                    <dt class="col-sm-3">Frequency</dt>
+                    <dd class="col-sm-9">{{.Backup.FrequencyLabel}}</dd>
+                    <dt class="col-sm-3">Source</dt>
+                    <dd class="col-sm-9">{{.Backup.SourceLabel}}</dd>
+                    <dt class="col-sm-3">Source folder</dt>
+                    <dd class="col-sm-9">{{with .Backup.SourceFolder}}<code>{{.}}</code>{{else}}<span class="text-body-secondary">—</span>{{end}}</dd>
+                    <dt class="col-sm-3">Limit backups count</dt>
+                    <dd class="col-sm-9">{{if .Backup.LimitEnabled}}Keep latest {{.Backup.LimitCount}}{{else}}<span class="text-body-secondary">Disabled</span>{{end}}</dd>
+                    {{if .Backup.IsAWSS3}}
+                    <dt class="col-sm-3">S3 region</dt>
+                    <dd class="col-sm-9">{{.Backup.S3Region}}</dd>
+                    <dt class="col-sm-3">S3 bucket</dt>
+                    <dd class="col-sm-9"><code>{{.Backup.S3Bucket}}</code></dd>
+                    <dt class="col-sm-3">S3 storage class</dt>
+                    <dd class="col-sm-9">{{.Backup.StorageClassLabel}}</dd>
+                    {{end}}
+                    {{if .Backup.IsLocal}}
+                    <dt class="col-sm-3">Local path</dt>
+                    <dd class="col-sm-9"><code>{{.Backup.LocalPath}}</code></dd>
+                    {{end}}
+                    <dt class="col-sm-3">Pre run script</dt>
+                    <dd class="col-sm-9">{{if .Backup.PreRunEnabled}}<pre class="small bg-body-tertiary p-2 mb-0 rounded">{{.Backup.PreRunScript}}</pre>{{else}}<span class="text-body-secondary">Disabled</span>{{end}}</dd>
+                    <dt class="col-sm-3">Created</dt>
+                    <dd class="col-sm-9 mb-0 text-body-secondary">{{.Backup.CreatedAt.Local.Format "2006-01-02 15:04"}}</dd>
+                </dl>
+            </div>
+        </div>
+
+        <h2 class="h5 mb-3">History</h2>
+        <div class="card shadow-sm border-0">
+            {{if .Runs}}
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Started</th>
+                            <th>Trigger</th>
+                            <th>Status</th>
+                            <th>Duration</th>
+                            <th>Size</th>
+                            <th>File</th>
+                            <th class="text-end">Logs</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .Runs}}
+                        <tr>
+                            <td class="text-nowrap">{{.StartedAt.Local.Format "2006-01-02 15:04:05"}}</td>
+                            <td class="text-capitalize">{{.Trigger}}</td>
+                            <td><span class="badge {{.StatusBadge}} text-capitalize">{{.Status}}</span></td>
+                            <td>{{.Duration}}</td>
+                            <td>{{.SizeLabel}}</td>
+                            <td>{{if .FileName}}<code title="{{.FilePath}}">{{.FileName}}</code>{{else}}<span class="text-body-secondary">—</span>{{end}}</td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-outline-secondary btn-sm text-nowrap" data-bs-toggle="modal" data-bs-target="#run-log-modal" data-log-target="#run-log-{{.ID}}" data-log-title="{{.StartedAt.Local.Format "2006-01-02 15:04:05"}}">View Logs</button>
+                                <textarea class="d-none" id="run-log-{{.ID}}" autocomplete="off">{{if .Log}}{{.Log}}{{else}}No log yet.{{end}}</textarea>
+                            </td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
+            {{else}}
+            <div class="card-body text-center py-5">
+                <p class="text-body-secondary mb-0">This task hasn't run yet.</p>
+            </div>
+            {{end}}
+        </div>
+        {{end}}
+
+        <div class="modal fade" id="run-log-modal" tabindex="-1" aria-labelledby="run-log-modal-label" aria-hidden="true">
+            <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title h5" id="run-log-modal-label">Run log <span class="text-body-secondary small ms-2" id="run-log-modal-time"></span></h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="run-log-viewer">
+                            <textarea id="run-log-editor" autocomplete="off"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+{{template "footer" .}}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script>
+        $(function () {
+            var viewer = CodeMirror.fromTextArea(document.getElementById('run-log-editor'), {
+                mode: 'text/plain',
+                theme: 'material-darker',
+                lineNumbers: true,
+                lineWrapping: true,
+                readOnly: true
+            });
+
+            $('#run-log-modal').on('show.bs.modal', function (event) {
+                var button = $(event.relatedTarget);
+                viewer.setValue($(button.data('log-target')).val());
+                $('#run-log-modal-time').text(button.data('log-title'));
+            });
+
+            $('#run-log-modal').on('shown.bs.modal', function () {
+                viewer.refresh();
+                viewer.scrollIntoView({ line: viewer.lastLine(), ch: 0 });
+            });
+        });
+    </script>
+{{if .Data.Running}}
+    <script>
+        setInterval(function () {
+            if (!$('#run-log-modal').hasClass('show')) {
+                location.reload();
+            }
+        }, 5000);
+    </script>
+{{end}}

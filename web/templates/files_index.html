@@ -1,0 +1,402 @@
+{{template "header" .}}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/theme/material-darker.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/addon/dialog/dialog.min.css" rel="stylesheet">
+    <style>
+        .editor-box { position: relative; }
+        .editor-box .CodeMirror { height: 70vh; font-size: 14px; font-family: Menlo, Consolas, "DejaVu Sans Mono", monospace; border: 1px solid var(--bs-border-color); border-radius: var(--bs-border-radius); }
+        .editor-box .CodeMirror-dialog { background: var(--bs-body-bg); color: var(--bs-body-color); }
+        .editor-box .CodeMirror-dialog input { color: var(--bs-body-color); }
+        .editor-loading { position: absolute; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, .55); border-radius: var(--bs-border-radius); }
+        @media (max-width: 991.98px) { .editor-box .CodeMirror { height: calc(100vh - 220px); } }
+    </style>
+    <main class="container py-5">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <h1 class="h3 mb-0">File Manager</h1>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#create-modal" data-type="file"><i class="bi bi-file-earmark-plus me-1"></i>New file</button>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#create-modal" data-type="folder"><i class="bi bi-folder-plus me-1"></i>New folder</button>
+            </div>
+        </div>
+
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb bg-body rounded px-3 py-2 shadow-sm">
+                {{range $i, $c := .Data.Crumbs}}
+                {{if eq $c.Path $.Data.Path}}
+                <li class="breadcrumb-item active" aria-current="page"><code>{{$c.Name}}</code></li>
+                {{else}}
+                <li class="breadcrumb-item"><a href="/files?path={{$c.Path}}" class="text-decoration-none"><code>{{$c.Name}}</code></a></li>
+                {{end}}
+                {{end}}
+            </ol>
+        </nav>
+
+        {{with .Data.Flash}}
+        <div class="alert alert-{{$.Data.FlashType}} alert-dismissible fade show" role="alert">
+            {{.}}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {{end}}
+
+        <div class="card shadow-sm border-0">
+            {{if or .Data.Entries .Data.Parent}}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Size</th>
+                            <th>Permissions</th>
+                            <th>Modified</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{with .Data.Parent}}
+                        <tr>
+                            <td colspan="5"><a href="/files?path={{.}}" class="link-body-emphasis text-decoration-none"><i class="bi bi-arrow-90deg-up me-2 text-body-secondary"></i>..</a></td>
+                        </tr>
+                        {{end}}
+                        {{range .Data.Entries}}
+                        <tr>
+                            <td class="fw-medium text-break">
+                                {{if .IsDir}}
+                                <a href="/files?path={{.Path}}" class="link-body-emphasis text-decoration-none"><i class="bi bi-folder-fill text-warning me-2"></i>{{.Name}}</a>
+                                {{else}}
+                                <a href="/files?path={{.Path}}" class="link-body-emphasis text-decoration-none file-open" data-path="{{.Path}}"><i class="bi bi-file-earmark-text text-body-secondary me-2"></i>{{.Name}}</a>
+                                {{end}}
+                                {{if .IsLink}}<i class="bi bi-link-45deg text-info ms-1" title="Symbolic link"></i>{{end}}
+                            </td>
+                            <td class="text-body-secondary text-nowrap">{{.SizeLabel}}</td>
+                            <td class="text-nowrap"><code>{{.Mode}}</code></td>
+                            <td class="text-body-secondary text-nowrap">{{.ModTimeLabel}}</td>
+                            <td class="text-end text-nowrap">
+                                {{if not .IsDir}}
+                                <a href="/files?path={{.Path}}" class="btn btn-outline-primary btn-sm file-open" data-path="{{.Path}}">Edit</a>
+                                <a href="/files/download?path={{.Path}}" class="btn btn-outline-info btn-sm" title="Download" download><i class="bi bi-download"></i></a>
+                                {{end}}
+                                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#rename-modal" data-path="{{.Path}}" data-name="{{.Name}}">Rename</button>
+                                <form method="post" action="/files/delete" class="d-inline file-delete-form" data-name="{{.Name}}" data-dir="{{if .IsDir}}1{{end}}">
+                                    <input type="hidden" name="path" value="{{.Path}}" autocomplete="off">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
+            {{end}}
+            {{if not .Data.Entries}}
+            <div class="card-body text-center py-5">
+                <p class="text-body-secondary mb-0">This folder is empty.</p>
+            </div>
+            {{end}}
+        </div>
+
+        <div class="modal fade" id="create-modal" tabindex="-1" aria-labelledby="create-modal-label" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <form method="post" action="/files/create" class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title h5" id="create-modal-label">New file</h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="dir" value="{{.Data.Path}}" autocomplete="off">
+                        <input type="hidden" name="type" id="create-type" value="file" autocomplete="off">
+                        <label for="create-name" class="form-label">Name</label>
+                        <input type="text" class="form-control" id="create-name" name="name" required maxlength="255" autocomplete="off">
+                        <div class="form-text">Will be created in <code>{{.Data.Path}}</code></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Create</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="modal fade" id="rename-modal" tabindex="-1" aria-labelledby="rename-modal-label" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <form method="post" action="/files/rename" class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title h5" id="rename-modal-label">Rename</h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="path" id="rename-path" autocomplete="off">
+                        <label for="rename-name" class="form-label">New name</label>
+                        <input type="text" class="form-control" id="rename-name" name="name" required maxlength="255" autocomplete="off">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Rename</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="modal fade" id="editor-modal" tabindex="-1" aria-labelledby="editor-modal-label" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+            <div class="modal-dialog modal-xl modal-fullscreen-lg-down modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="me-3 overflow-hidden">
+                            <h2 class="modal-title h5 text-break" id="editor-modal-label"></h2>
+                            <div class="small text-body-secondary text-break"><code id="editor-path"></code><span id="editor-meta"></span></div>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 ms-auto">
+                            <span class="badge text-bg-secondary" id="editor-mode">Plain text</span>
+                            <span class="badge text-bg-secondary" id="editor-status">Loading</span>
+                            <button type="button" class="btn-close ms-2" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-danger d-none" role="alert" id="editor-error"></div>
+                        <div class="editor-box">
+                            <div class="editor-loading" id="editor-loading"><div class="spinner-border text-light" role="status"><span class="visually-hidden">Loading…</span></div></div>
+                            <textarea id="editor" autocomplete="off"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer justify-content-between">
+                        <div class="small text-body-secondary">Ctrl+S to save · Ctrl+F to search · Shift+Ctrl+F to replace</div>
+                        <div class="d-flex gap-2">
+                            <a href="#" class="btn btn-outline-info" id="editor-download" download><i class="bi bi-download me-1"></i>Download</a>
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-primary" id="editor-save" disabled><i class="bi bi-floppy me-1"></i>Save</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+{{template "footer" .}}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/meta.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/addon/mode/loadmode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/addon/mode/overlay.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/addon/mode/simple.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/addon/mode/multiplex.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/addon/selection/active-line.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/addon/edit/matchbrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/addon/dialog/dialog.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/addon/search/searchcursor.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/addon/search/search.min.js"></script>
+    <script>
+        $(function () {
+            var currentDir = {{.Data.Path}};
+            var openPath = {{.Data.Open}};
+
+            $('#create-modal').on('show.bs.modal', function (event) {
+                var type = $(event.relatedTarget).data('type') === 'folder' ? 'folder' : 'file';
+                $('#create-type').val(type);
+                $('#create-modal-label').text(type === 'folder' ? 'New folder' : 'New file');
+                $('#create-name').val('');
+            }).on('shown.bs.modal', function () {
+                $('#create-name').trigger('focus');
+            });
+
+            $('#rename-modal').on('show.bs.modal', function (event) {
+                var button = $(event.relatedTarget);
+                $('#rename-path').val(button.attr('data-path'));
+                $('#rename-name').val(button.attr('data-name'));
+            }).on('shown.bs.modal', function () {
+                var input = $('#rename-name');
+                var value = input.val();
+                var dot = value.lastIndexOf('.');
+                input.trigger('focus');
+                input[0].setSelectionRange(0, dot > 0 ? dot : value.length);
+            });
+
+            $('.file-delete-form').on('submit', function () {
+                var form = $(this);
+                var name = form.attr('data-name');
+                var message = form.attr('data-dir')
+                    ? 'Delete the folder "' + name + '" and everything inside it?'
+                    : 'Delete the file "' + name + '"?';
+                return confirm(message);
+            });
+
+            CodeMirror.modeURL = 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/%N/%N.min.js';
+
+            var editorModalEl = document.getElementById('editor-modal');
+            var editorModal = bootstrap.Modal.getOrCreateInstance(editorModalEl);
+            var editorState = { path: null, ready: false, saving: false, dirty: false, saved: false, generation: 0, request: 0 };
+
+            var editor = CodeMirror.fromTextArea(document.getElementById('editor'), {
+                theme: 'material-darker',
+                lineNumbers: true,
+                styleActiveLine: true,
+                matchBrackets: true,
+                indentUnit: 4,
+                tabSize: 4,
+                extraKeys: {
+                    'Ctrl-S': save,
+                    'Cmd-S': save
+                }
+            });
+
+            function setStatus(text, type) {
+                $('#editor-status')
+                    .removeClass('text-bg-success text-bg-warning text-bg-danger text-bg-secondary')
+                    .addClass('text-bg-' + type)
+                    .text(text);
+            }
+
+            function showError(message) {
+                $('#editor-error').toggleClass('d-none', !message).text(message || '');
+            }
+
+            function refreshDirty() {
+                if (!editorState.ready) {
+                    return;
+                }
+                editorState.dirty = !editor.isClean(editorState.generation);
+                setStatus(editorState.dirty ? 'Unsaved' : 'Saved', editorState.dirty ? 'warning' : 'success');
+            }
+
+            editor.on('change', refreshDirty);
+
+            function openFile(path) {
+                var request = ++editorState.request;
+                editorState.path = path;
+                editorState.ready = false;
+                editorState.dirty = false;
+                $('#editor-modal-label').text(path.split('/').pop());
+                $('#editor-path').text(path);
+                $('#editor-download').attr('href', '/files/download?path=' + encodeURIComponent(path));
+                $('#editor-meta').text('');
+                $('#editor-mode').text('Plain text');
+                $('#editor-save').prop('disabled', true);
+                $('#editor-loading').removeClass('d-none');
+                setStatus('Loading', 'secondary');
+                showError('');
+                editor.setOption('mode', null);
+                editor.setValue('');
+                editor.setOption('readOnly', 'nocursor');
+                editorModal.show();
+
+                $.ajax({ url: '/files/content', data: { path: path }, dataType: 'json', cache: false })
+                    .done(function (file) {
+                        if (request !== editorState.request) {
+                            return;
+                        }
+                        editor.setOption('lineSeparator', file.content.indexOf('\r\n') !== -1 ? '\r\n' : null);
+                        editor.setValue(file.content);
+                        editor.clearHistory();
+                        editor.setOption('readOnly', false);
+                        var info = CodeMirror.findModeByFileName(file.name);
+                        if (info && info.mode && info.mode !== 'null') {
+                            editor.setOption('mode', info.mime || info.mode);
+                            CodeMirror.autoLoadMode(editor, info.mode);
+                            $('#editor-mode').text(info.name);
+                        }
+                        $('#editor-modal-label').text(file.name);
+                        $('#editor-path').text(file.path);
+                        $('#editor-meta').text(' · ' + file.mode + ' · ' + file.size);
+                        editorState.path = file.path;
+                        editorState.generation = editor.changeGeneration(true);
+                        editorState.ready = true;
+                        refreshDirty();
+                        $('#editor-save').prop('disabled', false);
+                        $('#editor-loading').addClass('d-none');
+                        editor.refresh();
+                        editor.focus();
+                    })
+                    .fail(function (xhr) {
+                        if (request !== editorState.request) {
+                            return;
+                        }
+                        $('#editor-loading').addClass('d-none');
+                        setStatus('Error', 'danger');
+                        showError((xhr.responseJSON && xhr.responseJSON.error) || 'Failed to open the file.');
+                    });
+            }
+
+            function save() {
+                if (!editorState.ready || editorState.saving) {
+                    return;
+                }
+                editorState.saving = true;
+                var generation = editor.changeGeneration();
+                setStatus('Saving…', 'secondary');
+                $('#editor-save').prop('disabled', true);
+                $.ajax({
+                    url: '/files/save',
+                    method: 'POST',
+                    data: { path: editorState.path, content: editor.getValue() },
+                    dataType: 'json'
+                })
+                    .done(function () {
+                        editorState.generation = generation;
+                        editorState.saved = true;
+                        refreshDirty();
+                        showError('');
+                    })
+                    .fail(function (xhr) {
+                        setStatus('Error', 'danger');
+                        showError((xhr.responseJSON && xhr.responseJSON.error) || 'Failed to save the file.');
+                    })
+                    .always(function () {
+                        editorState.saving = false;
+                        $('#editor-save').prop('disabled', !editorState.ready);
+                    });
+            }
+
+            $('#editor-save').on('click', save);
+
+            $(document).on('click', '.file-open', function (event) {
+                if (event.ctrlKey || event.metaKey || event.shiftKey || event.button !== 0) {
+                    return;
+                }
+                event.preventDefault();
+                openFile($(this).attr('data-path'));
+            });
+
+            $(editorModalEl).on('shown.bs.modal', function () {
+                editor.refresh();
+                if (editorState.ready) {
+                    editor.focus();
+                }
+            }).on('hide.bs.modal', function (event) {
+                if (editorState.dirty && !confirm('Discard unsaved changes?')) {
+                    event.preventDefault();
+                }
+            }).on('hidden.bs.modal', function () {
+                editorState.request++;
+                editorState.ready = false;
+                editorState.dirty = false;
+                editorState.path = null;
+                editor.setValue('');
+                editor.clearHistory();
+                if (editorState.saved) {
+                    location.href = '/files?path=' + encodeURIComponent(currentDir);
+                }
+            });
+
+            $(document).on('keydown', function (event) {
+                if (event.isDefaultPrevented() || !editorState.ready) {
+                    return;
+                }
+                if ((event.ctrlKey || event.metaKey) && (event.key === 's' || event.key === 'S')) {
+                    event.preventDefault();
+                    save();
+                }
+            });
+
+            $(window).on('beforeunload', function () {
+                if (editorState.dirty) {
+                    return 'You have unsaved changes.';
+                }
+            });
+
+            if (openPath) {
+                if (window.history && history.replaceState) {
+                    var url = new URL(location.href);
+                    url.searchParams.delete('open');
+                    history.replaceState(null, '', url.toString());
+                }
+                openFile(openPath);
+            }
+        });
+    </script>

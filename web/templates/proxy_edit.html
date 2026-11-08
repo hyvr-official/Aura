@@ -1,0 +1,87 @@
+{{template "header" .}}
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/theme/material-darker.min.css" rel="stylesheet">
+    <style>
+        .config-editor { border: 1px solid var(--bs-border-color); border-radius: var(--bs-border-radius); overflow: hidden; }
+        .config-editor.is-invalid { border-color: var(--bs-form-invalid-border-color); }
+        .config-editor .CodeMirror { height: 480px; font-size: .875rem; }
+    </style>
+    <main class="container py-5" style="max-width: 960px;">
+        <a href="/proxy" class="link-secondary text-decoration-none small">&larr; Back to reverse proxy</a>
+
+        {{with .Data}}
+        <div class="d-flex align-items-center gap-2 mt-2 mb-4">
+            <h1 class="h3 mb-0">{{.Site.Name}}</h1>
+            {{if .Site.Enabled}}<span class="badge text-bg-success">Enabled</span>{{else}}<span class="badge text-bg-secondary">Disabled</span>{{end}}
+            {{if .Site.SSL}}<span class="badge text-bg-success">SSL</span>{{end}}
+        </div>
+
+        {{with .TestOutput}}
+        <div class="alert alert-danger" role="alert">
+            <div class="fw-medium mb-2">The config was not saved. The previous version is still active.</div>
+            <pre class="mb-0 small text-wrap">{{.}}</pre>
+        </div>
+        {{end}}
+
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <form method="post" action="/proxy/{{.Site.Name}}" id="config-form">
+                    <div class="mb-3">
+                        <label for="config" class="form-label">Config <span class="text-body-secondary small">/etc/nginx/sites-available/{{.Site.Name}}</span></label>
+                        <div class="config-editor{{if .TestOutput}} is-invalid{{end}}">
+                            <textarea id="config" name="config" autocomplete="off">{{.Config}}</textarea>
+                        </div>
+                        <div class="form-text">The config is checked with <code>nginx -t</code> before nginx is reloaded.</div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">Save changes</button>
+                        <a href="/proxy" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {{if not .Site.SSL}}
+        <div class="card shadow-sm border-0 mt-4">
+            <div class="card-body p-4">
+                <h2 class="h5 mb-1">Issue SSL certificate</h2>
+                <p class="text-body-secondary small mb-3">Runs certbot for {{.Site.DomainsLabel}} and redirects HTTP to HTTPS. The domains must already point to this server.</p>
+
+                {{with .SSLError}}
+                <div class="alert alert-danger" role="alert">
+                    <pre class="mb-0 small text-wrap">{{.}}</pre>
+                </div>
+                {{end}}
+
+                <form method="post" action="/proxy/{{.Site.Name}}/ssl" id="ssl-form" class="row g-2 align-items-end">
+                    <div class="col-sm">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" autocomplete="off" value="{{.Email}}" placeholder="admin@example.com">
+                    </div>
+                    <div class="col-sm-auto">
+                        <button type="submit" class="btn btn-outline-success">Issue certificate</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {{end}}
+        {{end}}
+    </main>
+{{template "footer" .}}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/nginx/nginx.min.js"></script>
+    <script>
+        $(function () {
+            CodeMirror.fromTextArea(document.getElementById('config'), {
+                mode: 'nginx',
+                theme: 'material-darker',
+                lineNumbers: true,
+                indentUnit: 4
+            });
+
+            $('#config-form, #ssl-form').on('submit', function () {
+                $(this).find('button[type="submit"]').prop('disabled', true).text('Working...');
+            });
+        });
+    </script>
