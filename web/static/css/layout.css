@@ -1,0 +1,70 @@
+:root {
+    --aura-navbar-height: 3.75rem;
+}
+
+.app-navbar {
+    height: var(--aura-navbar-height);
+    background: #070707 !important;
+}
+
+.app-sidebar {
+    background: #070707;
+    --bs-offcanvas-width: 260px;
+}
+
+.app-sidebar .nav-link {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    color: var(--bs-body-color);
+    padding: 8px 10px 8px 10px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none;
+    letter-spacing: 0.015em;
+}
+
+.app-sidebar .nav-link i {
+    font-size: 1.15rem;
+    line-height: 1;
+    color: var(--bs-secondary-color);
+}
+
+.app-sidebar .nav-link:hover {
+    background-color: var(--bs-tertiary-bg);
+}
+
+.app-sidebar .nav-link.active {
+    background-color: rgba(var(--bs-primary-rgb), .15);
+    color: var(--bs-primary-text-emphasis);
+}
+
+.app-sidebar .nav-link.active i {
+    color: var(--bs-primary-text-emphasis);
+}
+
+.app-content {
+    min-width: 0;
+}
+
+.nav-gauge-chart {
+    width: 40px;
+    height: 40px;
+}
+
+.nav-gauge-label {
+    line-height: 1.1;
+    min-width: 2.75rem;
+}
+
+@media (min-width: 992px) {
+    .app-sidebar {
+        width: 240px;
+        flex-shrink: 0;
+        position: sticky;
+        top: var(--aura-navbar-height);
+        height: calc(100vh - var(--aura-navbar-height));
+        overflow-y: auto;
+    }
+}

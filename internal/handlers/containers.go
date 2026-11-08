@@ -104,7 +104,7 @@ func (h *Handlers) ContainersShow(w http.ResponseWriter, r *http.Request) {
 	if status == "failed" {
 		data.FlashType = "danger"
 	}
-	h.render(w, http.StatusOK, "containers_show.html", page{
+	h.render(w, http.StatusOK, "containers/show.html", page{
 		Title:  title,
 		Active: "containers",
 		Data:   data,
@@ -124,7 +124,7 @@ func (h *Handlers) ContainersIndex(w http.ResponseWriter, r *http.Request) {
 	if status == "failed" {
 		data.FlashType = "danger"
 	}
-	h.render(w, http.StatusOK, "containers_index.html", page{
+	h.render(w, http.StatusOK, "containers/index.html", page{
 		Title:  "Containers",
 		Active: "containers",
 		Data:   data,

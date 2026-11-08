@@ -55,7 +55,7 @@ func (h *Handlers) BackupsIndex(w http.ResponseWriter, r *http.Request) {
 	for i := range list {
 		list[i].LastRunAt = lastRuns[list[i].ID]
 	}
-	h.render(w, http.StatusOK, "backups_index.html", page{
+	h.render(w, http.StatusOK, "backups/index.html", page{
 		Title:  "Backups",
 		Active: "backups",
 		Data:   backupsIndexData{Backups: list, Flash: backupFlashes[r.URL.Query().Get("status")]},
@@ -82,7 +82,7 @@ func (h *Handlers) BackupsShow(w http.ResponseWriter, r *http.Request) {
 	if status == "running" {
 		flashType = "warning"
 	}
-	h.render(w, http.StatusOK, "backups_show.html", page{
+	h.render(w, http.StatusOK, "backups/show.html", page{
 		Title:  b.Name,
 		Active: "backups",
 		Data: backupsShowData{
@@ -188,7 +188,7 @@ func (h *Handlers) renderBackupForm(w http.ResponseWriter, status int, b backups
 	if b.ID != 0 {
 		title = "Edit backup"
 	}
-	h.render(w, status, "backups_upsert.html", page{
+	h.render(w, status, "backups/upsert.html", page{
 		Title:  title,
 		Active: "backups",
 		Data: backupsUpsertData{

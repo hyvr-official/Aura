@@ -66,7 +66,7 @@ func (h *Handlers) ProxyIndex(w http.ResponseWriter, r *http.Request) {
 	default:
 		data.FlashType = "success"
 	}
-	h.render(w, http.StatusOK, "proxy_index.html", page{
+	h.render(w, http.StatusOK, "proxy/index.html", page{
 		Title:  "Reverse Proxy",
 		Active: "proxy",
 		Data:   data,
@@ -230,7 +230,7 @@ func (h *Handlers) proxyAction(w http.ResponseWriter, r *http.Request, action st
 }
 
 func (h *Handlers) renderProxyCreate(w http.ResponseWriter, status int, data proxyCreateData) {
-	h.render(w, status, "proxy_create.html", page{
+	h.render(w, status, "proxy/create.html", page{
 		Title:  "Create site",
 		Active: "proxy",
 		Data:   data,
@@ -238,7 +238,7 @@ func (h *Handlers) renderProxyCreate(w http.ResponseWriter, status int, data pro
 }
 
 func (h *Handlers) renderProxyEdit(w http.ResponseWriter, status int, data proxyEditData) {
-	h.render(w, status, "proxy_edit.html", page{
+	h.render(w, status, "proxy/edit.html", page{
 		Title:  "Edit " + data.Site.Name,
 		Active: "proxy",
 		Data:   data,

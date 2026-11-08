@@ -1,9 +1,7 @@
 {{template "header" .}}
-    <style>
-        .operation-output { max-height: 50vh; overflow: auto; white-space: pre-wrap; word-break: break-word; font-size: .8125rem; }
-    </style>
-    <main class="container py-5">
-        <a href="/projects" class="link-secondary text-decoration-none small">&larr; Back to projects</a>
+    <link href="/static/css/projects/show.css" rel="stylesheet">
+    <main class="container py-4">
+        <a href="/projects" class="link-secondary text-decoration-none small"><i class="ri-arrow-left-line"></i> Back to projects</a>
 
         {{with .Data}}
         <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mt-2 mb-4">

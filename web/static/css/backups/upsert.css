@@ -1,0 +1,14 @@
+.pre-run-editor {
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+    overflow: hidden;
+}
+
+.pre-run-editor.is-invalid {
+    border-color: var(--bs-form-invalid-border-color);
+}
+
+.pre-run-editor .CodeMirror {
+    height: 220px;
+    font-size: .875rem;
+}

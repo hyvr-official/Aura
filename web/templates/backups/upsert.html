@@ -1,13 +1,9 @@
 {{template "header" .}}
     <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css" rel="stylesheet">
-    <style>
-        .pre-run-editor { border: 1px solid var(--bs-border-color); border-radius: var(--bs-border-radius); overflow: hidden; }
-        .pre-run-editor.is-invalid { border-color: var(--bs-form-invalid-border-color); }
-        .pre-run-editor .CodeMirror { height: 220px; font-size: .875rem; }
-    </style>
-    <main class="container py-5" style="max-width: 640px;">
-        <a href="/backups" class="link-secondary text-decoration-none small">&larr; Back to backups</a>
+    <link href="/static/css/backups/upsert.css" rel="stylesheet">
+    <main class="container py-4" style="max-width: 640px;">
+        <a href="/backups" class="link-secondary text-decoration-none small"><i class="ri-arrow-left-line"></i> Back to backups</a>
         <h1 class="h3 mt-2 mb-4">{{.Title}}</h1>
 
         {{with .Data}}

@@ -1,0 +1,14 @@
+.config-editor {
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+    overflow: hidden;
+}
+
+.config-editor.is-invalid {
+    border-color: var(--bs-form-invalid-border-color);
+}
+
+.config-editor .CodeMirror {
+    height: 480px;
+    font-size: .875rem;
+}

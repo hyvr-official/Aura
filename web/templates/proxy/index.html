@@ -1,9 +1,7 @@
 {{template "header" .}}
     <link href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.min.css" rel="stylesheet">
-    <style>
-        .xterm-box { height: 65vh; background: #000; padding: .5rem; border: 1px solid var(--bs-border-color); border-radius: var(--bs-border-radius); }
-    </style>
-    <main class="container py-5">
+    <link href="/static/css/proxy/index.css" rel="stylesheet">
+    <main class="container py-4">
         <div class="d-flex align-items-center justify-content-between mb-4">
             <h1 class="h3 mb-0">Reverse Proxy</h1>
             {{if not .Data.NginxMissing}}

@@ -91,7 +91,7 @@ func (h *Handlers) ProjectsIndex(w http.ResponseWriter, r *http.Request) {
 		}
 		rows = append(rows, row)
 	}
-	h.render(w, http.StatusOK, "projects_index.html", page{
+	h.render(w, http.StatusOK, "projects/index.html", page{
 		Title:  "Projects",
 		Active: "projects",
 		Data:   projectsIndexData{Projects: rows, Flash: projectFlashes[r.URL.Query().Get("status")]},
@@ -136,7 +136,7 @@ func (h *Handlers) ProjectsShow(w http.ResponseWriter, r *http.Request) {
 		}
 		data.Folders = folders
 	}
-	h.render(w, http.StatusOK, "projects_show.html", page{
+	h.render(w, http.StatusOK, "projects/show.html", page{
 		Title:  p.Name,
 		Active: "projects",
 		Data:   data,
@@ -355,7 +355,7 @@ func (h *Handlers) renderProjectForm(w http.ResponseWriter, status int, p projec
 	if p.ID != 0 {
 		title = "Edit project"
 	}
-	h.render(w, status, "projects_upsert.html", page{
+	h.render(w, status, "projects/upsert.html", page{
 		Title:  title,
 		Active: "projects",
 		Data:   projectsUpsertData{Project: p, Repositories: repoList, Errors: errs},

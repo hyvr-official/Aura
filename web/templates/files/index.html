@@ -2,15 +2,8 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/theme/material-darker.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/addon/dialog/dialog.min.css" rel="stylesheet">
-    <style>
-        .editor-box { position: relative; }
-        .editor-box .CodeMirror { height: 70vh; font-size: 14px; font-family: Menlo, Consolas, "DejaVu Sans Mono", monospace; border: 1px solid var(--bs-border-color); border-radius: var(--bs-border-radius); }
-        .editor-box .CodeMirror-dialog { background: var(--bs-body-bg); color: var(--bs-body-color); }
-        .editor-box .CodeMirror-dialog input { color: var(--bs-body-color); }
-        .editor-loading { position: absolute; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, .55); border-radius: var(--bs-border-radius); }
-        @media (max-width: 991.98px) { .editor-box .CodeMirror { height: calc(100vh - 220px); } }
-    </style>
-    <main class="container py-5">
+    <link href="/static/css/files/index.css" rel="stylesheet">
+    <main class="container py-4">
         <div class="d-flex align-items-center justify-content-between mb-4">
             <h1 class="h3 mb-0">File Manager</h1>
             <div class="d-flex gap-2">

@@ -17,7 +17,7 @@ type consoleCommandResponse struct {
 }
 
 func (h *Handlers) ConsoleIndex(w http.ResponseWriter, r *http.Request) {
-	h.render(w, http.StatusOK, "console_index.html", page{
+	h.render(w, http.StatusOK, "console/index.html", page{
 		Title:  "Console",
 		Active: "console",
 	})

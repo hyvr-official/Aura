@@ -1,10 +1,7 @@
 {{template "header" .}}
-    <style>
-        .deploy-key { font-family: var(--bs-font-monospace); font-size: .8125rem; resize: none; word-break: break-all; }
-        .operation-output { max-height: 50vh; overflow: auto; white-space: pre-wrap; word-break: break-word; font-size: .8125rem; }
-    </style>
-    <main class="container py-5">
-        <a href="/repositories" class="link-secondary text-decoration-none small">&larr; Back to repositories</a>
+    <link href="/static/css/repositories/show.css" rel="stylesheet">
+    <main class="container py-4">
+        <a href="/repositories" class="link-secondary text-decoration-none small"><i class="ri-arrow-left-line"></i> Back to repositories</a>
 
         {{with .Data}}
         <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mt-2 mb-4">

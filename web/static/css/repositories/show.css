@@ -1,0 +1,14 @@
+.deploy-key {
+    font-family: var(--bs-font-monospace);
+    font-size: .8125rem;
+    resize: none;
+    word-break: break-all;
+}
+
+.operation-output {
+    max-height: 50vh;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-size: .8125rem;
+}

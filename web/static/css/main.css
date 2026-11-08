@@ -1,0 +1,94 @@
+html, body{
+	font-family: "Space Grotesk", sans-serif;
+	font-optical-sizing: auto;
+}
+
+[data-bs-theme="dark"]{
+    --bs-body-bg: #131313;
+    --bs-tertiary-bg-rgb: 7,7,7;
+    --bs-body-bg-rgb: 19,19,19;
+    --bs-border-color: #3a3a3aa1;
+}
+
+/*-- table --*/
+
+.table{
+	margin: 0;
+}
+
+.table > :not(caption) > * > *{
+	border: none;
+}
+
+.table th{
+	font-size: 13px;
+	font-weight: 600;
+	padding: 10px 1rem;
+}
+
+.table tr{
+	border-bottom: 1px solid #3a3a3aa1;
+}
+
+.table td{
+	padding: 5px 1rem;
+	font-size: 14px;
+	font-weight: 500;
+	min-height: 45px;
+	height: 45px;
+	vertical-align: middle;
+}
+
+/*-- btn --*/
+
+.btn{
+	font-size: 14px;
+	font-weight: 600;
+	padding: 6px 10px;
+	border-radius: 0.5rem;
+	transition-duration: 0.2s;
+	outline: none !important;
+	position: relative;
+}
+
+.btn i{
+	font-weight: 500;
+}
+
+/*-- badge --*/
+
+.badge{
+	font-size: 12px;
+	font-weight: 500;
+	border-radius: 10000px;
+	padding: 5px 10px;
+}
+
+/*-- form --*/
+
+.form-label{
+	margin-bottom: 3px;
+	font-weight: 500;
+	font-style: normal;
+	font-size: 14px;
+	letter-spacing: 0.016em;
+	position: relative;
+}
+
+input.form-control, textarea.form-control{
+	font-size: 15px;
+	font-weight: 500;
+	padding: 6px 12px;
+	border-radius: 0.5rem;
+	border: 1px solid #3a3a3aa1 !important;
+	outline: none !important;
+	box-shadow: none !important;
+    outline: none !important;
+	transition-duration: 0.2s;
+}
+
+/*-- card --*/
+
+.card{
+    border-radius: 8px;
+}

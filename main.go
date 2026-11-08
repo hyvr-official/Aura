@@ -48,6 +48,7 @@ func main() {
 	protected := func(fn http.HandlerFunc) http.Handler { return auth.RequireAuth(sessions, fn) }
 
 	mux := http.NewServeMux()
+	mux.Handle("GET /static/", http.StripPrefix("/static/", web.Static()))
 	mux.HandleFunc("GET /login", h.LoginForm)
 	mux.HandleFunc("POST /login", h.Login)
 	mux.HandleFunc("POST /logout", h.Logout)

@@ -11,7 +11,7 @@ type settingsData struct {
 }
 
 func (h *Handlers) SettingsIndex(w http.ResponseWriter, r *http.Request) {
-	h.render(w, http.StatusOK, "settings_index.html", page{
+	h.render(w, http.StatusOK, "settings/index.html", page{
 		Title:  "Settings",
 		Active: "settings",
 		Data:   settingsData{Report: startup.Last()},

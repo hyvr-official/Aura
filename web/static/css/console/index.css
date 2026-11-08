@@ -1,0 +1,73 @@
+.console-box {
+    height: calc(100vh - 200px);
+    min-height: 360px;
+    background: #000;
+    padding: .5rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+    overflow: hidden;
+}
+
+.command-editor {
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+    overflow: hidden;
+}
+
+.command-editor.is-invalid {
+    border-color: var(--bs-form-invalid-border-color);
+}
+
+.command-editor .CodeMirror {
+    height: 180px;
+    font-size: .875rem;
+    font-family: Menlo, Consolas, "DejaVu Sans Mono", monospace;
+}
+
+.saved-panel {
+    height: calc(100vh - 200px);
+    min-height: 360px;
+}
+
+.saved-commands {
+    overflow-y: auto;
+    min-height: 0;
+}
+
+.saved-command-code {
+    font-family: Menlo, Consolas, "DejaVu Sans Mono", monospace;
+    font-size: .8rem;
+    white-space: pre;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-height: 3.9em;
+    color: var(--bs-secondary-color);
+    margin: 0;
+}
+
+.saved-command-title {
+    min-width: 0;
+}
+
+.empty-hide:empty {
+    display: none;
+}
+
+@media (max-width: 1199.98px) {
+    .console-box {
+        height: 60vh;
+    }
+
+    .saved-panel {
+        height: auto;
+        min-height: 0;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .console-box {
+        height: 55vh;
+        min-height: 280px;
+        padding: .25rem;
+    }
+}

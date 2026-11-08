@@ -53,7 +53,7 @@ func (h *Handlers) VolumesIndex(w http.ResponseWriter, r *http.Request) {
 	if status == "failed" || status == "invalid" {
 		data.FlashType = "danger"
 	}
-	h.render(w, http.StatusOK, "volumes_index.html", page{
+	h.render(w, http.StatusOK, "volumes/index.html", page{
 		Title:  "Volumes",
 		Active: "volumes",
 		Data:   data,

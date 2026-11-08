@@ -1,0 +1,10 @@
+.run-log-viewer {
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+    overflow: hidden;
+}
+
+.run-log-viewer .CodeMirror {
+    height: 60vh;
+    font-size: .875rem;
+}

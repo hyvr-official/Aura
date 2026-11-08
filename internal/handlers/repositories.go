@@ -80,7 +80,7 @@ func (h *Handlers) RepositoriesIndex(w http.ResponseWriter, r *http.Request) {
 		}
 		rows = append(rows, row)
 	}
-	h.render(w, http.StatusOK, "repositories_index.html", page{
+	h.render(w, http.StatusOK, "repositories/index.html", page{
 		Title:  "Repositories",
 		Active: "repositories",
 		Data:   repositoriesIndexData{Repositories: rows, Flash: repositoryFlashes[r.URL.Query().Get("status")]},
@@ -114,7 +114,7 @@ func (h *Handlers) RepositoriesShow(w http.ResponseWriter, r *http.Request) {
 		}
 		data.Branches = branches
 	}
-	h.render(w, http.StatusOK, "repositories_show.html", page{
+	h.render(w, http.StatusOK, "repositories/show.html", page{
 		Title:  repo.Name,
 		Active: "repositories",
 		Data:   data,
@@ -296,7 +296,7 @@ func (h *Handlers) renderRepositoryForm(w http.ResponseWriter, status int, repo 
 	if repo.ID != 0 {
 		title = "Edit repository"
 	}
-	h.render(w, status, "repositories_upsert.html", page{
+	h.render(w, status, "repositories/upsert.html", page{
 		Title:  title,
 		Active: "repositories",
 		Data:   repositoriesUpsertData{Repository: repo, Errors: errs},

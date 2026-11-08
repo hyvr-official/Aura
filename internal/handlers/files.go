@@ -98,7 +98,7 @@ func (h *Handlers) FilesIndex(w http.ResponseWriter, r *http.Request) {
 	if fileSuccessFlashes[status] {
 		data.FlashType = "success"
 	}
-	h.render(w, http.StatusOK, "files_index.html", page{
+	h.render(w, http.StatusOK, "files/index.html", page{
 		Title:  "File Manager",
 		Active: "files",
 		Data:   data,
