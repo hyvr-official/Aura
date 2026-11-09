@@ -1,6 +1,7 @@
 package startup
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -45,6 +46,7 @@ var requirements = []requirement{
 	{pkgs: []string{"certbot", "python3-certbot-nginx"}, commands: []string{"certbot"}},
 	{pkgs: []string{"git"}, commands: []string{"git"}},
 	{pkgs: []string{"openssh-client"}, commands: []string{"ssh-keygen"}},
+	{pkgs: []string{"docker.io", "docker-compose-v2"}, commands: []string{"docker"}},
 }
 
 var (
@@ -116,6 +118,14 @@ func Run() Report {
 		checks = append(checks, Check{Name: "Nginx service", OK: true, Message: "Running"})
 	}
 
+	if err := ensureDockerRunning(); err != nil {
+		log.Printf("startup: docker: %v", err)
+		checks = append(checks, Check{Name: "Docker service", Message: err.Error()})
+	} else {
+		log.Printf("startup: docker is running")
+		checks = append(checks, Check{Name: "Docker service", OK: true, Message: "Running"})
+	}
+
 	report := Report{Checks: checks, RanAt: time.Now()}
 	stateMu.Lock()
 	last = report
@@ -134,16 +144,23 @@ func installed(r requirement) bool {
 
 func aptInstall(pkgs []string) error {
 	install := append([]string{"apt-get", "install", "-y", "--no-install-recommends"}, pkgs...)
-	if err := apt(install...); err == nil {
+	if err := runRoot(install...); err == nil {
 		return nil
 	}
-	if err := apt("apt-get", "update"); err != nil {
+	if err := runRoot("apt-get", "update"); err != nil {
 		return err
 	}
-	return apt(install...)
+	return runRoot(install...)
 }
 
-func apt(args ...string) error {
+func ensureDockerRunning() error {
+	if _, err := exec.LookPath("docker"); err != nil {
+		return errors.New("docker is not installed")
+	}
+	return runRoot("systemctl", "enable", "--now", "docker")
+}
+
+func runRoot(args ...string) error {
 	if os.Geteuid() != 0 {
 		args = append([]string{"sudo", "-n"}, args...)
 	}

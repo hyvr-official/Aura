@@ -1,4 +1,4 @@
-**Aura** is a linux only server control panel that allows users to manage various server resources and services, including SSH keys, backups, Docker containers, and much more.
+**Aura** is a ubuntu only server control panel that allows users to manage various server resources and services, including SSH keys, backups, Docker containers, and much more.
 
 **Technologies Used:**
 
