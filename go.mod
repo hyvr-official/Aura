@@ -10,7 +10,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.114.6
 	github.com/creack/pty v1.1.24
 	github.com/gorilla/websocket v1.5.3
-	github.com/joho/godotenv v1.5.1
 	modernc.org/sqlite v1.34.5
 )
 

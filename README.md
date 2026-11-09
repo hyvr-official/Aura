@@ -28,8 +28,7 @@
 Download the install script and run it as root:
 
 ```bash
-wget -O install.sh https://raw.githubusercontent.com/hyvr-official/Aura/master/install.sh
-sudo bash install.sh
+wget -O install.sh https://raw.githubusercontent.com/hyvr-official/Aura/master/install.sh && sudo bash install.sh
 ```
 
 The script will:
@@ -70,15 +69,6 @@ systemctl restart aura     # Restart Aura
 ```
 
 To **update** Aura, run the install script again. Your data is kept.
-
-### Configuration
-
-Aura can be configured with environment variables, set in the systemd service or in a `.env` file kept in the base of the project `/opt/aura`. Restart the service with `systemctl restart aura` after changing the .env file.
-
-| Variable          | Default   | Description                               |
-| ----------------- | --------- | ----------------------------------------- |
-| `AURA_DB_PATH`    | `aura.db` | Path to the SQLite database file.         |
-| `AURA_FILES_ROOT` | `/`       | Root folder shown in the File Manager.    |
 
 ## :hammer_and_wrench: How to build
 You can build the binaries or do development of Aura by following the below steps. Aura is build fully on Golang and Goreleaser is used for building releases. So you should install latest version of Go from [here](https://go.dev/doc/install).

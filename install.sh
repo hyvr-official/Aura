@@ -84,7 +84,6 @@ Wants=network-online.target
 Type=simple
 User=root
 WorkingDirectory=${INSTALL_DIR}
-Environment=AURA_DB_PATH=${INSTALL_DIR}/aura.db
 ExecStart=${INSTALL_DIR}/aura
 Restart=on-failure
 RestartSec=5
