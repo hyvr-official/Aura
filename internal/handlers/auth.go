@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 
 	"aura/internal/auth"
@@ -40,6 +41,7 @@ func (h *Handlers) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.startSession(w, r); err != nil {
+		log.Printf("session create: %v", err)
 		http.Error(w, "Could not create session", http.StatusInternalServerError)
 		return
 	}
@@ -91,6 +93,7 @@ func (h *Handlers) Setup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.startSession(w, r); err != nil {
+		log.Printf("session create: %v", err)
 		http.Error(w, "Could not create session", http.StatusInternalServerError)
 		return
 	}

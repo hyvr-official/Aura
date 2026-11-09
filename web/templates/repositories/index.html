@@ -28,9 +28,9 @@
                     <tbody>
                         {{range .Data.Repositories}}
                         <tr>
-                            <td class="fw-medium"><a href="/repositories/{{.Repository.ID}}" class="link-body-emphasis text-decoration-none">{{.Repository.Name}}</a></td>
-                            <td><code class="text-break">{{.Repository.URL}}</code></td>
-                            <td><code class="text-break">{{.Repository.Path}}</code></td>
+                            <td class="text-nowrap fw-medium"><a href="/repositories/{{.Repository.ID}}" class="link-body-emphasis text-decoration-none">{{.Repository.Name}}</a></td>
+                            <td><code class="text-nowrap">{{.Repository.URL}}</code></td>
+                            <td><code class="text-nowrap">{{.Repository.Path}}</code></td>
                             <td class="text-nowrap">
                                 {{if .Branch}}
                                 <span class="badge text-bg-primary">{{.Branch}}</span>

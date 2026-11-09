@@ -21,13 +21,13 @@
                     <tbody>
                         {{range .Containers}}
                         <tr>
-                            <td class="fw-medium" title="{{.ID}}"><a href="/containers/{{.ID}}" class="link-body-emphasis text-decoration-none">{{.Name}}</a></td>
-                            <td><code>{{.Image}}</code></td>
+                            <td class="fw-medium text-nowrap" title="{{.ID}}"><a href="/containers/{{.ID}}" class="link-body-emphasis text-decoration-none">{{.Name}}</a></td>
+                            <td><code class="text-nowrap">{{.Image}}</code></td>
                             <td><span class="badge text-bg-{{.StateClass}}">{{.State}}</span></td>
                             <td class="text-body-secondary text-nowrap">{{.Status}}</td>
                             <td class="text-nowrap">{{with .Stats}}{{.CPUPerc}}{{else}}<span class="text-body-secondary">—</span>{{end}}</td>
-                            <td class="text-nowrap">{{with .Stats}}{{.MemUsage}}<div class="small text-body-secondary">{{.MemPerc}}</div>{{else}}<span class="text-body-secondary">—</span>{{end}}</td>
-                            <td class="text-body-secondary small">{{.Ports}}</td>
+                            <td class="text-nowrap">{{with .Stats}}{{.MemUsage}}<div class="small text-body-secondary text-nowrap">{{.MemPerc}}</div>{{else}}<span class="text-body-secondary">—</span>{{end}}</td>
+                            <td class="text-body-secondary text-nowrap small">{{.Ports}}</td>
                             <td class="text-end text-nowrap">
                                 <a href="/containers/{{.ID}}" class="btn btn-outline-primary btn-sm">Details</a>
                                 {{if .Running}}
