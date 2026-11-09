@@ -12,12 +12,12 @@
                 <a href="/backups/{{.Backup.ID}}/edit" class="btn btn-outline-secondary">Edit</a>
                 <form method="post" action="/backups/{{.Backup.ID}}/run">
                     {{if .Running}}
-                    <button type="submit" class="btn btn-primary" disabled>
+                    <button type="submit" class="btn btn-secondary" disabled>
                         <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
                         Running…
                     </button>
                     {{else}}
-                    <button type="submit" class="btn btn-primary">Run now</button>
+                    <button type="submit" class="btn btn-secondary">Run now</button>
                     {{end}}
                 </form>
             </div>

@@ -10,12 +10,12 @@
                 <a href="/repositories/{{.Repository.ID}}/edit" class="btn btn-outline-secondary">Edit</a>
                 {{if .State.CanClone}}
                 <form method="post" action="/repositories/{{.Repository.ID}}/clone" class="js-operation" data-busy="Cloning…">
-                    <button type="submit" class="btn btn-primary">Clone</button>
+                    <button type="submit" class="btn btn-secondary">Clone</button>
                 </form>
                 {{end}}
                 {{if .State.IsRepo}}
                 <form method="post" action="/repositories/{{.Repository.ID}}/pull" class="js-operation" data-busy="Pulling…" data-confirm="Discard all local changes to tracked files and pull the latest changes?">
-                    <button type="submit" class="btn btn-primary">Pull</button>
+                    <button type="submit" class="btn btn-secondary">Pull</button>
                 </form>
                 {{end}}
             </div>

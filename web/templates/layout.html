@@ -83,7 +83,21 @@
             var usagePending = null;
             var usageTimer = null;
 
-            function navGauge(selector, color) {
+            function navUsageColor(value) {
+                if (value > 80) {
+                    return '#ff524b';
+                }
+                if (value < 30) {
+                    return '#00c363';
+                }
+                return '#ffee49';
+            }
+
+            function navSetUsage(chart, value) {
+                chart.updateOptions({ colors: [navUsageColor(value)], series: [value] });
+            }
+
+            function navGauge(selector) {
                 var chart = new ApexCharts(document.querySelector(selector), {
                     chart: {
                         type: 'radialBar',
@@ -95,7 +109,7 @@
                     },
                     theme: { mode: 'dark' },
                     series: [0],
-                    colors: [color],
+                    colors: [navUsageColor(0)],
                     plotOptions: {
                         radialBar: {
                             hollow: { size: '43%', margin: 0 },
@@ -123,8 +137,8 @@
             }
 
             var navCharts = {
-                cpu: navGauge('#nav-chart-cpu', '#0d6efd'),
-                memory: navGauge('#nav-chart-memory', '#20c997')
+                cpu: navGauge('#nav-chart-cpu'),
+                memory: navGauge('#nav-chart-memory')
             };
 
             function scheduleUsage(delay) {
@@ -148,8 +162,8 @@
                             return;
                         }
                         var usage = JSON.parse(body);
-                        navCharts.cpu.updateSeries([usage.cpu]);
-                        navCharts.memory.updateSeries([usage.memPercent]);
+                        navSetUsage(navCharts.cpu, usage.cpu);
+                        navSetUsage(navCharts.memory, usage.memPercent);
                         $('#nav-cpu-value').text(usage.cpu.toFixed(0) + '%');
                         $('#nav-memory-value').text(usage.memPercent.toFixed(0) + '%');
                         $('#nav-gauge-cpu').attr('title', 'CPU usage: ' + usage.cpu.toFixed(1) + '%');

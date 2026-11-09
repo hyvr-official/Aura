@@ -79,7 +79,21 @@
         $(function () {
             var statsInterval = 3000;
 
-            function radialChart(selector, color) {
+            function usageColor(value) {
+                if (value > 80) {
+                    return '#ff524b';
+                }
+                if (value < 30) {
+                    return '#00c363';
+                }
+                return '#ffee49';
+            }
+
+            function setUsage(chart, value) {
+                chart.updateOptions({ colors: [usageColor(value)], series: [value] });
+            }
+
+            function radialChart(selector) {
                 var chart = new ApexCharts(document.querySelector(selector), {
                     chart: {
                         type: 'radialBar',
@@ -90,7 +104,7 @@
                     },
                     theme: { mode: 'dark' },
                     series: [0],
-                    colors: [color],
+                    colors: [usageColor(0)],
                     plotOptions: {
                         radialBar: {
                             hollow: { size: '63%' },
@@ -119,10 +133,10 @@
             }
 
             var charts = {
-                cpu: radialChart('#chart-cpu', '#0d6efd'),
-                memory: radialChart('#chart-memory', '#20c997'),
-                swap: radialChart('#chart-swap', '#6f42c1'),
-                disk: radialChart('#chart-disk', '#fd7e14')
+                cpu: radialChart('#chart-cpu'),
+                memory: radialChart('#chart-memory'),
+                swap: radialChart('#chart-swap'),
+                disk: radialChart('#chart-disk')
             };
 
             var processSort = 'cpu';
@@ -188,10 +202,10 @@
                             return;
                         }
                         var stats = JSON.parse(body);
-                        charts.cpu.updateSeries([stats.cpu]);
-                        charts.memory.updateSeries([stats.memPercent]);
-                        charts.swap.updateSeries([stats.swapPercent]);
-                        charts.disk.updateSeries([stats.diskPercent]);
+                        setUsage(charts.cpu, stats.cpu);
+                        setUsage(charts.memory, stats.memPercent);
+                        setUsage(charts.swap, stats.swapPercent);
+                        setUsage(charts.disk, stats.diskPercent);
                         $('#detail-cpu').text('Current load');
                         $('#detail-memory').text(formatBytes(stats.memUsed) + ' / ' + formatBytes(stats.memTotal));
                         $('#detail-swap').text(stats.swapTotal > 0 ? formatBytes(stats.swapUsed) + ' / ' + formatBytes(stats.swapTotal) : 'No swap configured');

@@ -5,9 +5,13 @@ html, body{
 
 [data-bs-theme="dark"]{
     --bs-body-bg: #131313;
-    --bs-tertiary-bg-rgb: 7,7,7;
-    --bs-body-bg-rgb: 19,19,19;
+    --bs-tertiary-bg-rgb: 7, 7, 7;
+    --bs-body-bg-rgb: 19, 19, 19;
     --bs-border-color: #3a3a3aa1;
+    --bs-success-rgb: 0, 195, 99;
+    --bs-tertiary-bg: #131313;
+    --bs-warning-rgb: 255, 238, 73;
+    --bs-code-color: #ffbfde;
 }
 
 /*-- table --*/
@@ -55,6 +59,29 @@ html, body{
 	font-weight: 500;
 }
 
+.btn-secondary{
+    background: #ffffff !important;
+    color: #070707 !important;
+    box-shadow: none !important;
+}
+
+.btn-secondary:focus-visible, .btn-secondary:hover, .btn-secondary:active, .btn-secondary:focus{
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.btn-outline-secondary{
+    --bs-btn-active-bg: #ffffff;
+    --bs-btn-active-color: #070707;
+
+    border: 1px solid #ffffff;
+    color: #ffffff;
+}
+
+.btn-outline-secondary:focus-visible, .btn-outline-secondary:hover, .btn-outline-secondary:active, .btn-outline-secondary:focus{
+    background: #ffffff !important;
+    color: #070707 !important;
+}
+
 /*-- badge --*/
 
 .badge{
@@ -85,6 +112,14 @@ input.form-control, textarea.form-control{
 	box-shadow: none !important;
     outline: none !important;
 	transition-duration: 0.2s;
+}
+
+input::placeholder{
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.form-select{
+    border-radius: 0.5rem !important;
 }
 
 /*-- card --*/

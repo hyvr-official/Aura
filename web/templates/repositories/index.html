@@ -2,7 +2,7 @@
     <main class="container py-4">
         <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-4">
             <h1 class="h5 mb-0">Repositories</h1>
-            <a href="/repositories/create" class="btn btn-primary">New repository</a>
+            <a href="/repositories/create" class="btn btn-secondary">New repository</a>
         </div>
 
         {{with .Data.Flash}}
@@ -53,7 +53,7 @@
             {{else}}
             <div class="card-body text-center py-5">
                 <p class="text-body-secondary mb-3">No repositories yet.</p>
-                <a href="/repositories/create" class="btn btn-primary">Add your first repository</a>
+                <a href="/repositories/create" class="btn btn-secondary">Add your first repository</a>
             </div>
             {{end}}
         </div>

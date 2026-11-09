@@ -10,7 +10,7 @@
                 <a href="/projects/{{.Project.ID}}/edit" class="btn btn-outline-secondary">Edit</a>
                 {{if and .Project.IsRepository .State.IsRepo}}
                 <form method="post" action="/projects/{{.Project.ID}}/pull" class="js-operation" data-busy="Pulling…" data-confirm="Discard all local changes to tracked files and pull the latest changes?">
-                    <button type="submit" class="btn btn-primary">Pull</button>
+                    <button type="submit" class="btn btn-secondary">Pull</button>
                 </form>
                 {{end}}
             </div>
@@ -114,7 +114,7 @@
                                         <td class="text-end text-nowrap">
                                             <form method="post" action="/projects/{{$.Data.Project.ID}}/deploy" class="d-inline js-operation" data-busy="Deploying…" data-confirm="{{if .IsCompose}}Run docker compose up -d --build in {{.Rel}}?{{else}}Build the image and run a container from {{.Rel}}?{{end}}">
                                                 <input type="hidden" name="folder" value="{{.Rel}}" autocomplete="off">
-                                                <button type="submit" class="btn btn-primary btn-sm">Deploy</button>
+                                                <button type="submit" class="btn btn-secondary btn-sm">Deploy</button>
                                             </form>
                                             <form method="post" action="/projects/{{$.Data.Project.ID}}/down" class="d-inline js-operation" data-busy="Stopping…" data-confirm="{{if .IsCompose}}Run docker compose down in {{.Rel}}?{{else}}Stop and remove the container for {{.Rel}}?{{end}}">
                                                 <input type="hidden" name="folder" value="{{.Rel}}" autocomplete="off">

@@ -26,7 +26,7 @@
                         </div>
                         <div class="d-flex flex-shrink-0 gap-2">
                             <button type="button" class="btn btn-danger btn-sm d-none" id="command-stop">Stop</button>
-                            <button type="button" class="btn btn-primary btn-sm" id="command-new" aria-expanded="false" aria-controls="command-form">New command</button>
+                            <button type="button" class="btn btn-secondary btn-sm" id="command-new" aria-expanded="false" aria-controls="command-form">New command</button>
                         </div>
                     </div>
                     <div class="collapse flex-shrink-0" id="command-form">
@@ -45,7 +45,7 @@
                             <div class="invalid-feedback d-block small" id="command-error"></div>
                             <div class="form-text mb-2">Ctrl+Enter to run. Multiple lines run one by one.</div>
                             <div class="d-flex flex-wrap gap-2">
-                                <button type="button" class="btn btn-primary btn-sm" id="command-run">Run</button>
+                                <button type="button" class="btn btn-secondary btn-sm" id="command-run">Run</button>
                                 <button type="button" class="btn btn-outline-success btn-sm" id="command-save">Save</button>
                                 <button type="button" class="btn btn-outline-secondary btn-sm" id="command-copy">Copy</button>
                                 <button type="button" class="btn btn-outline-secondary btn-sm ms-auto" id="command-cancel">Cancel</button>
@@ -399,7 +399,7 @@
                         title.append($('<span class="badge text-bg-secondary"></span>').text(lines + ' lines'));
                     }
                     var actions = $('<div class="d-flex flex-shrink-0 gap-1"></div>')
-                        .append($('<button type="button" class="btn btn-primary btn-sm saved-run">Run</button>'))
+                        .append($('<button type="button" class="btn btn-secondary btn-sm saved-run">Run</button>'))
                         .append($('<button type="button" class="btn btn-outline-secondary btn-sm saved-copy">Copy</button>'))
                         .append($('<button type="button" class="btn btn-outline-secondary btn-sm saved-edit">Edit</button>'))
                         .append($('<button type="button" class="btn btn-outline-danger btn-sm saved-delete">Delete</button>'));

@@ -17,23 +17,26 @@
 </head>
 <body class="bg-body-tertiary">
     <main class="d-flex align-items-center justify-content-center min-dvh-100 p-3">
-        <div class="card shadow-sm border-0" style="width: 100%; max-width: 380px;">
-            <div class="card-body p-4">
-                <h1 class="h3 text-center mb-2"><img src="/static/images/aura-logo.svg" alt="Aura" class="aura-logo aura-logo-lg"></h1>
-                <p class="text-body-secondary text-center mb-2">Server control panel</p>
+        <div style="width: 100%; max-width: 380px;">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <h1 class="h3 text-center mb-2"><img src="/static/images/aura-logo.svg" alt="Aura" class="aura-logo aura-logo-lg"></h1>
+                    <p class="text-body-secondary text-center mb-2">Server control panel</p>
 
-                {{if .Error}}
-                <div class="alert alert-danger py-2" role="alert">{{.Error}}</div>
-                {{end}}
+                    {{if .Error}}
+                    <div class="alert alert-danger py-2" role="alert">{{.Error}}</div>
+                    {{end}}
 
-                <form method="post" action="/login">
-                    <div class="mb-3">
-                        <label for="password" class="form-label">Password</label>
-                        <input type="text" class="form-control" id="password" name="password" autocomplete="off" required autofocus>
-                    </div>
-                    <button type="submit" class="btn btn-primary w-100 py-2">Sign in</button>
-                </form>
+                    <form method="post" action="/login">
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="password" name="password" autocomplete="off" required autofocus>
+                        </div>
+                        <button type="submit" class="btn btn-secondary w-100 py-2">Sign in</button>
+                    </form>
+                </div>
             </div>
+            <p class="mt-2 mb-0 text-center opacity-50"><small>Made with love by <a class="text-white" href="https://hyvr.dev" target="_blank">Hyvr</a></small></p>
         </div>
     </main>
 

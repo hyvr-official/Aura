@@ -54,7 +54,7 @@
                     </div>
 
                     <div class="d-flex flex-wrap gap-2">
-                        <button type="submit" class="btn btn-primary">{{if .Project.ID}}Save changes{{else}}Create project{{end}}</button>
+                        <button type="submit" class="btn btn-secondary">{{if .Project.ID}}Save changes{{else}}Create project{{end}}</button>
                         <a href="{{if .Project.ID}}/projects/{{.Project.ID}}{{else}}/projects{{end}}" class="btn btn-outline-secondary">Cancel</a>
                     </div>
                 </form>
