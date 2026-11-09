@@ -6,3 +6,4 @@
 *.db
 backups.log
 .stfolder
+.stignore
