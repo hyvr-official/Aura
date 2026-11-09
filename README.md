@@ -1,16 +1,5 @@
-<p align="center">
-  <img src="web/static/images/aura-logo.svg" alt="Aura" height="64">
-</p>
-
-<p align="center">A simple, self-hosted server control panel for Ubuntu.</p>
-
----
-
-## Introduction
-
-**Aura** is a web-based control panel for managing an Ubuntu server from your browser. It lets you manage Docker containers, Git repositories, Nginx sites, backups, files and more, all in one place.
-
-Aura is written in Go and uses HTML, Javascript for the UI. It ships as a **single binary** with all templates and assets built in. It stores its data in a local SQLite database and runs on port **8445**.
+![Aura logo](https://github.com/hyvr-official/aura/blob/main/art/cover.png?raw=true)
+**Aura** is a web-based control panel for managing an Ubuntu server from your browser. It lets you manage Docker containers, Git repositories, Nginx sites, backups, files and more, all in one place. Aura is written in Go and uses HTML, Javascript for the UI. It ships as a **single binary** with all templates and assets built in. It stores its data in a local SQLite database and runs on port **8445**.
 
 ## Features
 
@@ -34,7 +23,7 @@ Aura is written in Go and uses HTML, Javascript for the UI. It ships as a **sing
 
 ## Installation & usage
 
-### Install
+### :rocket: Install
 
 Download the install script and run it as root:
 
