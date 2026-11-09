@@ -14,8 +14,8 @@ var templateFS embed.FS
 //go:embed static
 var staticFS embed.FS
 
-func Templates() *template.Template {
-	root := template.New("")
+func Templates(version string) *template.Template {
+	root := template.New("").Funcs(template.FuncMap{"version": func() string { return version }})
 	err := fs.WalkDir(templateFS, "templates", func(path string, entry fs.DirEntry, err error) error {
 		if err != nil {
 			return err

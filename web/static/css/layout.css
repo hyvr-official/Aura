@@ -12,6 +12,10 @@
     --bs-offcanvas-width: 260px;
 }
 
+.app-sidebar .offcanvas-body {
+    flex-grow: 1;
+}
+
 .app-sidebar .nav-link {
     display: flex;
     align-items: center;
@@ -67,5 +71,11 @@
         top: var(--aura-navbar-height);
         height: calc(100vh - var(--aura-navbar-height));
         overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .app-sidebar .offcanvas-body {
+        flex-grow: 1;
     }
 }

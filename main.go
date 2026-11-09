@@ -17,7 +17,7 @@ import (
 	"aura/web"
 )
 
-var version = "1.0.1"
+var version = "1.0.2"
 
 func main() {
 	cfg, err := config.Load()
@@ -48,7 +48,7 @@ func main() {
 	if err := repos.FailInterruptedWebhookLogs(); err != nil {
 		log.Printf("webhook logs: mark interrupted: %v", err)
 	}
-	h := handlers.New(cfg, sessions, passwords, web.Templates(), store, runner, files.New(cfg.FilesRoot), repos, repositories.NewGit(), projects.NewStore(db), projects.NewDocker(), console.NewStore(db))
+	h := handlers.New(cfg, sessions, passwords, web.Templates(version), store, runner, files.New(cfg.FilesRoot), repos, repositories.NewGit(), projects.NewStore(db), projects.NewDocker(), console.NewStore(db))
 	protected := func(fn http.HandlerFunc) http.Handler { return auth.RequireAuth(sessions, fn) }
 
 	mux := http.NewServeMux()

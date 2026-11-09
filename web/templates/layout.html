@@ -56,7 +56,7 @@
                 <h5 class="offcanvas-title d-flex align-items-center" id="sidebar-label"><img src="/static/images/aura-logo.svg" alt="Aura" class="aura-logo"></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebar" aria-label="Close"></button>
             </div>
-            <div class="offcanvas-body p-2">
+            <div class="offcanvas-body p-2 d-flex flex-column">
                 <ul class="nav nav-pills flex-column gap-2 w-100 mt-2">
                     <li class="nav-item"><a class="nav-link{{if eq .Active "dashboard"}} active{{end}}" href="/"><i class="ri-dashboard-3-line"></i>Dashboard</a></li>
                     <li class="nav-item"><a class="nav-link{{if eq .Active "projects"}} active{{end}}" href="/projects"><i class="ri-stack-line"></i>Projects</a></li>
@@ -69,6 +69,7 @@
                     <li class="nav-item"><a class="nav-link{{if eq .Active "backups"}} active{{end}}" href="/backups"><i class="ri-archive-line"></i>Backups</a></li>
                     <li class="nav-item"><a class="nav-link{{if eq .Active "settings"}} active{{end}}" href="/settings"><i class="ri-settings-3-line"></i>Settings</a></li>
                 </ul>
+                <div class="mt-auto pt-3 pb-1 text-center small text-body-secondary">v{{version}}</div>
             </div>
         </aside>
         <div class="app-content flex-grow-1">
