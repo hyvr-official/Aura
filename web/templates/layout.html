@@ -25,7 +25,7 @@
                     <i class="ri-menu-line fs-4"></i>
                 </button>
                 <a class="navbar-brand d-flex align-items-center me-0" href="/">
-                    <img src="/static/images/aura-icon.svg" class="aura-logo-icon">
+                    <img src="/static/images/aura-icon.svg" class="aura-logo-icon loading">
                     <img src="/static/images/aura-text.svg" alt="Aura" class="aura-logo">
                 </a>
             </div>
@@ -81,6 +81,20 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.54.1/dist/apexcharts.min.js"></script>
     <script>
+        $(window).on('load', function () {
+            $('.aura-logo-icon').removeClass('loading');
+        });
+
+        $(window).on('beforeunload', function () {
+            $('.aura-logo-icon').addClass('loading');
+        });
+
+        $(window).on('pageshow', function (event) {
+            if (event.originalEvent.persisted) {
+                $('.aura-logo-icon').removeClass('loading');
+            }
+        });
+
         $(function () {
             var usageInterval = 5000;
             var usagePending = null;

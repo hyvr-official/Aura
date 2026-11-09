@@ -154,7 +154,7 @@ input::placeholder{
 }
 
 .aura-logo-icon.loading{
-    animation: snapRotate 1.5s steps(1, end) infinite;
+    animation: snapRotate 1s steps(1, end) infinite;
 }
 
 @keyframes snapRotate {
