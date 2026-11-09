@@ -1,9 +1,9 @@
 {{template "header" .}}
     <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/theme/material-darker.min.css" rel="stylesheet">
-    <link href="/static/css/proxy/edit.css" rel="stylesheet">
+    <link href="/static/css/webserver/edit.css" rel="stylesheet">
     <main class="container py-4" style="max-width: 960px;">
-        <a href="/proxy" class="link-secondary text-decoration-none small"><i class="ri-arrow-left-line"></i> Back to reverse proxy</a>
+        <a href="/web-server" class="link-secondary text-decoration-none small"><i class="ri-arrow-left-line"></i> Back to web server</a>
 
         {{with .Data}}
         <div class="d-flex align-items-center gap-2 mt-2 mb-4">
@@ -21,7 +21,7 @@
 
         <div class="card shadow-sm border-0">
             <div class="card-body p-4">
-                <form method="post" action="/proxy/{{.Site.Name}}" id="config-form">
+                <form method="post" action="/web-server/{{.Site.Name}}" id="config-form">
                     <div class="mb-3">
                         <label for="config" class="form-label">Config <span class="text-body-secondary small">/etc/nginx/sites-available/{{.Site.Name}}</span></label>
                         <div class="config-editor{{if .TestOutput}} is-invalid{{end}}">
@@ -32,7 +32,7 @@
 
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-secondary">Save changes</button>
-                        <a href="/proxy" class="btn btn-outline-secondary">Cancel</a>
+                        <a href="/web-server" class="btn btn-outline-secondary">Cancel</a>
                     </div>
                 </form>
             </div>
@@ -50,7 +50,7 @@
                 </div>
                 {{end}}
 
-                <form method="post" action="/proxy/{{.Site.Name}}/ssl" id="ssl-form" class="row g-2 align-items-end">
+                <form method="post" action="/web-server/{{.Site.Name}}/ssl" id="ssl-form" class="row g-2 align-items-end">
                     <div class="col-sm">
                         <label for="email" class="form-label">Email</label>
                         <input type="email" class="form-control" id="email" name="email" autocomplete="off" value="{{.Email}}" placeholder="admin@example.com">

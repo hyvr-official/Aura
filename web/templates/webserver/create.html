@@ -1,6 +1,6 @@
 {{template "header" .}}
     <main class="container py-4" style="max-width: 640px;">
-        <a href="/proxy" class="link-secondary text-decoration-none small"><i class="ri-arrow-left-line"></i> Back to reverse proxy</a>
+        <a href="/web-server" class="link-secondary text-decoration-none small"><i class="ri-arrow-left-line"></i> Back to web server</a>
         <h1 class="h3 mt-2 mb-4">{{.Title}}</h1>
 
         {{with .Data}}
@@ -13,7 +13,7 @@
 
         <div class="card shadow-sm border-0">
             <div class="card-body p-4">
-                <form method="post" action="/proxy" novalidate>
+                <form method="post" action="/web-server" novalidate>
                     <div class="mb-3">
                         <label for="name" class="form-label">Name <span class="text-danger">*</span></label>
                         <input type="text" class="form-control{{if index .Errors "Name"}} is-invalid{{end}}" id="name" name="name" autocomplete="off" value="{{.Input.Name}}" placeholder="example.com" required autofocus>
@@ -60,7 +60,7 @@
 
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-secondary">Create site</button>
-                        <a href="/proxy" class="btn btn-outline-secondary">Cancel</a>
+                        <a href="/web-server" class="btn btn-outline-secondary">Cancel</a>
                     </div>
                 </form>
             </div>

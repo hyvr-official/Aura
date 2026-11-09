@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"aura/internal/backups"
-	"aura/internal/proxy"
+	"aura/internal/webserver"
 )
 
 type requirement struct {
@@ -110,7 +110,7 @@ func Run() Report {
 		checks = append(checks, Check{Name: "Backup cron", OK: true, Message: "Set (daily at 00:00)"})
 	}
 
-	if err := proxy.EnsureRunning(); err != nil {
+	if err := webserver.EnsureRunning(); err != nil {
 		log.Printf("startup: nginx: %v", err)
 		checks = append(checks, Check{Name: "Nginx service", Message: err.Error()})
 	} else {
