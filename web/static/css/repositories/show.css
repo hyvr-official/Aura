@@ -12,3 +12,38 @@
     word-break: break-word;
     font-size: .8125rem;
 }
+
+.webhook-url {
+    font-family: var(--bs-font-monospace);
+    font-size: .8125rem;
+}
+
+.post-pull-preview {
+    max-height: 160px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.post-pull-editor,
+.webhook-log-viewer {
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+    overflow: hidden;
+}
+
+.post-pull-editor .CodeMirror {
+    height: 320px;
+    font-size: .875rem;
+}
+
+.webhook-log-viewer .CodeMirror {
+    height: 60vh;
+    font-size: .875rem;
+}
+
+@media (max-width: 767.98px) {
+    .post-pull-editor .CodeMirror {
+        height: calc(100vh - 260px);
+    }
+}

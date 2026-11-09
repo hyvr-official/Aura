@@ -17,6 +17,7 @@ const (
 	ActionClone    = "clone"
 	ActionPull     = "pull"
 	ActionCheckout = "checkout"
+	ActionWebhook  = "webhook"
 )
 
 const (
@@ -29,6 +30,7 @@ const (
 
 const (
 	operationTimeout = 5 * time.Minute
+	postPullTimeout  = 30 * time.Minute
 	listTimeout      = 20 * time.Second
 )
 
@@ -193,6 +195,23 @@ func (s *session) run(dir string, args ...string) (string, error) {
 	return string(out), nil
 }
 
+func (s *session) script(dir, script string) error {
+	s.log.WriteString("$ post pull commands\n")
+	cmd := exec.CommandContext(s.ctx, "bash", "-e", "-c", script)
+	cmd.Dir = dir
+	out, err := cmd.CombinedOutput()
+	if text := strings.TrimRight(string(out), "\n"); text != "" {
+		s.log.WriteString(text + "\n")
+	}
+	if errors.Is(s.ctx.Err(), context.DeadlineExceeded) {
+		return errors.New("post pull commands timed out")
+	}
+	if err != nil {
+		return fmt.Errorf("post pull commands: %v", err)
+	}
+	return nil
+}
+
 func (s *session) persistKey() (string, error) {
 	keyPath, err := SaveKeyFile(s.repo)
 	if err != nil {
@@ -241,7 +260,11 @@ func (g *Git) Clone(r Repository) (string, error) {
 }
 
 func (g *Git) Pull(r Repository) (string, error) {
-	s, done, err := g.start(r, operationTimeout, true)
+	timeout := operationTimeout
+	if strings.TrimSpace(r.PostPullCommands) != "" {
+		timeout += postPullTimeout
+	}
+	s, done, err := g.start(r, timeout, true)
 	if err != nil {
 		return err.Error(), err
 	}
@@ -263,8 +286,28 @@ func (g *Git) Pull(r Repository) (string, error) {
 	if _, err := s.run(r.Path, "fetch", "--depth", "1", "origin", "+refs/heads/"+branch+":refs/remotes/origin/"+branch); err != nil {
 		return s.finish(err)
 	}
-	_, err = s.run(r.Path, "reset", "--hard", "origin/"+branch)
-	return s.finish(err)
+	if _, err := s.run(r.Path, "reset", "--hard", "origin/"+branch); err != nil {
+		return s.finish(err)
+	}
+	if strings.TrimSpace(r.PostPullCommands) != "" {
+		return s.finish(s.script(r.Path, r.PostPullCommands))
+	}
+	return s.finish(nil)
+}
+
+func CurrentBranch(r Repository) (string, error) {
+	if _, err := exec.LookPath("git"); err != nil {
+		return "", ErrGitMissing
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), listTimeout)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, "git", "-c", "safe.directory="+r.Path, "rev-parse", "--abbrev-ref", "HEAD")
+	cmd.Dir = r.Path
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("git rev-parse: %v: %s", err, lastLine(string(out)))
+	}
+	return strings.TrimSpace(string(out)), nil
 }
 
 func (g *Git) Checkout(r Repository, branch string) (string, error) {

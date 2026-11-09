@@ -73,6 +73,19 @@ func migrate(db *sql.DB) error {
 			updated_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 		);
 
+		CREATE TABLE IF NOT EXISTS repository_webhook_logs (
+			id            INTEGER PRIMARY KEY AUTOINCREMENT,
+			repository_id INTEGER  NOT NULL,
+			event         TEXT     NOT NULL DEFAULT '',
+			ref           TEXT     NOT NULL DEFAULT '',
+			status        TEXT     NOT NULL,
+			log           TEXT     NOT NULL DEFAULT '',
+			started_at    DATETIME NOT NULL,
+			finished_at   DATETIME
+		);
+
+		CREATE INDEX IF NOT EXISTS idx_repository_webhook_logs_repository_id ON repository_webhook_logs (repository_id, id);
+
 		CREATE TABLE IF NOT EXISTS projects (
 			id             INTEGER PRIMARY KEY AUTOINCREMENT,
 			name           TEXT     NOT NULL,
@@ -109,6 +122,12 @@ func migrate(db *sql.DB) error {
 		return err
 	}
 	if err := renameColumn(db, "backups", "s3_folder", "source_folder"); err != nil {
+		return err
+	}
+	if err := addColumns(db, "repositories", []string{
+		"webhook_token TEXT NOT NULL DEFAULT ''",
+		"post_pull_commands TEXT NOT NULL DEFAULT ''",
+	}); err != nil {
 		return err
 	}
 	return addColumns(db, "backups", []string{

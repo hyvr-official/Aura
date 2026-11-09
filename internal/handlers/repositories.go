@@ -30,6 +30,9 @@ type repositoriesShowData struct {
 	InfoError   string
 	Branches    []string
 	BranchError string
+	WebhookURL  string
+	WebhookPort string
+	WebhookLogs []repositories.WebhookLog
 	Flash       string
 	FlashType   string
 }
@@ -40,19 +43,21 @@ type repositoriesUpsertData struct {
 }
 
 var repositoryFlashes = map[string]string{
-	"created":         "Repository created. Add the deploy key below to GitHub before cloning.",
-	"updated":         "Repository updated.",
-	"remote_failed":   "Repository updated, but changing the remote URL of the cloned folder failed. Check the server logs.",
-	"deleted":         "Repository deleted. The files on disk were not removed.",
-	"key_generated":   "A new SSH key was generated. Update the deploy key in GitHub.",
-	"key_failed":      "Generating a new SSH key failed. Check the server logs.",
-	"key_file_failed": "The SSH key was saved, but writing it to ~/.ssh failed. Check the server logs.",
-	"cloned":          "Repository cloned.",
-	"pulled":          "Latest changes pulled.",
-	"switched":        "Branch changed.",
-	"failed":          "Operation failed. See the output below.",
-	"busy":            "Another operation is already running for this repository.",
-	"invalid_branch":  "Select a valid branch.",
+	"created":             "Repository created. Add the deploy key below to GitHub before cloning.",
+	"updated":             "Repository updated.",
+	"remote_failed":       "Repository updated, but changing the remote URL of the cloned folder failed. Check the server logs.",
+	"deleted":             "Repository deleted. The files on disk were not removed.",
+	"key_generated":       "A new SSH key was generated. Update the deploy key in GitHub.",
+	"key_failed":          "Generating a new SSH key failed. Check the server logs.",
+	"key_file_failed":     "The SSH key was saved, but writing it to ~/.ssh failed. Check the server logs.",
+	"cloned":              "Repository cloned.",
+	"pulled":              "Latest changes pulled.",
+	"switched":            "Branch changed.",
+	"failed":              "Operation failed. See the output below.",
+	"busy":                "Another operation is already running for this repository.",
+	"invalid_branch":      "Select a valid branch.",
+	"webhook_regenerated": "A new webhook URL was generated. Update the webhook in GitHub or GitLab.",
+	"post_pull_saved":     "Post pull commands saved.",
 }
 
 var repositoryFlashTypes = map[string]string{
@@ -94,14 +99,26 @@ func (h *Handlers) RepositoriesShow(w http.ResponseWriter, r *http.Request) {
 	}
 	status := r.URL.Query().Get("status")
 	data := repositoriesShowData{
-		Repository: repo,
-		State:      repositories.State(repo.Path),
-		Flash:      repositoryFlashes[status],
-		FlashType:  repositoryFlashTypes[status],
+		Repository:  repo,
+		State:       repositories.State(repo.Path),
+		WebhookPort: h.cfg.WebhookPort,
+		Flash:       repositoryFlashes[status],
+		FlashType:   repositoryFlashTypes[status],
 	}
 	if data.FlashType == "" {
 		data.FlashType = "success"
 	}
+	if err := h.repos.EnsureWebhookToken(&data.Repository); err != nil {
+		log.Printf("ensure webhook token for repository %q: %v", repo.Name, err)
+	}
+	if data.Repository.WebhookToken != "" {
+		data.WebhookURL = h.webhookURL(r, data.Repository)
+	}
+	logs, err := h.repos.ListWebhookLogs(repo.ID)
+	if err != nil {
+		log.Printf("list webhook logs for repository %q: %v", repo.Name, err)
+	}
+	data.WebhookLogs = logs
 	if data.State.IsRepo() {
 		info, err := repositories.ReadInfo(repo)
 		if err != nil {
@@ -265,6 +282,9 @@ func (h *Handlers) RepositoriesDelete(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := repositories.RemoveKeyFile(repo); err != nil {
 		log.Printf("remove ssh key file for repository %q: %v", repo.Name, err)
+	}
+	if err := h.repos.DeleteWebhookLogs(repo.ID); err != nil {
+		log.Printf("delete webhook logs for repository %q: %v", repo.Name, err)
 	}
 	http.Redirect(w, r, "/repositories?status=deleted", http.StatusSeeOther)
 }

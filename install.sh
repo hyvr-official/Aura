@@ -6,6 +6,7 @@ INSTALL_DIR="/opt/aura"
 SERVICE_NAME="aura"
 SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
 PORT="8445"
+WEBHOOK_PORT="8600"
 
 info() {
 	printf '\033[36m==>\033[0m %s\n' "$1"
@@ -111,5 +112,6 @@ fi
 
 printf '\n\033[32mAura has been installed and is running.\033[0m\n\n'
 printf 'Open \033[1mhttp://%s:%s/setup\033[0m in your browser to complete the setup.\n\n' "${HOST_IP}" "${PORT}"
-printf 'Check status: systemctl status %s\n' "${SERVICE_NAME}"
+printf 'Repository webhooks are received on port \033[1m%s\033[0m. Open this port in your firewall to use them.\n\n' "${WEBHOOK_PORT}"
+printf 'Check status:systemctl status %s\n' "${SERVICE_NAME}"
 printf 'View logs:    journalctl -u %s -f\n' "${SERVICE_NAME}"

@@ -44,7 +44,11 @@ func main() {
 	if !passwords.IsSet() {
 		log.Printf("No password set, open /setup to create one")
 	}
-	h := handlers.New(cfg, sessions, passwords, web.Templates(), store, runner, files.New(cfg.FilesRoot), repositories.NewStore(db), repositories.NewGit(), projects.NewStore(db), projects.NewDocker(), console.NewStore(db))
+	repos := repositories.NewStore(db)
+	if err := repos.FailInterruptedWebhookLogs(); err != nil {
+		log.Printf("webhook logs: mark interrupted: %v", err)
+	}
+	h := handlers.New(cfg, sessions, passwords, web.Templates(), store, runner, files.New(cfg.FilesRoot), repos, repositories.NewGit(), projects.NewStore(db), projects.NewDocker(), console.NewStore(db))
 	protected := func(fn http.HandlerFunc) http.Handler { return auth.RequireAuth(sessions, fn) }
 
 	mux := http.NewServeMux()
@@ -112,6 +116,8 @@ func main() {
 	mux.Handle("POST /repositories/{id}/pull", protected(h.RepositoriesPull))
 	mux.Handle("POST /repositories/{id}/checkout", protected(h.RepositoriesCheckout))
 	mux.Handle("POST /repositories/{id}/delete", protected(h.RepositoriesDelete))
+	mux.Handle("POST /repositories/{id}/webhook", protected(h.RepositoriesWebhookRegenerate))
+	mux.Handle("POST /repositories/{id}/post-pull", protected(h.RepositoriesPostPull))
 
 	mux.Handle("GET /projects", protected(h.ProjectsIndex))
 	mux.Handle("GET /projects/create", protected(h.ProjectsCreate))
@@ -133,6 +139,16 @@ func main() {
 
 	mux.Handle("GET /settings", protected(h.SettingsIndex))
 	mux.Handle("POST /settings/checks", protected(h.SettingsChecks))
+
+	hooks := http.NewServeMux()
+	hooks.HandleFunc("POST /hooks/{token}", h.WebhookReceive)
+	webhookAddr := ":" + cfg.WebhookPort
+	go func() {
+		log.Printf("Aura webhooks listening on http://localhost%s", webhookAddr)
+		if err := http.ListenAndServe(webhookAddr, hooks); err != nil {
+			log.Printf("webhook server: %v", err)
+		}
+	}()
 
 	addr := ":" + cfg.Port
 	log.Printf("Aura %s listening on http://localhost%s", version, addr)

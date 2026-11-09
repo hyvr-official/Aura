@@ -17,6 +17,9 @@ type Repository struct {
 	PublicKey  string
 	PrivateKey string
 
+	WebhookToken     string
+	PostPullCommands string
+
 	LastAction   string
 	LastOutput   string
 	LastActionAt time.Time
@@ -80,6 +83,8 @@ func (r Repository) LastActionLabel() string {
 		return "Pull"
 	case ActionCheckout:
 		return "Change branch"
+	case ActionWebhook:
+		return "Webhook pull"
 	}
 	return r.LastAction
 }
@@ -92,7 +97,7 @@ func NewStore(db *sql.DB) *Store {
 	return &Store{db: db}
 }
 
-const columns = "id, name, url, path, public_key, private_key, last_action, last_output, last_action_at, created_at, updated_at"
+const columns = "id, name, url, path, public_key, private_key, webhook_token, post_pull_commands, last_action, last_output, last_action_at, created_at, updated_at"
 
 type scanner interface {
 	Scan(dest ...any) error
@@ -104,6 +109,7 @@ func scan(row scanner) (Repository, error) {
 	err := row.Scan(
 		&r.ID, &r.Name, &r.URL, &r.Path,
 		&r.PublicKey, &r.PrivateKey,
+		&r.WebhookToken, &r.PostPullCommands,
 		&r.LastAction, &r.LastOutput, &lastActionAt,
 		&r.CreatedAt, &r.UpdatedAt,
 	)
@@ -135,12 +141,24 @@ func (s *Store) Get(id int64) (Repository, error) {
 	return scan(s.db.QueryRow("SELECT "+columns+" FROM repositories WHERE id = ?", id))
 }
 
+func (s *Store) GetByWebhookToken(token string) (Repository, error) {
+	if len(token) < 32 {
+		return Repository{}, sql.ErrNoRows
+	}
+	return scan(s.db.QueryRow("SELECT "+columns+" FROM repositories WHERE webhook_token = ?", token))
+}
+
 func (s *Store) Create(r *Repository) error {
 	now := time.Now().UTC()
+	token, err := NewWebhookToken()
+	if err != nil {
+		return err
+	}
+	r.WebhookToken = token
 	res, err := s.db.Exec(
-		`INSERT INTO repositories (name, url, path, public_key, private_key, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?)`,
-		r.Name, r.URL, r.Path, r.PublicKey, r.PrivateKey, now, now,
+		`INSERT INTO repositories (name, url, path, public_key, private_key, webhook_token, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		r.Name, r.URL, r.Path, r.PublicKey, r.PrivateKey, r.WebhookToken, now, now,
 	)
 	if err != nil {
 		return err
@@ -167,6 +185,40 @@ func (s *Store) UpdateKey(id int64, public, private string) error {
 	res, err := s.db.Exec(
 		"UPDATE repositories SET public_key = ?, private_key = ?, updated_at = ? WHERE id = ?",
 		public, private, time.Now().UTC(), id,
+	)
+	if err != nil {
+		return err
+	}
+	return affected(res)
+}
+
+func (s *Store) EnsureWebhookToken(r *Repository) error {
+	if r.WebhookToken != "" {
+		return nil
+	}
+	return s.RegenerateWebhookToken(r)
+}
+
+func (s *Store) RegenerateWebhookToken(r *Repository) error {
+	token, err := NewWebhookToken()
+	if err != nil {
+		return err
+	}
+	res, err := s.db.Exec("UPDATE repositories SET webhook_token = ? WHERE id = ?", token, r.ID)
+	if err != nil {
+		return err
+	}
+	if err := affected(res); err != nil {
+		return err
+	}
+	r.WebhookToken = token
+	return nil
+}
+
+func (s *Store) UpdatePostPullCommands(id int64, commands string) error {
+	res, err := s.db.Exec(
+		"UPDATE repositories SET post_pull_commands = ?, updated_at = ? WHERE id = ?",
+		commands, time.Now().UTC(), id,
 	)
 	if err != nil {
 		return err
