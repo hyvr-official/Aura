@@ -1,11 +1,11 @@
 {{template "header" .}}
     <link href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.min.css" rel="stylesheet">
-    <link href="/static/css/proxy/index.css" rel="stylesheet">
+    <link href="/static/css/webserver/index.css" rel="stylesheet">
     <main class="container py-4">
         <div class="d-flex align-items-center justify-content-between mb-4">
-            <h1 class="h5 mb-0">Reverse Proxy</h1>
+            <h1 class="h5 mb-0">Web Server</h1>
             {{if not .Data.NginxMissing}}
-            <a href="/proxy/create" class="btn btn-secondary">New site</a>
+            <a href="/web-server/create" class="btn btn-secondary">New site</a>
             {{end}}
         </div>
 
@@ -39,7 +39,7 @@
                     <tbody>
                         {{range .Data.Sites}}
                         <tr>
-                            <td class="fw-medium"><a href="/proxy/{{.Name}}/edit" class="link-body-emphasis text-decoration-none">{{.Name}}</a></td>
+                            <td class="fw-medium"><a href="/web-server/{{.Name}}/edit" class="link-body-emphasis text-decoration-none">{{.Name}}</a></td>
                             <td>{{.DomainsLabel}}</td>
                             <td>{{if .Upstream}}<code>{{.Upstream}}</code>{{else}}<span class="text-body-secondary">—</span>{{end}}</td>
                             <td>{{if .SSL}}<span class="badge text-bg-success">SSL</span>{{else}}<span class="badge text-bg-secondary">None</span>{{end}}</td>
@@ -47,17 +47,17 @@
                             <td class="text-body-secondary text-nowrap">{{.ModifiedLabel}}</td>
                             <td class="text-end text-nowrap">
                                 <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#logs-modal" data-site-name="{{.Name}}">Logs</button>
-                                <a href="/proxy/{{.Name}}/edit" class="btn btn-outline-secondary btn-sm">Edit</a>
+                                <a href="/web-server/{{.Name}}/edit" class="btn btn-outline-secondary btn-sm">Edit</a>
                                 {{if .Enabled}}
-                                <form method="post" action="/proxy/{{.Name}}/disable" class="d-inline" onsubmit="return confirm('Disable this site?');">
+                                <form method="post" action="/web-server/{{.Name}}/disable" class="d-inline" onsubmit="return confirm('Disable this site?');">
                                     <button type="submit" class="btn btn-outline-warning btn-sm">Disable</button>
                                 </form>
                                 {{else}}
-                                <form method="post" action="/proxy/{{.Name}}/enable" class="d-inline">
+                                <form method="post" action="/web-server/{{.Name}}/enable" class="d-inline">
                                     <button type="submit" class="btn btn-outline-success btn-sm">Enable</button>
                                 </form>
                                 {{end}}
-                                <form method="post" action="/proxy/{{.Name}}/delete" class="d-inline" onsubmit="return confirm('Delete this site? Its config file will be removed.');">
+                                <form method="post" action="/web-server/{{.Name}}/delete" class="d-inline" onsubmit="return confirm('Delete this site? Its config file will be removed.');">
                                     <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
                                 </form>
                             </td>
@@ -69,7 +69,7 @@
             {{else}}
             <div class="card-body text-center py-5">
                 <p class="text-body-secondary mb-3">No nginx sites yet.</p>
-                <a href="/proxy/create" class="btn btn-secondary">Create your first site</a>
+                <a href="/web-server/create" class="btn btn-secondary">Create your first site</a>
             </div>
             {{end}}
         </div>
@@ -123,7 +123,7 @@
                 closeSocket();
                 session.term.reset();
                 var type = $('input[name="log-type"]:checked').val();
-                var socket = new WebSocket(socketUrl('/proxy/' + encodeURIComponent(session.name) + '/logs?type=' + type));
+                var socket = new WebSocket(socketUrl('/web-server/' + encodeURIComponent(session.name) + '/logs?type=' + type));
                 socket.binaryType = 'arraybuffer';
                 socket.onopen = function () {
                     $('#logs-live').removeClass('d-none');
