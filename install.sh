@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO="hyvr-official/aura"
+REPO="hyvr-official/Aura"
 INSTALL_DIR="/opt/aura"
 SERVICE_NAME="aura"
 SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"

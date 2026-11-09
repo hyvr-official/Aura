@@ -1,4 +1,4 @@
-![Aura logo](https://github.com/hyvr-official/aura/blob/master/art/cover.png?raw=true)
+![Aura logo](https://github.com/hyvr-official/Aura/blob/master/art/cover.png?raw=true)
 **Aura** is a web-based control panel for managing an Ubuntu server from your browser. It lets you manage Docker containers, Git repositories, Nginx sites, backups, files and more, all in one place. Aura is written in Go and uses HTML, Javascript for the UI. It ships as a **single binary** with all templates and assets built in. It stores its data in a local SQLite database and runs on port **8445**.
 
 ## :zap: Features
@@ -28,7 +28,7 @@
 Download the install script and run it as root:
 
 ```bash
-wget -O install.sh https://raw.githubusercontent.com/hyvr-official/aura/master/install.sh
+wget -O install.sh https://raw.githubusercontent.com/hyvr-official/Aura/master/install.sh
 sudo bash install.sh
 ```
 
