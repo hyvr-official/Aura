@@ -2,6 +2,9 @@ version: 2
 
 project_name: aura
 
+env:
+  - GOOS=linux
+
 before:
   hooks:
     - go mod tidy
@@ -26,7 +29,13 @@ builds:
 archives:
   - id: aura
     formats: [tar.gz]
-    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    name_template: >-
+      {{ "aura" }}_
+      {{- tolower .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
 
 checksum:
   name_template: checksums.txt
