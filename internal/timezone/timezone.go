@@ -15,13 +15,18 @@ import (
 )
 
 const (
-	settingKey  = "timezone"
-	zoneinfoDir = "/usr/share/zoneinfo"
+	settingKey      = "timezone"
+	clockSettingKey = "time_format"
+	zoneinfoDir     = "/usr/share/zoneinfo"
+	Clock12         = "12"
+	Clock24         = "24"
+	DefaultClock    = Clock12
 )
 
 var (
 	current     atomic.Pointer[time.Location]
 	currentName atomic.Value
+	clock       atomic.Value
 	optionsOnce sync.Once
 	options     []string
 	regions     = []string{"Africa", "America", "Antarctica", "Asia", "Atlantic", "Australia", "Europe", "Indian", "Pacific"}
@@ -38,6 +43,62 @@ func NewStore(db *sql.DB) *Store {
 }
 
 func (s *Store) Load() error {
+	return errors.Join(s.loadZone(), s.loadClock())
+}
+
+func (s *Store) loadClock() error {
+	var value string
+	err := s.db.QueryRow(`SELECT value FROM settings WHERE key = ?`, clockSettingKey).Scan(&value)
+	if errors.Is(err, sql.ErrNoRows) {
+		clock.Store(DefaultClock)
+		return nil
+	}
+	if err != nil {
+		clock.Store(DefaultClock)
+		return err
+	}
+	if !validClock(value) {
+		value = DefaultClock
+	}
+	clock.Store(value)
+	return nil
+}
+
+func (s *Store) SaveClock(value string) error {
+	value = strings.TrimSpace(value)
+	if !validClock(value) {
+		return ErrInvalid
+	}
+	_, err := s.db.Exec(`INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value`, clockSettingKey, value)
+	if err != nil {
+		return err
+	}
+	clock.Store(value)
+	return nil
+}
+
+func validClock(value string) bool {
+	return value == Clock12 || value == Clock24
+}
+
+func Clock() string {
+	if value, ok := clock.Load().(string); ok {
+		return value
+	}
+	return DefaultClock
+}
+
+func layoutFor(layout string) string {
+	if Clock() != Clock12 {
+		return layout
+	}
+	if strings.Contains(layout, "15:04:05") {
+		return strings.Replace(layout, "15:04:05", "03:04:05 PM", 1)
+	}
+	return strings.Replace(layout, "15:04", "03:04 PM", 1)
+}
+
+func (s *Store) loadZone() error {
 	var name string
 	err := s.db.QueryRow(`SELECT value FROM settings WHERE key = ?`, settingKey).Scan(&name)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -120,7 +181,7 @@ func Format(t time.Time, layout string) string {
 	if t.IsZero() {
 		return ""
 	}
-	return t.In(Location()).Format(layout)
+	return t.In(Location()).Format(layoutFor(layout))
 }
 
 func Options() []string {

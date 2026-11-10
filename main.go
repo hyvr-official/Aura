@@ -156,6 +156,7 @@ func main() {
 	mux.Handle("GET /settings", protected(h.SettingsIndex))
 	mux.Handle("POST /settings/checks", protected(h.SettingsChecks))
 	mux.Handle("POST /settings/timezone", protected(h.SettingsTimezone))
+	mux.Handle("POST /settings/time-format", protected(h.SettingsTimeFormat))
 
 	hooks := http.NewServeMux()
 	hooks.HandleFunc("POST /hooks/{token}", h.WebhookReceive)

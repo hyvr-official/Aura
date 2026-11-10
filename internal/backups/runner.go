@@ -89,7 +89,7 @@ func (r *Runner) RunOne(b Backup, trigger string) error {
 func (r *Runner) Execute(b Backup, run Run) (err error) {
 	var logs strings.Builder
 	logf := func(format string, args ...any) {
-		fmt.Fprintf(&logs, "[%s] %s\n", timezone.Now().Format("2006-01-02 15:04:05"), fmt.Sprintf(format, args...))
+		fmt.Fprintf(&logs, "[%s] %s\n", timezone.Format(time.Now(), "2006-01-02 15:04:05"), fmt.Sprintf(format, args...))
 	}
 
 	defer func() {

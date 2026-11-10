@@ -23,7 +23,7 @@
                 <p class="text-body-secondary small mb-3">Timestamps across every module are shown in this timezone.</p>
                 <form method="post" action="/settings/timezone" autocomplete="off">
                     <div class="row g-2 align-items-end">
-                        <div class="col-12 col-md-8 col-lg-6">
+                        <div class="col-12 col-md-6">
                             <select class="form-select" id="timezone" name="timezone" autocomplete="off">
                                 <option value=""{{if eq .Data.Timezone ""}} selected{{end}}>Server default ({{.Data.ServerZone}})</option>
                                 {{$selected := .Data.Timezone}}
@@ -37,6 +37,26 @@
                         </div>
                     </div>
                     <div class="form-text">Current time: {{formatTime .Data.Now "2006-01-02 15:04:05 MST"}}</div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body">
+                <h2 class="h5 mb-1">Time format</h2>
+                <p class="text-body-secondary small mb-3">Timestamps across every module are shown in this clock format.</p>
+                <form method="post" action="/settings/time-format" autocomplete="off">
+                    <div class="row g-2 align-items-end">
+                        <div class="col-12 col-md-6">
+                            <select class="form-select" id="time_format" name="time_format" autocomplete="off">
+                                <option value="12"{{if eq .Data.Clock "12"}} selected{{end}}>12-hour (03:04 PM)</option>
+                                <option value="24"{{if eq .Data.Clock "24"}} selected{{end}}>24-hour (15:04)</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-auto">
+                            <button type="submit" class="btn btn-secondary w-100">Save</button>
+                        </div>
+                    </div>
                 </form>
             </div>
         </div>

@@ -15,6 +15,7 @@ type settingsData struct {
 	Timezone   string
 	Timezones  []string
 	ServerZone string
+	Clock      string
 	Now        time.Time
 	Flash      string
 	Error      string
@@ -22,11 +23,14 @@ type settingsData struct {
 
 var settingsFlashes = map[string]string{
 	"timezone_updated": "Timezone updated.",
+	"clock_updated":    "Time format updated.",
 }
 
 var settingsErrors = map[string]string{
 	"timezone_invalid": "Choose a valid timezone.",
 	"timezone_failed":  "Could not save the timezone. Check the server logs.",
+	"clock_invalid":    "Choose a valid time format.",
+	"clock_failed":     "Could not save the time format. Check the server logs.",
 }
 
 func (h *Handlers) SettingsIndex(w http.ResponseWriter, r *http.Request) {
@@ -39,6 +43,7 @@ func (h *Handlers) SettingsIndex(w http.ResponseWriter, r *http.Request) {
 			Timezone:   timezone.Name(),
 			Timezones:  timezone.Options(),
 			ServerZone: timezone.ServerName(),
+			Clock:      timezone.Clock(),
 			Now:        time.Now(),
 			Flash:      settingsFlashes[status],
 			Error:      settingsErrors[status],
@@ -57,6 +62,19 @@ func (h *Handlers) SettingsTimezone(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.Redirect(w, r, "/settings?status=timezone_updated", http.StatusSeeOther)
+}
+
+func (h *Handlers) SettingsTimeFormat(w http.ResponseWriter, r *http.Request) {
+	if err := h.timezones.SaveClock(r.PostFormValue("time_format")); err != nil {
+		if errors.Is(err, timezone.ErrInvalid) {
+			http.Redirect(w, r, "/settings?status=clock_invalid", http.StatusSeeOther)
+			return
+		}
+		log.Printf("save time format: %v", err)
+		http.Redirect(w, r, "/settings?status=clock_failed", http.StatusSeeOther)
+		return
+	}
+	http.Redirect(w, r, "/settings?status=clock_updated", http.StatusSeeOther)
 }
 
 func (h *Handlers) SettingsChecks(w http.ResponseWriter, r *http.Request) {
