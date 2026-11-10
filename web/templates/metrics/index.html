@@ -1,0 +1,236 @@
+{{template "header" .}}
+    <main class="container py-4">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <h1 class="h5 mb-0">Metrics</h1>
+            <span class="badge text-bg-secondary" id="metrics-live">Connecting</span>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-6 col-lg-2">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body text-center">
+                        <h2 class="h6 text-body-secondary text-uppercase mb-0">CPU</h2>
+                        <div id="chart-cpu"></div>
+                        <div class="small text-body-secondary" id="detail-cpu">&nbsp;</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-2">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body text-center">
+                        <h2 class="h6 text-body-secondary text-uppercase mb-0">Memory</h2>
+                        <div id="chart-memory"></div>
+                        <div class="small text-body-secondary" id="detail-memory">&nbsp;</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-2">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body text-center">
+                        <h2 class="h6 text-body-secondary text-uppercase mb-0">Swap</h2>
+                        <div id="chart-swap"></div>
+                        <div class="small text-body-secondary" id="detail-swap">&nbsp;</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-2">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body text-center">
+                        <h2 class="h6 text-body-secondary text-uppercase mb-0">Storage</h2>
+                        <div id="chart-disk"></div>
+                        <div class="small text-body-secondary" id="detail-disk">&nbsp;</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0 mt-4">
+            <div class="card-header bg-transparent d-flex align-items-center justify-content-between">
+                <h2 class="h6 mb-0">Top processes</h2>
+                <div class="btn-group btn-group-sm" role="group" aria-label="Sort processes">
+                    <input type="radio" class="btn-check" name="process-sort" id="process-sort-cpu" value="cpu" autocomplete="off" checked>
+                    <label class="btn btn-outline-secondary" for="process-sort-cpu"><i class="ri-sort-desc"></i> CPU</label>
+                    <input type="radio" class="btn-check" name="process-sort" id="process-sort-memory" value="memory" autocomplete="off">
+                    <label class="btn btn-outline-secondary" for="process-sort-memory">Memory</label>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover table-sm align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th class="ps-3">PID</th>
+                            <th>Name</th>
+                            <th>User</th>
+                            <th>State</th>
+                            <th class="text-end">CPU</th>
+                            <th class="text-end">Memory</th>
+                            <th class="text-end pe-3">RAM</th>
+                        </tr>
+                    </thead>
+                    <tbody id="process-rows">
+                        <tr><td colspan="7" class="text-center text-body-secondary py-4">Loading…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+{{template "footer" .}}
+    <script>
+        $(function () {
+            var statsInterval = 3000;
+
+            function usageColor(value) {
+                if (value > 80) {
+                    return '#ff524b';
+                }
+                if (value < 30) {
+                    return '#00c363';
+                }
+                return '#ffee49';
+            }
+
+            function setUsage(chart, value) {
+                chart.updateOptions({ colors: [usageColor(value)], series: [value] });
+            }
+
+            function radialChart(selector) {
+                var chart = new ApexCharts(document.querySelector(selector), {
+                    chart: {
+                        type: 'radialBar',
+                        height: 260,
+                        background: 'transparent',
+                        fontFamily: '"Space Grotesk", sans-serif',
+                        animations: { enabled: true, dynamicAnimation: { enabled: true, speed: 600 } }
+                    },
+                    theme: { mode: 'dark' },
+                    series: [0],
+                    colors: [usageColor(0)],
+                    plotOptions: {
+                        radialBar: {
+                            hollow: { size: '63%' },
+                            track: { background: '#2b3035', strokeWidth: '100%' },
+                            dataLabels: {
+                                name: { show: false },
+                                value: {
+                                    show: true,
+                                    offsetY: 8,
+                                    fontSize: '28px',
+                                    fontFamily: '"Space Grotesk", sans-serif',
+                                    fontWeight: 600,
+                                    color: '#dee2e6',
+                                    formatter: function (val) {
+                                        return Math.round(Number(val)) + '%';
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    stroke: { lineCap: 'round' },
+                    labels: ['Usage']
+                });
+                chart.render();
+                return chart;
+            }
+
+            var charts = {
+                cpu: radialChart('#chart-cpu'),
+                memory: radialChart('#chart-memory'),
+                swap: radialChart('#chart-swap'),
+                disk: radialChart('#chart-disk')
+            };
+
+            var processSort = 'cpu';
+            var pending = null;
+            var timer = null;
+
+            function renderProcesses(processes) {
+                var rows = $('#process-rows').empty();
+                if (!processes || processes.length === 0) {
+                    rows.append($('<tr>').append($('<td>', { colspan: 7, 'class': 'text-center text-body-secondary py-4' }).text('No processes found.')));
+                    return;
+                }
+                $.each(processes, function (i, process) {
+                    rows.append($('<tr>').append(
+                        $('<td>', { 'class': 'ps-3 text-body-secondary' }).text(process.pid),
+                        $('<td>', { 'class': 'fw-semibold' }).text(process.name),
+                        $('<td>').text(process.user),
+                        $('<td>').text(process.state),
+                        $('<td>', { 'class': 'text-end' }).text(process.cpu.toFixed(1) + '%'),
+                        $('<td>', { 'class': 'text-end' }).text(process.memPercent.toFixed(1) + '%'),
+                        $('<td>', { 'class': 'text-end pe-3' }).text(formatBytes(process.memory))
+                    ));
+                });
+            }
+
+            function formatBytes(bytes) {
+                var units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
+                var i = 0;
+                var value = bytes;
+                while (value >= 1024 && i < units.length - 1) {
+                    value /= 1024;
+                    i++;
+                }
+                return value.toFixed(i === 0 ? 0 : 1) + ' ' + units[i];
+            }
+
+            function setLive(ok) {
+                $('#metrics-live')
+                    .toggleClass('text-bg-success', ok)
+                    .toggleClass('text-bg-danger', !ok)
+                    .removeClass('text-bg-secondary')
+                    .text(ok ? 'Live' : 'Offline');
+            }
+
+            function schedule(delay) {
+                clearTimeout(timer);
+                timer = setTimeout(refreshStats, delay);
+            }
+
+            function refreshStats() {
+                if (document.hidden) {
+                    schedule(statsInterval);
+                    return;
+                }
+                if (pending) {
+                    pending.abort();
+                }
+                pending = $.ajax({ url: '/metrics/stats', data: { sort: processSort }, cache: false, dataType: 'text' });
+                pending
+                    .done(function (body, status, xhr) {
+                        if (!xhr.getResponseHeader('X-Metrics-Stats')) {
+                            location.reload();
+                            return;
+                        }
+                        var stats = JSON.parse(body);
+                        setUsage(charts.cpu, stats.cpu);
+                        setUsage(charts.memory, stats.memPercent);
+                        setUsage(charts.swap, stats.swapPercent);
+                        setUsage(charts.disk, stats.diskPercent);
+                        $('#detail-cpu').text('Current load');
+                        $('#detail-memory').text(formatBytes(stats.memUsed) + ' / ' + formatBytes(stats.memTotal));
+                        $('#detail-swap').text(stats.swapTotal > 0 ? formatBytes(stats.swapUsed) + ' / ' + formatBytes(stats.swapTotal) : 'No swap configured');
+                        $('#detail-disk').text(formatBytes(stats.diskUsed) + ' / ' + formatBytes(stats.diskTotal));
+                        renderProcesses(stats.processes);
+                        setLive(true);
+                        schedule(statsInterval);
+                    })
+                    .fail(function (xhr, status) {
+                        if (status === 'abort') {
+                            return;
+                        }
+                        setLive(false);
+                        schedule(statsInterval);
+                    })
+                    .always(function () {
+                        pending = null;
+                    });
+            }
+
+            $('input[name="process-sort"]').on('change', function () {
+                processSort = $(this).val();
+                refreshStats();
+            });
+
+            refreshStats();
+        });
+    </script>

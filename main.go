@@ -60,8 +60,10 @@ func main() {
 	mux.HandleFunc("POST /setup", h.Setup)
 	mux.HandleFunc("POST /setup/checks", h.SetupChecks)
 	mux.Handle("GET /{$}", protected(h.Dashboard))
-	mux.Handle("GET /dashboard/stats", protected(h.DashboardStats))
 	mux.Handle("GET /system/usage", protected(h.SystemUsage))
+
+	mux.Handle("GET /metrics", protected(h.Metrics))
+	mux.Handle("GET /metrics/stats", protected(h.MetricsStats))
 
 	mux.Handle("GET /backups", protected(h.BackupsIndex))
 	mux.Handle("GET /backups/create", protected(h.BackupsCreate))

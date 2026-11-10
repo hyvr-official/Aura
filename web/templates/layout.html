@@ -30,6 +30,7 @@
                 </a>
             </div>
             <div class="ms-auto d-flex align-items-center gap-2">
+                {{if ne .Active "metrics"}}
                 <div class="d-flex align-items-center" id="nav-gauge-cpu" title="CPU usage">
                     <div class="nav-gauge-chart" id="nav-chart-cpu"></div>
                     <div class="nav-gauge-label small">
@@ -44,6 +45,7 @@
                         <div class="fw-semibold" id="nav-memory-value">–</div>
                     </div>
                 </div>
+                {{end}}
                 <form method="post" action="/logout" class="d-flex">
                     <button type="submit" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1" title="Log out"><i class="ri-logout-box-r-line"></i><span class="d-none d-sm-inline">Log out</span></button>
                 </form>
@@ -59,6 +61,7 @@
             <div class="offcanvas-body p-2 d-flex flex-column">
                 <ul class="nav nav-pills flex-column gap-2 w-100 mt-2">
                     <li class="nav-item"><a class="nav-link{{if eq .Active "dashboard"}} active{{end}}" href="/"><i class="ri-dashboard-3-line"></i>Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link{{if eq .Active "metrics"}} active{{end}}" href="/metrics"><i class="ri-pulse-line"></i>Metrics</a></li>
                     <li class="nav-item"><a class="nav-link{{if eq .Active "projects"}} active{{end}}" href="/projects"><i class="ri-stack-line"></i>Projects</a></li>
                     <li class="nav-item"><a class="nav-link{{if eq .Active "repositories"}} active{{end}}" href="/repositories"><i class="ri-git-repository-line"></i>Repositories</a></li>
                     <li class="nav-item"><a class="nav-link{{if eq .Active "containers"}} active{{end}}" href="/containers"><i class="ri-box-3-line"></i>Containers</a></li>
@@ -95,7 +98,9 @@
                 $('.aura-logo-icon').removeClass('loading');
             }
         });
-
+    </script>
+    {{if ne .Active "metrics"}}
+    <script>
         $(function () {
             var usageInterval = 5000;
             var usagePending = null;
@@ -202,6 +207,7 @@
             refreshUsage();
         });
     </script>
+    {{end}}
 </body>
 </html>
 {{end}}

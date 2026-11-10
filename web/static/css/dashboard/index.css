@@ -1,0 +1,26 @@
+.module-card {
+    transition: transform .15s ease, background-color .15s ease, box-shadow .15s ease;
+}
+
+.module-card:hover {
+    transform: translateY(-2px);
+    background-color: var(--bs-secondary-bg);
+    box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .35) !important;
+}
+
+.module-card-icon {
+    flex-shrink: 0;
+    width: 2.75rem;
+    height: 2.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: .5rem;
+    background-color: var(--bs-tertiary-bg);
+    color: var(--bs-emphasis-color);
+    font-size: 1.4rem;
+}
+
+.module-card:hover .module-card-icon {
+    background-color: var(--bs-body-bg);
+}
