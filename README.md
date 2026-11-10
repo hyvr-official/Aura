@@ -39,16 +39,6 @@ The script will:
 3. Create and start the `aura` systemd service.
 4. Print the URL to finish the setup.
 
-### Update
-
-To update Aura, run the same install script again:
-
-```bash
-wget -O install.sh https://raw.githubusercontent.com/hyvr-official/Aura/master/install.sh && sudo bash install.sh
-```
-
-The script detects the existing install and updates Aura in place. Your database, files and service settings are kept.
-
 ### Automatic dependency setup
 
 You don't need to install anything else by hand. Each time Aura starts, it checks for the tools it needs and **installs any that are missing** using `apt`:
@@ -78,6 +68,16 @@ systemctl status aura      # Check the service status
 journalctl -u aura -f      # Follow the logs
 systemctl restart aura     # Restart Aura
 ```
+
+### Update
+
+To update Aura, run the same install script again:
+
+```bash
+wget -O install.sh https://raw.githubusercontent.com/hyvr-official/Aura/master/install.sh && sudo bash install.sh
+```
+
+The script detects the existing install and updates Aura in place. Your database, files and service settings are kept.
 
 ## :hammer_and_wrench: How to build
 You can build the binaries or do development of Aura by following the below steps. Aura is build fully on Golang and Goreleaser is used for building releases. So you should install latest version of Go from [here](https://go.dev/doc/install).
