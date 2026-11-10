@@ -19,8 +19,9 @@
                     <thead>
                         <tr>
                             <th>Name</th>
-                            <th>Path</th>
+                            <th>Paths</th>
                             <th>Frequency</th>
+                            <th>Status</th>
                             <th>Source</th>
                             <th>Last run on</th>
                             <th class="text-end">Actions</th>
@@ -30,8 +31,9 @@
                         {{range .Data.Backups}}
                         <tr>
                             <td class="fw-medium"><a href="/backups/{{.ID}}" class="link-body-emphasis text-decoration-none">{{.Name}}</a></td>
-                            <td><code>{{.Path}}</code></td>
+                            <td class="text-nowrap"{{if .Paths}} title="{{.PathsTitle}}"{{end}}>{{if .Paths}}<code>{{index .Paths 0}}</code>{{if .PathsMore}} <span class="badge text-bg-secondary">+{{.PathsMore}} more</span>{{end}}{{else}}<span class="text-body-secondary">—</span>{{end}}</td>
                             <td>{{.FrequencyLabel}}</td>
+                            <td>{{if .IsManual}}<span class="text-body-secondary">—</span>{{else}}<span class="badge {{if .IsActive}}text-bg-success{{else}}text-bg-secondary{{end}}">{{.StatusLabel}}</span>{{end}}</td>
                             <td>{{.SourceLabel}}</td>
                             <td class="text-body-secondary text-nowrap"{{if not .LastRunAt.IsZero}} title="{{formatTime .LastRunAt "2006-01-02 15:04"}}"{{end}}>{{.LastRunLabel}}</td>
                             <td class="text-end text-nowrap">

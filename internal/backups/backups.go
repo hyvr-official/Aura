@@ -13,8 +13,9 @@ import (
 type Backup struct {
 	ID        int64
 	Name      string
-	Path      string
+	Paths     []string
 	Frequency string
+	Status    string
 	Source    string
 
 	SourceFolder string
@@ -53,6 +54,16 @@ var Frequencies = []Option{
 }
 
 const (
+	StatusActive   = "active"
+	StatusInactive = "inactive"
+)
+
+var Statuses = []Option{
+	{Value: StatusActive, Label: "Active"},
+	{Value: StatusInactive, Label: "Inactive"},
+}
+
+const (
 	SourceAWSS3 = "aws_s3"
 	SourceLocal = "local"
 )
@@ -73,6 +84,10 @@ func (b Backup) StorageClassLabel() string { return label(StorageClasses, b.S3St
 func (b Backup) IsAWSS3() bool             { return b.Source == SourceAWSS3 }
 func (b Backup) IsLocal() bool             { return b.Source == SourceLocal }
 func (b Backup) IsManual() bool            { return b.Frequency == FrequencyManual }
+func (b Backup) StatusLabel() string       { return label(Statuses, b.Status) }
+func (b Backup) IsActive() bool            { return b.Status != StatusInactive }
+func (b Backup) PathsMore() int            { return max(len(b.Paths)-1, 0) }
+func (b Backup) PathsTitle() string        { return strings.Join(b.Paths, "\n") }
 
 func (b Backup) LastRunLabel() string {
 	if b.LastRunAt.IsZero() {
@@ -140,8 +155,20 @@ func day(t time.Time) time.Time {
 
 func (b *Backup) Normalize() {
 	b.Name = strings.TrimSpace(b.Name)
-	b.Path = strings.TrimSpace(b.Path)
+	var paths []string
+	for _, p := range b.Paths {
+		p = strings.TrimSpace(p)
+		if p == "" {
+			continue
+		}
+		paths = append(paths, path.Clean(p))
+	}
+	b.Paths = paths
 	b.Frequency = strings.TrimSpace(b.Frequency)
+	b.Status = strings.TrimSpace(b.Status)
+	if b.IsManual() || b.Status == "" {
+		b.Status = StatusActive
+	}
 	b.Source = strings.TrimSpace(b.Source)
 	b.SourceFolder = strings.Trim(strings.TrimSpace(b.SourceFolder), "/")
 	b.S3AccessKey = strings.TrimSpace(b.S3AccessKey)
@@ -161,11 +188,13 @@ func (b Backup) Validate() map[string]string {
 	if b.Name == "" {
 		errs["Name"] = "Name is required."
 	}
-	if b.Path == "" {
-		errs["Path"] = "Path is required."
+	if msg := validatePaths(b.Paths); msg != "" {
+		errs["Paths"] = msg
 	}
 	if !valid(Frequencies, b.Frequency) {
 		errs["Frequency"] = "Select a valid frequency."
+	} else if !b.IsManual() && !valid(Statuses, b.Status) {
+		errs["Status"] = "Select a valid status."
 	}
 	if !valid(Sources, b.Source) {
 		errs["Source"] = "Select a valid source."
@@ -203,6 +232,29 @@ func (b Backup) Validate() map[string]string {
 	return errs
 }
 
+func validatePaths(paths []string) string {
+	if len(paths) == 0 {
+		return "At least one path is required."
+	}
+	seen := map[string]bool{}
+	names := map[string]bool{}
+	for _, p := range paths {
+		if !strings.HasPrefix(p, "/") {
+			return "Paths must be absolute paths."
+		}
+		if seen[p] {
+			return "Paths must be unique."
+		}
+		seen[p] = true
+		name := path.Base(p)
+		if names[name] {
+			return "Paths must have different folder names."
+		}
+		names[name] = true
+	}
+	return ""
+}
+
 func valid(options []Option, value string) bool {
 	for _, o := range options {
 		if o.Value == value {
@@ -220,7 +272,7 @@ func NewStore(db *sql.DB) *Store {
 	return &Store{db: db}
 }
 
-const columns = "id, name, path, frequency, source, source_folder, limit_enabled, limit_count, s3_access_key, s3_secret, s3_region, s3_bucket, s3_storage_class, local_path, pre_run_enabled, pre_run_script, created_at, updated_at"
+const columns = "id, name, frequency, status, source, source_folder, limit_enabled, limit_count, s3_access_key, s3_secret, s3_region, s3_bucket, s3_storage_class, local_path, pre_run_enabled, pre_run_script, created_at, updated_at"
 
 type scanner interface {
 	Scan(dest ...any) error
@@ -229,7 +281,7 @@ type scanner interface {
 func scan(row scanner) (Backup, error) {
 	var b Backup
 	err := row.Scan(
-		&b.ID, &b.Name, &b.Path, &b.Frequency, &b.Source,
+		&b.ID, &b.Name, &b.Frequency, &b.Status, &b.Source,
 		&b.SourceFolder, &b.LimitEnabled, &b.LimitCount,
 		&b.S3AccessKey, &b.S3Secret, &b.S3Region, &b.S3Bucket, &b.S3StorageClass,
 		&b.LocalPath,
@@ -254,19 +306,77 @@ func (s *Store) List() ([]Backup, error) {
 		}
 		list = append(list, b)
 	}
-	return list, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	rows.Close()
+
+	paths, err := s.loadPaths("SELECT backup_id, path FROM backup_paths ORDER BY backup_id, position, id")
+	if err != nil {
+		return nil, err
+	}
+	for i := range list {
+		list[i].Paths = paths[list[i].ID]
+	}
+	return list, nil
 }
 
 func (s *Store) Get(id int64) (Backup, error) {
-	return scan(s.db.QueryRow("SELECT "+columns+" FROM backups WHERE id = ?", id))
+	b, err := scan(s.db.QueryRow("SELECT "+columns+" FROM backups WHERE id = ?", id))
+	if err != nil {
+		return b, err
+	}
+	paths, err := s.loadPaths("SELECT backup_id, path FROM backup_paths WHERE backup_id = ? ORDER BY position, id", id)
+	if err != nil {
+		return b, err
+	}
+	b.Paths = paths[id]
+	return b, nil
+}
+
+func (s *Store) loadPaths(query string, args ...any) (map[int64][]string, error) {
+	rows, err := s.db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	paths := map[int64][]string{}
+	for rows.Next() {
+		var id int64
+		var p string
+		if err := rows.Scan(&id, &p); err != nil {
+			return nil, err
+		}
+		paths[id] = append(paths[id], p)
+	}
+	return paths, rows.Err()
+}
+
+func replacePaths(tx *sql.Tx, id int64, paths []string) error {
+	if _, err := tx.Exec("DELETE FROM backup_paths WHERE backup_id = ?", id); err != nil {
+		return err
+	}
+	for i, p := range paths {
+		if _, err := tx.Exec("INSERT INTO backup_paths (backup_id, path, position) VALUES (?, ?, ?)", id, p, i); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (s *Store) Create(b *Backup) error {
 	now := time.Now().UTC()
-	res, err := s.db.Exec(
-		`INSERT INTO backups (name, path, frequency, source, source_folder, limit_enabled, limit_count, s3_access_key, s3_secret, s3_region, s3_bucket, s3_storage_class, local_path, pre_run_enabled, pre_run_script, created_at, updated_at)
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	res, err := tx.Exec(
+		`INSERT INTO backups (name, frequency, status, source, source_folder, limit_enabled, limit_count, s3_access_key, s3_secret, s3_region, s3_bucket, s3_storage_class, local_path, pre_run_enabled, pre_run_script, created_at, updated_at)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		b.Name, b.Path, b.Frequency, b.Source,
+		b.Name, b.Frequency, b.Status, b.Source,
 		b.SourceFolder, b.LimitEnabled, b.LimitCount,
 		b.S3AccessKey, b.S3Secret, b.S3Region, b.S3Bucket, b.S3StorageClass,
 		b.LocalPath,
@@ -276,21 +386,37 @@ func (s *Store) Create(b *Backup) error {
 	if err != nil {
 		return err
 	}
-	b.ID, err = res.LastInsertId()
+	id, err := res.LastInsertId()
+	if err != nil {
+		return err
+	}
+	if err := replacePaths(tx, id, b.Paths); err != nil {
+		return err
+	}
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+	b.ID = id
 	b.CreatedAt, b.UpdatedAt = now, now
-	return err
+	return nil
 }
 
 func (s *Store) Update(b *Backup) error {
 	now := time.Now().UTC()
-	res, err := s.db.Exec(
-		`UPDATE backups SET name = ?, path = ?, frequency = ?, source = ?,
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	res, err := tx.Exec(
+		`UPDATE backups SET name = ?, frequency = ?, status = ?, source = ?,
 		source_folder = ?, limit_enabled = ?, limit_count = ?,
 		s3_access_key = ?, s3_secret = ?, s3_region = ?, s3_bucket = ?, s3_storage_class = ?,
 		local_path = ?,
 		pre_run_enabled = ?, pre_run_script = ?,
 		updated_at = ? WHERE id = ?`,
-		b.Name, b.Path, b.Frequency, b.Source,
+		b.Name, b.Frequency, b.Status, b.Source,
 		b.SourceFolder, b.LimitEnabled, b.LimitCount,
 		b.S3AccessKey, b.S3Secret, b.S3Region, b.S3Bucket, b.S3StorageClass,
 		b.LocalPath,
@@ -300,12 +426,24 @@ func (s *Store) Update(b *Backup) error {
 	if err != nil {
 		return err
 	}
+	if err := affected(res); err != nil {
+		return err
+	}
+	if err := replacePaths(tx, b.ID, b.Paths); err != nil {
+		return err
+	}
+	if err := tx.Commit(); err != nil {
+		return err
+	}
 	b.UpdatedAt = now
-	return affected(res)
+	return nil
 }
 
 func (s *Store) Delete(id int64) error {
 	if _, err := s.db.Exec("DELETE FROM backup_runs WHERE backup_id = ?", id); err != nil {
+		return err
+	}
+	if _, err := s.db.Exec("DELETE FROM backup_paths WHERE backup_id = ?", id); err != nil {
 		return err
 	}
 	res, err := s.db.Exec("DELETE FROM backups WHERE id = ?", id)

@@ -29,6 +29,7 @@ type backupsUpsertData struct {
 	Backup         backups.Backup
 	Errors         map[string]string
 	Frequencies    []backups.Option
+	Statuses       []backups.Option
 	Sources        []backups.Option
 	StorageClasses []backups.Option
 }
@@ -119,7 +120,7 @@ func (h *Handlers) BackupsRun(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) BackupsCreate(w http.ResponseWriter, r *http.Request) {
-	h.renderBackupForm(w, http.StatusOK, backups.Backup{}, nil)
+	h.renderBackupForm(w, http.StatusOK, backups.Backup{Status: backups.StatusActive}, nil)
 }
 
 func (h *Handlers) BackupsStore(w http.ResponseWriter, r *http.Request) {
@@ -188,6 +189,9 @@ func (h *Handlers) renderBackupForm(w http.ResponseWriter, status int, b backups
 	if b.ID != 0 {
 		title = "Edit backup"
 	}
+	if len(b.Paths) == 0 {
+		b.Paths = []string{""}
+	}
 	h.render(w, status, "backups/upsert.html", page{
 		Title:  title,
 		Active: "backups",
@@ -195,6 +199,7 @@ func (h *Handlers) renderBackupForm(w http.ResponseWriter, status int, b backups
 			Backup:         b,
 			Errors:         errs,
 			Frequencies:    backups.Frequencies,
+			Statuses:       backups.Statuses,
 			Sources:        backups.Sources,
 			StorageClasses: backups.StorageClasses,
 		},
@@ -204,8 +209,8 @@ func (h *Handlers) renderBackupForm(w http.ResponseWriter, status int, b backups
 func backupFromForm(r *http.Request) backups.Backup {
 	b := backups.Backup{
 		Name:           r.PostFormValue("name"),
-		Path:           r.PostFormValue("path"),
 		Frequency:      r.PostFormValue("frequency"),
+		Status:         r.PostFormValue("status"),
 		Source:         r.PostFormValue("source"),
 		SourceFolder:   r.PostFormValue("source_folder"),
 		LimitEnabled:   r.PostFormValue("limit_enabled") == "1",
@@ -218,6 +223,7 @@ func backupFromForm(r *http.Request) backups.Backup {
 		PreRunEnabled:  r.PostFormValue("pre_run_enabled") == "1",
 		PreRunScript:   r.PostFormValue("pre_run_script"),
 	}
+	b.Paths = r.PostForm["paths"]
 	b.LimitCount, _ = strconv.Atoi(strings.TrimSpace(r.PostFormValue("limit_count")))
 	b.Normalize()
 	return b

@@ -17,9 +17,17 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="path" class="form-label">Path <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control{{if index .Errors "Path"}} is-invalid{{end}}" id="path" name="path" autocomplete="off" value="{{.Backup.Path}}" placeholder="/var/www/html" required>
-                        {{with index .Errors "Path"}}<div class="invalid-feedback">{{.}}</div>{{end}}
+                        <label class="form-label">Paths <span class="text-danger">*</span></label>
+                        <div id="paths-list">
+                            {{range .Backup.Paths}}
+                            <div class="input-group mb-2 path-row">
+                                <input type="text" class="form-control{{if index $.Data.Errors "Paths"}} is-invalid{{end}}" name="paths" autocomplete="off" value="{{.}}" placeholder="/var/www/html" aria-label="Path">
+                                <button type="button" class="btn btn-outline-secondary path-remove" aria-label="Remove path"><i class="ri-delete-bin-line"></i></button>
+                            </div>
+                            {{end}}
+                        </div>
+                        {{with index .Errors "Paths"}}<div class="invalid-feedback d-block mb-2">{{.}}</div>{{end}}
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="path-add"><i class="ri-add-line"></i> Add path</button>
                     </div>
 
                     <div class="mb-3">
@@ -31,6 +39,17 @@
                             {{end}}
                         </select>
                         {{with index .Errors "Frequency"}}<div class="invalid-feedback">{{.}}</div>{{end}}
+                    </div>
+
+                    <div id="status-fields" class="mb-3{{if or (not .Backup.Frequency) .Backup.IsManual}} d-none{{end}}">
+                        <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
+                        <select class="form-select{{if index .Errors "Status"}} is-invalid{{end}}" id="status" name="status" autocomplete="off">
+                            {{range .Statuses}}
+                            <option value="{{.Value}}"{{if eq .Value $.Data.Backup.Status}} selected{{end}}>{{.Label}}</option>
+                            {{end}}
+                        </select>
+                        {{with index .Errors "Status"}}<div class="invalid-feedback">{{.}}</div>{{end}}
+                        <div class="form-text">Inactive backups are skipped by the scheduled run. They can still be run manually.</div>
                     </div>
 
                     <div class="mb-3">
@@ -115,7 +134,7 @@
                             <textarea id="pre_run_script" name="pre_run_script">{{.Backup.PreRunScript}}</textarea>
                         </div>
                         {{with index .Errors "PreRunScript"}}<div class="invalid-feedback d-block">{{.}}</div>{{end}}
-                        <div class="form-text">Bash commands run inside the backup path before the archive is created. The backup fails if any command fails.</div>
+                        <div class="form-text">Bash commands run inside the first backup path before the archive is created. The backup fails if any command fails.</div>
                     </div>
 
                     <div class="d-flex gap-2">
@@ -132,6 +151,32 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/shell/shell.min.js"></script>
     <script>
         $(function () {
+            function syncPathButtons() {
+                $('#paths-list .path-remove').prop('disabled', $('#paths-list .path-row').length <= 1);
+            }
+
+            $('#path-add').on('click', function () {
+                var row = $('#paths-list .path-row').first().clone();
+                row.find('input').val('').removeClass('is-invalid');
+                $('#paths-list').append(row);
+                syncPathButtons();
+                row.find('input').trigger('focus');
+            });
+
+            $('#paths-list').on('click', '.path-remove', function () {
+                if ($('#paths-list .path-row').length > 1) {
+                    $(this).closest('.path-row').remove();
+                    syncPathButtons();
+                }
+            });
+
+            syncPathButtons();
+
+            $('#frequency').on('change', function () {
+                var value = $(this).val();
+                $('#status-fields').toggleClass('d-none', value === '' || value === 'manual');
+            });
+
             $('#source').on('change', function () {
                 $('#s3-fields').toggleClass('d-none', $(this).val() !== 'aws_s3');
                 $('#local-fields').toggleClass('d-none', $(this).val() !== 'local');

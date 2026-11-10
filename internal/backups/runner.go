@@ -40,6 +40,10 @@ func (r *Runner) RunAll(trigger string) {
 			log.Printf("backup %q: manual only, skipped", b.Name)
 			continue
 		}
+		if !b.IsActive() {
+			log.Printf("backup %q: inactive, skipped", b.Name)
+			continue
+		}
 		last, ok, err := r.store.LastSuccess(b.ID)
 		if err != nil {
 			log.Printf("backup %q: last success: %v", b.Name, err)
@@ -109,14 +113,19 @@ func (r *Runner) Execute(b Backup, run Run) (err error) {
 		}
 	}()
 
-	logf("Starting %s backup of %s", run.Trigger, b.Path)
+	logf("Starting %s backup of %s", run.Trigger, strings.Join(b.Paths, ", "))
 
-	info, err := os.Stat(b.Path)
-	if err != nil {
-		return fmt.Errorf("source path: %w", err)
+	if len(b.Paths) == 0 {
+		return errors.New("no backup paths configured")
 	}
-	if !info.IsDir() {
-		return fmt.Errorf("source path %s is not a directory", b.Path)
+	for _, p := range b.Paths {
+		info, err := os.Stat(p)
+		if err != nil {
+			return fmt.Errorf("source path: %w", err)
+		}
+		if !info.IsDir() {
+			return fmt.Errorf("source path %s is not a directory", p)
+		}
 	}
 
 	sevenZip, err := findSevenZip()
@@ -127,7 +136,7 @@ func (r *Runner) Execute(b Backup, run Run) (err error) {
 	if b.PreRunEnabled {
 		logf("Running pre run script")
 		cmd := exec.Command("bash", "-e", "-c", b.PreRunScript)
-		cmd.Dir = b.Path
+		cmd.Dir = b.Paths[0]
 		output, err := cmd.CombinedOutput()
 		if s := strings.TrimSpace(string(output)); s != "" {
 			logs.WriteString(s + "\n")
@@ -150,7 +159,7 @@ func (r *Runner) Execute(b Backup, run Run) (err error) {
 	defer os.Remove(out)
 	logf("Archive: %s", out)
 
-	args := []string{sevenZip, "a", "-t7z", "-mx=1", "-mmt=1", "-bd", "-y", out, b.Path}
+	args := append([]string{sevenZip, "a", "-t7z", "-mx=1", "-mmt=1", "-bd", "-y", out}, b.Paths...)
 	if ionice, lerr := exec.LookPath("ionice"); lerr == nil {
 		args = append([]string{ionice, "-c", "3"}, args...)
 	} else {

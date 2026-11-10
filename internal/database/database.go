@@ -27,8 +27,8 @@ func migrate(db *sql.DB) error {
 		CREATE TABLE IF NOT EXISTS backups (
 			id               INTEGER PRIMARY KEY AUTOINCREMENT,
 			name             TEXT     NOT NULL,
-			path             TEXT     NOT NULL,
 			frequency        TEXT     NOT NULL,
+			status           TEXT     NOT NULL DEFAULT 'active',
 			source           TEXT     NOT NULL,
 			source_folder    TEXT     NOT NULL DEFAULT '',
 			limit_enabled    INTEGER  NOT NULL DEFAULT 0,
@@ -44,6 +44,15 @@ func migrate(db *sql.DB) error {
 			created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 		);
+
+		CREATE TABLE IF NOT EXISTS backup_paths (
+			id        INTEGER PRIMARY KEY AUTOINCREMENT,
+			backup_id INTEGER NOT NULL,
+			path      TEXT    NOT NULL,
+			position  INTEGER NOT NULL DEFAULT 0
+		);
+
+		CREATE INDEX IF NOT EXISTS idx_backup_paths_backup_id ON backup_paths (backup_id, position);
 
 		CREATE TABLE IF NOT EXISTS backup_runs (
 			id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -124,6 +133,9 @@ func migrate(db *sql.DB) error {
 	if err := renameColumn(db, "backups", "s3_folder", "source_folder"); err != nil {
 		return err
 	}
+	if err := dropColumn(db, "backups", "path"); err != nil {
+		return err
+	}
 	if err := addColumns(db, "repositories", []string{
 		"webhook_token TEXT NOT NULL DEFAULT ''",
 		"post_pull_commands TEXT NOT NULL DEFAULT ''",
@@ -142,6 +154,7 @@ func migrate(db *sql.DB) error {
 		"local_path TEXT NOT NULL DEFAULT ''",
 		"pre_run_enabled INTEGER NOT NULL DEFAULT 0",
 		"pre_run_script TEXT NOT NULL DEFAULT ''",
+		"status TEXT NOT NULL DEFAULT 'active'",
 	})
 }
 
@@ -171,6 +184,18 @@ func renameColumn(db *sql.DB, table, from, to string) error {
 		return nil
 	}
 	_, err = db.Exec(fmt.Sprintf("ALTER TABLE %s RENAME COLUMN %s TO %s", table, from, to))
+	return err
+}
+
+func dropColumn(db *sql.DB, table, column string) error {
+	existing, err := columnNames(db, table)
+	if err != nil {
+		return err
+	}
+	if !existing[column] {
+		return nil
+	}
+	_, err = db.Exec(fmt.Sprintf("ALTER TABLE %s DROP COLUMN %s", table, column))
 	return err
 }
 
