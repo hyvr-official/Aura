@@ -25,6 +25,12 @@ if [ "$(uname -s)" != "Linux" ]; then
 	fail "Aura only supports Linux."
 fi
 
+UPDATE_MODE="false"
+if [ -f "${INSTALL_DIR}/aura" ]; then
+	UPDATE_MODE="true"
+	info "Existing installation found in ${INSTALL_DIR}, updating to the latest version"
+fi
+
 command -v systemctl >/dev/null 2>&1 || fail "systemd is required but systemctl was not found."
 command -v tar >/dev/null 2>&1 || fail "tar is required but was not found."
 
@@ -70,12 +76,17 @@ if systemctl is-active --quiet "${SERVICE_NAME}"; then
 	systemctl stop "${SERVICE_NAME}"
 fi
 
-info "Installing to ${INSTALL_DIR}"
-mkdir -p "${INSTALL_DIR}"
+if [ "${UPDATE_MODE}" = "true" ]; then
+	info "Updating executable ${INSTALL_DIR}/aura"
+else
+	info "Installing to ${INSTALL_DIR}"
+	mkdir -p "${INSTALL_DIR}"
+fi
 install -m 0755 "${TMP_DIR}/aura" "${INSTALL_DIR}/aura"
 
-info "Creating service file ${SERVICE_FILE}"
-cat > "${SERVICE_FILE}" <<EOF
+if [ "${UPDATE_MODE}" = "false" ] || [ ! -f "${SERVICE_FILE}" ]; then
+	info "Creating service file ${SERVICE_FILE}"
+	cat > "${SERVICE_FILE}" <<EOF
 [Unit]
 Description=Aura Server Control Panel
 After=network-online.target docker.service
@@ -92,6 +103,7 @@ RestartSec=5
 [Install]
 WantedBy=multi-user.target
 EOF
+fi
 
 info "Starting ${SERVICE_NAME} service"
 systemctl daemon-reload
@@ -103,6 +115,13 @@ sleep 2
 if ! systemctl is-active --quiet "${SERVICE_NAME}"; then
 	journalctl -u "${SERVICE_NAME}" -n 20 --no-pager || true
 	fail "The ${SERVICE_NAME} service failed to start."
+fi
+
+if [ "${UPDATE_MODE}" = "true" ]; then
+	printf '\n\033[32mAura has been updated to the latest version and is running.\033[0m\n\n'
+	printf 'Check status:systemctl status %s\n' "${SERVICE_NAME}"
+	printf 'View logs:    journalctl -u %s -f\n' "${SERVICE_NAME}"
+	exit 0
 fi
 
 HOST_IP="$(hostname -I 2>/dev/null | awk '{print $1}' || true)"
