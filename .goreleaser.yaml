@@ -24,7 +24,7 @@ builds:
     flags:
       - -trimpath
     ldflags:
-      - -s -w -X main.version={{ .Version }}
+      - -s -w
 
 archives:
   - id: aura
