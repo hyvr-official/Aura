@@ -36,14 +36,15 @@ type webServerEditData struct {
 }
 
 var webServerFlashes = map[string]string{
-	"created":    "Site created.",
-	"updated":    "Site updated.",
-	"deleted":    "Site deleted.",
-	"enabled":    "Site enabled.",
-	"disabled":   "Site disabled.",
-	"ssl_issued": "SSL certificate issued.",
-	"ssl_failed": "Site created, but issuing the SSL certificate failed. Check the server logs.",
-	"failed":     "Site action failed. Check the server logs.",
+	"created":      "Site created.",
+	"updated":      "Site updated.",
+	"deleted":      "Site deleted.",
+	"enabled":      "Site enabled.",
+	"disabled":     "Site disabled.",
+	"ssl_issued":   "SSL certificate issued.",
+	"ssl_reissued": "SSL certificate reissued.",
+	"ssl_failed":   "Site created, but issuing the SSL certificate failed. Check the server logs.",
+	"failed":       "Site action failed. Check the server logs.",
 }
 
 func (h *Handlers) WebServerIndex(w http.ResponseWriter, r *http.Request) {
@@ -89,7 +90,7 @@ func (h *Handlers) WebServerStore(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if in.SSL {
-		if err := webserver.IssueSSL(in.DomainList(), in.Email); err != nil {
+		if err := webserver.IssueSSL(in.DomainList(), in.Email, false); err != nil {
 			log.Printf("issue ssl for site %s: %v", in.Name, err)
 			http.Redirect(w, r, "/web-server?status=ssl_failed", http.StatusSeeOther)
 			return
@@ -139,7 +140,7 @@ func (h *Handlers) WebServerSSL(w http.ResponseWriter, r *http.Request) {
 	case email != "" && !webserver.ValidEmail(email):
 		data.SSLError = "Enter a valid email address."
 	case !site.Enabled:
-		data.SSLError = "Enable the site before issuing an SSL certificate."
+		data.SSLError = "Enable the site before issuing or reissuing an SSL certificate."
 	case len(site.Domains) == 0:
 		data.SSLError = "No domains found in the server_name of this site."
 	}
@@ -147,13 +148,17 @@ func (h *Handlers) WebServerSSL(w http.ResponseWriter, r *http.Request) {
 		h.renderWebServerEdit(w, http.StatusUnprocessableEntity, data)
 		return
 	}
-	if err := webserver.IssueSSL(site.Domains, email); err != nil {
+	if err := webserver.IssueSSL(site.Domains, email, site.SSL); err != nil {
 		log.Printf("issue ssl for site %s: %v", site.Name, err)
 		data.SSLError = err.Error()
 		h.renderWebServerEdit(w, http.StatusUnprocessableEntity, data)
 		return
 	}
-	http.Redirect(w, r, "/web-server?status=ssl_issued", http.StatusSeeOther)
+	status := "ssl_issued"
+	if site.SSL {
+		status = "ssl_reissued"
+	}
+	http.Redirect(w, r, "/web-server?status="+status, http.StatusSeeOther)
 }
 
 func (h *Handlers) WebServerLogs(w http.ResponseWriter, r *http.Request) {

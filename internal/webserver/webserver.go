@@ -308,7 +308,7 @@ func Delete(name string) error {
 	return reload()
 }
 
-func IssueSSL(domains []string, email string) error {
+func IssueSSL(domains []string, email string, force bool) error {
 	if len(domains) == 0 {
 		return errors.New("no domains to issue a certificate for")
 	}
@@ -323,6 +323,9 @@ func IssueSSL(domains []string, email string) error {
 		args = append(args, "-m", email)
 	} else {
 		args = append(args, "--register-unsafely-without-email")
+	}
+	if force {
+		args = append(args, "--force-renewal", "--expand")
 	}
 	_, err := run(args...)
 	return err

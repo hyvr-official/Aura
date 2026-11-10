@@ -38,11 +38,15 @@
             </div>
         </div>
 
-        {{if not .Site.SSL}}
         <div class="card shadow-sm border-0 mt-4">
             <div class="card-body p-4">
+                {{if .Site.SSL}}
+                <h2 class="h5 mb-1">Reissue SSL certificate</h2>
+                <p class="text-body-secondary small mb-3">Forces certbot to request a new certificate for {{.Site.DomainsLabel}} and reinstall it. Let's Encrypt limits duplicate certificates to 5 per week.</p>
+                {{else}}
                 <h2 class="h5 mb-1">Issue SSL certificate</h2>
                 <p class="text-body-secondary small mb-3">Runs certbot for {{.Site.DomainsLabel}} and redirects HTTP to HTTPS. The domains must already point to this server.</p>
+                {{end}}
 
                 {{with .SSLError}}
                 <div class="alert alert-danger" role="alert">
@@ -50,18 +54,21 @@
                 </div>
                 {{end}}
 
-                <form method="post" action="/web-server/{{.Site.Name}}/ssl" id="ssl-form" class="row g-2 align-items-end">
+                <form method="post" action="/web-server/{{.Site.Name}}/ssl" id="ssl-form" class="row g-2 align-items-end"{{if .Site.SSL}} data-confirm="Request a new SSL certificate for this site?"{{end}}>
                     <div class="col-sm">
                         <label for="email" class="form-label">Email</label>
                         <input type="email" class="form-control" id="email" name="email" autocomplete="off" value="{{.Email}}" placeholder="admin@example.com">
                     </div>
                     <div class="col-sm-auto">
+                        {{if .Site.SSL}}
+                        <button type="submit" class="btn btn-outline-warning">Reissue certificate</button>
+                        {{else}}
                         <button type="submit" class="btn btn-outline-success">Issue certificate</button>
+                        {{end}}
                     </div>
                 </form>
             </div>
         </div>
-        {{end}}
         {{end}}
     </main>
 {{template "footer" .}}
@@ -77,6 +84,10 @@
             });
 
             $('#config-form, #ssl-form').on('submit', function () {
+                var message = $(this).data('confirm');
+                if (message && !confirm(message)) {
+                    return false;
+                }
                 $(this).find('button[type="submit"]').prop('disabled', true).text('Working...');
             });
         });
