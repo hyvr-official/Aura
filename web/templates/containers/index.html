@@ -42,7 +42,14 @@
                             location.reload();
                             return;
                         }
-                        $('#containers-list').html(html);
+                        var $list = $('#containers-list');
+                        var $oldScroller = $list.find('.table-responsive');
+                        var scrollLeft = $oldScroller.scrollLeft() || 0;
+                        var scrollTop = $oldScroller.scrollTop() || 0;
+                        $list.css('min-height', $list.outerHeight());
+                        $list.html(html);
+                        $list.find('.table-responsive').scrollLeft(scrollLeft).scrollTop(scrollTop);
+                        $list.css('min-height', '');
                         setListLive(true);
                     })
                     .fail(function () {
