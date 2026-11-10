@@ -159,7 +159,7 @@ func (r *Runner) Execute(b Backup, run Run) (err error) {
 	defer os.Remove(out)
 	logf("Archive: %s", out)
 
-	args := append([]string{sevenZip, "a", "-t7z", "-mx=1", "-mmt=1", "-bd", "-y", out}, b.Paths...)
+	args := append([]string{sevenZip, "a", "-t7z", "-mx=1", "-mmt=1", "-snl", "-bd", "-y", out}, b.Paths...)
 	if ionice, lerr := exec.LookPath("ionice"); lerr == nil {
 		args = append([]string{ionice, "-c", "3"}, args...)
 	} else {
