@@ -119,11 +119,13 @@ input.form-control, textarea.form-control{
 }
 
 input::placeholder{
-    color: rgba(255, 255, 255, 0.4);
+    color: rgba(255, 255, 255, 0.3) !important;
 }
 
 .form-select{
     border-radius: 0.5rem !important;
+    box-shadow: none !important;
+    outline: none !important;
 }
 
 /*-- card --*/
