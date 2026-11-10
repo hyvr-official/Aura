@@ -1,0 +1,27 @@
+.xterm-box {
+    height: 65vh;
+    background: #000;
+    padding: .5rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+}
+
+.cron-command code {
+    display: inline-block;
+    max-width: 28rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.cron-command-input {
+    font-family: Menlo, Consolas, "DejaVu Sans Mono", monospace;
+    font-size: .875rem;
+}
+
+@media (max-width: 767.98px) {
+    .cron-command code {
+        max-width: 14rem;
+    }
+}

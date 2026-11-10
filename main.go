@@ -107,6 +107,12 @@ func main() {
 	mux.Handle("POST /web-server/{name}/ssl", protected(h.WebServerSSL))
 	mux.Handle("GET /web-server/{name}/logs", protected(h.WebServerLogs))
 
+	mux.Handle("GET /cron", protected(h.CronIndex))
+	mux.Handle("POST /cron", protected(h.CronStore))
+	mux.Handle("POST /cron/{id}", protected(h.CronUpdate))
+	mux.Handle("POST /cron/{id}/delete", protected(h.CronDelete))
+	mux.Handle("GET /cron/{id}/logs", protected(h.CronLogs))
+
 	mux.Handle("GET /repositories", protected(h.RepositoriesIndex))
 	mux.Handle("GET /repositories/create", protected(h.RepositoriesCreate))
 	mux.Handle("POST /repositories", protected(h.RepositoriesStore))

@@ -1,0 +1,310 @@
+{{template "header" .}}
+    <link href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.min.css" rel="stylesheet">
+    <link href="/static/css/cron/index.css" rel="stylesheet">
+    <main class="container py-4">
+        <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-4">
+            <div class="d-flex align-items-center gap-2">
+                <h1 class="h5 mb-0">Cron</h1>
+                {{if not .Data.CronMissing}}<span class="badge text-bg-secondary">{{len .Data.Jobs}}</span>{{end}}
+            </div>
+            {{if not .Data.CronMissing}}
+            <button type="button" class="btn btn-secondary btn-sm" id="cron-new">New job</button>
+            {{end}}
+        </div>
+
+        {{with .Data.Flash}}
+        <div class="alert alert-{{$.Data.FlashType}} alert-dismissible fade show" role="alert">
+            {{.}}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {{end}}
+
+        {{if .Data.CronMissing}}
+        <div class="alert alert-warning" role="alert">
+            cron is not installed on this server. Install it with <code>apt-get install cron</code>.
+        </div>
+        {{else}}
+        <div class="card shadow-sm border-0">
+            {{if .Data.Jobs}}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Schedule</th>
+                            <th>Command</th>
+                            <th>User</th>
+                            <th>Source</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .Data.Jobs}}
+                        <tr>
+                            <td class="text-nowrap">
+                                <code>{{.Schedule}}</code>
+                                <div class="small text-body-secondary">{{.ScheduleLabel}}</div>
+                            </td>
+                            <td class="cron-command"><code title="{{.Command}}">{{.Command}}</code></td>
+                            <td class="text-nowrap">{{.User}}</td>
+                            <td class="text-nowrap">
+                                {{if .System}}
+                                <span class="badge text-bg-secondary" title="System cron file, read-only">{{.SourceLabel}}</span>
+                                {{else}}
+                                <span class="badge text-bg-info">{{.SourceLabel}}</span>
+                                {{end}}
+                                {{if .Protected}}<span class="badge text-bg-warning">Aura backup</span>{{end}}
+                                {{if .HasOwnLog}}<span class="badge text-bg-success">Output logged</span>{{end}}
+                            </td>
+                            <td class="text-end text-nowrap">
+                                <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#logs-modal" data-job-id="{{.ID}}" data-job-name="{{.User}}: {{.Command}}">Logs</button>
+                                {{if .Editable}}
+                                <button type="button" class="btn btn-outline-secondary btn-sm cron-edit" data-job-id="{{.ID}}" data-job-user="{{.User}}" data-job-schedule="{{.Schedule}}" data-job-command="{{.Command}}">Edit</button>
+                                <form method="post" action="/cron/{{.ID}}/delete" class="d-inline" onsubmit="return confirm('Delete this cron job?');">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+                                </form>
+                                {{else}}
+                                <span class="d-inline-block" tabindex="0" title="{{if .Protected}}Managed by Aura backups{{else}}System cron jobs are read-only{{end}}">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" disabled>Edit</button>
+                                </span>
+                                <span class="d-inline-block" tabindex="0" title="{{if .Protected}}Managed by Aura backups{{else}}System cron jobs are read-only{{end}}">
+                                    <button type="button" class="btn btn-outline-danger btn-sm" disabled>Delete</button>
+                                </span>
+                                {{end}}
+                            </td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
+            {{else}}
+            <div class="card-body text-center py-5">
+                <p class="text-body-secondary mb-3">No cron jobs yet.</p>
+                <button type="button" class="btn btn-secondary" id="cron-new-empty">Create your first job</button>
+            </div>
+            {{end}}
+        </div>
+
+        <div class="modal fade" id="cron-modal" tabindex="-1" aria-labelledby="cron-modal-label" aria-hidden="true" data-open="{{if .Data.FormOpen}}1{{end}}" data-edit-id="{{.Data.EditID}}">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <form method="post" action="/cron" class="modal-content" id="cron-form" autocomplete="off">
+                    <div class="modal-header">
+                        <h2 class="modal-title h5" id="cron-modal-label">New cron job</h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-danger small{{if not .Data.Errors.form}} d-none{{end}}" id="cron-form-error" role="alert">{{.Data.Errors.form}}</div>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="cron-user" class="form-label">User</label>
+                                <input type="text" class="form-control{{if .Data.Errors.user}} is-invalid{{end}}" id="cron-user" name="user" value="{{.Data.Form.User}}" list="cron-users" required autocomplete="off">
+                                <datalist id="cron-users">
+                                    {{range .Data.Users}}<option value="{{.}}">{{end}}
+                                </datalist>
+                                <div class="invalid-feedback">{{.Data.Errors.user}}</div>
+                            </div>
+                            <div class="col-md-8">
+                                <label for="cron-preset" class="form-label">Preset</label>
+                                <select class="form-select" id="cron-preset" autocomplete="off">
+                                    <option value="* * * * *">Every minute</option>
+                                    <option value="*/5 * * * *">Every 5 minutes</option>
+                                    <option value="0 * * * *">Every hour</option>
+                                    <option value="0 0 * * *">Every day at midnight</option>
+                                    <option value="0 0 * * 0">Every week on Sunday</option>
+                                    <option value="0 0 1 * *">Every month on day 1</option>
+                                    <option value="@reboot">At system startup</option>
+                                    <option value="">Custom</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label for="cron-schedule" class="form-label">Schedule</label>
+                                <input type="text" class="form-control cron-command-input{{if .Data.Errors.schedule}} is-invalid{{end}}" id="cron-schedule" name="schedule" value="{{.Data.Form.Schedule}}" placeholder="* * * * *" required autocomplete="off">
+                                <div class="invalid-feedback">{{.Data.Errors.schedule}}</div>
+                                <div class="form-text">Minute, hour, day of month, month and day of week, or a keyword like <code>@daily</code>.</div>
+                            </div>
+                            <div class="col-12">
+                                <label for="cron-command" class="form-label">Command</label>
+                                <textarea class="form-control cron-command-input{{if .Data.Errors.command}} is-invalid{{end}}" id="cron-command" name="command" rows="3" maxlength="1000" required autocomplete="off">{{.Data.Form.Command}}</textarea>
+                                <div class="invalid-feedback">{{.Data.Errors.command}}</div>
+                                <div class="form-text">Single line. Escape <code>%</code> as <code>\%</code>. Output is saved and shown in Logs.</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-secondary" id="cron-submit">Create</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="modal fade" id="logs-modal" tabindex="-1" aria-labelledby="logs-modal-label" aria-hidden="true">
+            <div class="modal-dialog modal-xl modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title h5 text-truncate" id="logs-modal-label">Logs <span class="text-body-secondary small ms-2" id="logs-modal-name"></span><span class="badge text-bg-success ms-2 d-none" id="logs-live">Live</span></h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="xterm-box" id="logs-terminal"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{end}}
+    </main>
+{{template "footer" .}}
+    <script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.min.js"></script>
+    <script>
+        $(function () {
+            var modalEl = document.getElementById('cron-modal');
+            if (!modalEl) {
+                return;
+            }
+            var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            var session = { id: null, term: null, fit: null, socket: null };
+
+            function syncPreset() {
+                var value = $.trim($('#cron-schedule').val()).replace(/\s+/g, ' ');
+                var match = $('#cron-preset option').filter(function () {
+                    return $(this).val() === value && value !== '';
+                });
+                $('#cron-preset').val(match.length ? value : '');
+            }
+
+            function clearErrors() {
+                $('#cron-form .is-invalid').removeClass('is-invalid');
+                $('#cron-form-error').addClass('d-none').text('');
+            }
+
+            function setMode(id) {
+                $('#cron-form').attr('action', id ? '/cron/' + encodeURIComponent(id) : '/cron');
+                $('#cron-modal-label').text(id ? 'Edit cron job' : 'New cron job');
+                $('#cron-submit').text(id ? 'Update' : 'Create');
+            }
+
+            function openForm(id, user, schedule, command) {
+                clearErrors();
+                setMode(id);
+                $('#cron-user').val(user);
+                $('#cron-schedule').val(schedule);
+                $('#cron-command').val(command);
+                syncPreset();
+                modal.show();
+            }
+
+            $('#cron-new, #cron-new-empty').on('click', function () {
+                openForm(null, 'root', '* * * * *', '');
+            });
+
+            $('.cron-edit').on('click', function () {
+                var button = $(this);
+                openForm(button.attr('data-job-id'), button.attr('data-job-user'), button.attr('data-job-schedule'), button.attr('data-job-command'));
+            });
+
+            $('#cron-preset').on('change', function () {
+                var value = $(this).val();
+                if (value !== '') {
+                    $('#cron-schedule').val(value).removeClass('is-invalid');
+                }
+            });
+
+            $('#cron-schedule').on('input', syncPreset);
+
+            $('#cron-command').on('keydown', function (event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    if (event.ctrlKey || event.metaKey) {
+                        $('#cron-form').trigger('submit');
+                    }
+                }
+            });
+
+            $('#cron-modal').on('shown.bs.modal', function () {
+                $('#cron-command').trigger('focus');
+            });
+
+            if ($('#cron-modal').attr('data-open') === '1') {
+                setMode($('#cron-modal').attr('data-edit-id'));
+                syncPreset();
+                modal.show();
+            } else {
+                syncPreset();
+            }
+
+            function socketUrl(path) {
+                var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+                return protocol + '://' + location.host + path;
+            }
+
+            function closeSocket() {
+                if (session.socket) {
+                    session.socket.onclose = null;
+                    session.socket.close();
+                    session.socket = null;
+                }
+                $('#logs-live').addClass('d-none');
+            }
+
+            function connect() {
+                closeSocket();
+                session.term.reset();
+                var socket = new WebSocket(socketUrl('/cron/' + encodeURIComponent(session.id) + '/logs'));
+                socket.binaryType = 'arraybuffer';
+                socket.onopen = function () {
+                    $('#logs-live').removeClass('d-none');
+                };
+                socket.onmessage = function (event) {
+                    if (typeof event.data === 'string') {
+                        session.term.write(event.data);
+                    } else {
+                        session.term.write(new Uint8Array(event.data));
+                    }
+                };
+                socket.onclose = function () {
+                    $('#logs-live').addClass('d-none');
+                    if (session.term) {
+                        session.term.write('\r\n\x1b[90m[log stream ended]\x1b[0m\r\n');
+                    }
+                };
+                session.socket = socket;
+            }
+
+            $('#logs-modal').on('show.bs.modal', function (event) {
+                var button = $(event.relatedTarget);
+                session.id = button.attr('data-job-id');
+                $('#logs-modal-name').text(button.attr('data-job-name'));
+            }).on('shown.bs.modal', function () {
+                session.term = new Terminal({
+                    disableStdin: true,
+                    convertEol: true,
+                    scrollback: 10000,
+                    fontSize: 14,
+                    fontFamily: 'Menlo, Consolas, "DejaVu Sans Mono", monospace',
+                    theme: { background: '#000000', foreground: '#e5e5e5' }
+                });
+                session.fit = new FitAddon.FitAddon();
+                session.term.loadAddon(session.fit);
+                session.term.open(document.getElementById('logs-terminal'));
+                session.fit.fit();
+                connect();
+            }).on('hidden.bs.modal', function () {
+                closeSocket();
+                if (session.term) {
+                    session.term.dispose();
+                    session.term = null;
+                }
+                session.fit = null;
+                $('#logs-terminal').empty();
+            });
+
+            $(window).on('resize', function () {
+                if (session.term && session.fit) {
+                    session.fit.fit();
+                }
+            });
+        });
+    </script>
