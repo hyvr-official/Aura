@@ -6,9 +6,18 @@
         <a href="/backups" class="link-secondary text-decoration-none small"><i class="ri-arrow-left-line"></i> Back to backups</a>
 
         {{with .Data}}
-        <div class="d-flex align-items-center justify-content-between mt-2 mb-4">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-2 mb-4">
             <h1 class="h5 mb-0">{{.Backup.Name}}</h1>
-            <div class="d-flex gap-2">
+            <div class="d-flex flex-wrap gap-2">
+                {{if not .Backup.IsManual}}
+                <form method="post" action="/backups/{{.Backup.ID}}/status"{{if .Backup.IsActive}} onsubmit="return confirm('Disable this backup? It will be skipped by the scheduled run.');"{{end}}>
+                    {{if .Backup.IsActive}}
+                    <button type="submit" class="btn btn-outline-warning"><i class="ri-pause-circle-line"></i> Disable</button>
+                    {{else}}
+                    <button type="submit" class="btn btn-outline-success"><i class="ri-play-circle-line"></i> Activate</button>
+                    {{end}}
+                </form>
+                {{end}}
                 <a href="/backups/{{.Backup.ID}}/edit" class="btn btn-outline-secondary">Edit</a>
                 <form method="post" action="/backups/{{.Backup.ID}}/run">
                     {{if .Running}}

@@ -35,11 +35,13 @@ type backupsUpsertData struct {
 }
 
 var backupFlashes = map[string]string{
-	"created": "Backup created.",
-	"updated": "Backup updated.",
-	"deleted": "Backup deleted.",
-	"started": "Backup started.",
-	"running": "A backup for this task is already running.",
+	"created":   "Backup created.",
+	"updated":   "Backup updated.",
+	"deleted":   "Backup deleted.",
+	"started":   "Backup started.",
+	"running":   "A backup for this task is already running.",
+	"activated": "Backup activated.",
+	"disabled":  "Backup disabled. It will be skipped by the scheduled run.",
 }
 
 func (h *Handlers) BackupsIndex(w http.ResponseWriter, r *http.Request) {
@@ -117,6 +119,32 @@ func (h *Handlers) BackupsRun(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 	http.Redirect(w, r, target+"?status=started", http.StatusSeeOther)
+}
+
+func (h *Handlers) BackupsToggleStatus(w http.ResponseWriter, r *http.Request) {
+	b, ok := h.findBackup(w, r)
+	if !ok {
+		return
+	}
+	target := fmt.Sprintf("/backups/%d", b.ID)
+	if b.IsManual() {
+		http.Redirect(w, r, target, http.StatusSeeOther)
+		return
+	}
+	status, flash := backups.StatusInactive, "disabled"
+	if !b.IsActive() {
+		status, flash = backups.StatusActive, "activated"
+	}
+	err := h.backups.SetStatus(b.ID, status)
+	if errors.Is(err, sql.ErrNoRows) {
+		http.NotFound(w, r)
+		return
+	}
+	if err != nil {
+		serverError(w, "update backup status", err)
+		return
+	}
+	http.Redirect(w, r, target+"?status="+flash, http.StatusSeeOther)
 }
 
 func (h *Handlers) BackupsCreate(w http.ResponseWriter, r *http.Request) {

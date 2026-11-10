@@ -76,6 +76,7 @@ func main() {
 	mux.Handle("POST /backups", protected(h.BackupsStore))
 	mux.Handle("GET /backups/{id}", protected(h.BackupsShow))
 	mux.Handle("POST /backups/{id}/run", protected(h.BackupsRun))
+	mux.Handle("POST /backups/{id}/status", protected(h.BackupsToggleStatus))
 	mux.Handle("GET /backups/{id}/edit", protected(h.BackupsEdit))
 	mux.Handle("POST /backups/{id}", protected(h.BackupsUpdate))
 	mux.Handle("POST /backups/{id}/delete", protected(h.BackupsDelete))

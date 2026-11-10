@@ -439,6 +439,14 @@ func (s *Store) Update(b *Backup) error {
 	return nil
 }
 
+func (s *Store) SetStatus(id int64, status string) error {
+	res, err := s.db.Exec("UPDATE backups SET status = ?, updated_at = ? WHERE id = ?", status, time.Now().UTC(), id)
+	if err != nil {
+		return err
+	}
+	return affected(res)
+}
+
 func (s *Store) Delete(id int64) error {
 	if _, err := s.db.Exec("DELETE FROM backup_runs WHERE backup_id = ?", id); err != nil {
 		return err
