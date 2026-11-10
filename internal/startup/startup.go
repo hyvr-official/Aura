@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"aura/internal/backups"
+	"aura/internal/timezone"
 	"aura/internal/webserver"
 )
 
@@ -106,8 +107,12 @@ func Run() Report {
 		log.Printf("startup: backup cron: %v", err)
 		checks = append(checks, Check{Name: "Backup cron", Message: err.Error()})
 	} else {
-		log.Printf("startup: backup cron is set (daily at 00:00)")
-		checks = append(checks, Check{Name: "Backup cron", OK: true, Message: "Set (daily at 00:00)"})
+		zone := timezone.Name()
+		if zone == "" {
+			zone = timezone.ServerName()
+		}
+		log.Printf("startup: backup cron is set (daily at 00:00 %s)", zone)
+		checks = append(checks, Check{Name: "Backup cron", OK: true, Message: "Set (daily at 00:00 " + zone + ")"})
 	}
 
 	if err := webserver.EnsureRunning(); err != nil {

@@ -9,7 +9,7 @@
 - **Projects**: deploy Docker Compose projects from your repositories with pull, deploy and down actions.
 - **Git Repositories**: clone, pull and switch branches, with a separate SSH deploy key for each repository.
 - **Web Server (Nginx)**: create, edit, enable and disable sites, get free SSL certificates with Certbot and view site logs.
-- **Backups**: scheduled backups (daily at 00:00 through cron) stored locally or on AWS S3, with automatic cleanup of old backups, run history and manual runs.
+- **Backups**: scheduled backups (daily at 00:00 in the configured timezone through cron) stored locally or on AWS S3, with automatic cleanup of old backups, run history and manual runs.
 - **File Manager**: browse, create, rename, edit, delete and download files on the server.
 - **Console**: a web terminal for the server, plus saved commands you can run again later.
 - **Settings**: system checks that show the status of every required package and service.

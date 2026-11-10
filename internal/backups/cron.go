@@ -7,6 +7,9 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
+
+	"aura/internal/timezone"
 )
 
 const cronMarker = "# aura-backup"
@@ -23,8 +26,8 @@ func EnsureCron() error {
 	if err != nil {
 		return err
 	}
-	want := fmt.Sprintf("0 0 * * * cd %s && %s backup >> %s 2>&1 %s",
-		shellQuote(wd), shellQuote(exe), shellQuote(filepath.Join(wd, "backups.log")), cronMarker)
+	want := fmt.Sprintf("%s cd %s && %s backup >> %s 2>&1 %s",
+		cronSchedule(), shellQuote(wd), shellQuote(exe), shellQuote(filepath.Join(wd, "backups.log")), cronMarker)
 
 	current, err := readCrontab()
 	if err != nil {
@@ -63,6 +66,13 @@ func EnsureCron() error {
 		return fmt.Errorf("crontab -: %v: %s", err, strings.TrimSpace(string(out)))
 	}
 	return nil
+}
+
+func cronSchedule() string {
+	loc := timezone.Location()
+	now := time.Now().In(loc)
+	next := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, loc).In(time.Local)
+	return fmt.Sprintf("%d %d * * *", next.Minute(), next.Hour())
 }
 
 func readCrontab() (string, error) {

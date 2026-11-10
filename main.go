@@ -42,6 +42,9 @@ func main() {
 
 	if len(os.Args) > 1 && os.Args[1] == "backup" {
 		runner.RunAll(backups.TriggerCron)
+		if err := backups.EnsureCron(); err != nil {
+			log.Printf("backup cron: %v", err)
+		}
 		return
 	}
 

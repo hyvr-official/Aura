@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"aura/internal/backups"
 	"aura/internal/startup"
 	"aura/internal/timezone"
 )
@@ -60,6 +61,9 @@ func (h *Handlers) SettingsTimezone(w http.ResponseWriter, r *http.Request) {
 		log.Printf("save timezone: %v", err)
 		http.Redirect(w, r, "/settings?status=timezone_failed", http.StatusSeeOther)
 		return
+	}
+	if err := backups.EnsureCron(); err != nil {
+		log.Printf("backup cron: %v", err)
 	}
 	http.Redirect(w, r, "/settings?status=timezone_updated", http.StatusSeeOther)
 }
