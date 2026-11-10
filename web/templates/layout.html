@@ -118,7 +118,8 @@
             }
 
             function navSetUsage(chart, value) {
-                chart.updateOptions({ colors: [navUsageColor(value)], series: [value] });
+                chart.updateOptions({ colors: [navUsageColor(value)], series: [value] }, false, chart.navInitialized);
+                chart.navInitialized = true;
             }
 
             function navGauge(selector) {
@@ -146,6 +147,7 @@
                     states: { hover: { filter: { type: 'none' } }, active: { filter: { type: 'none' } } }
                 });
                 chart.render();
+                chart.navInitialized = false;
                 return chart;
             }
 
