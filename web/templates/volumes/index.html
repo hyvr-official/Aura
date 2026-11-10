@@ -21,7 +21,7 @@
             </div>
             {{else if .Data.Volumes}}
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
+                <table class="table table-hover align-middle mb-0 text-nowrap">
                     <thead>
                         <tr>
                             <th>Name</th>
@@ -35,7 +35,7 @@
                     <tbody>
                         {{range .Data.Volumes}}
                         <tr>
-                            <td class="fw-medium text-break">{{.Name}}</td>
+                            <td class="fw-medium text-nowrap">{{.Name}}</td>
                             <td><code>{{.Driver}}</code></td>
                             <td class="text-body-secondary">{{.Scope}}</td>
                             <td>
@@ -45,7 +45,7 @@
                                 <span class="text-body-secondary">—</span>
                                 {{end}}
                             </td>
-                            <td class="small text-break"><code>{{.Mountpoint}}</code></td>
+                            <td class="small text-nowrap"><code>{{.Mountpoint}}</code></td>
                             <td class="text-end text-nowrap">
                                 {{if .FilesURL}}
                                 <a href="{{.FilesURL}}" class="btn btn-outline-info btn-sm">Open</a>
