@@ -27,7 +27,7 @@
                             {{end}}
                         </div>
                         {{with index .Errors "Paths"}}<div class="invalid-feedback d-block mb-2">{{.}}</div>{{end}}
-                        <button type="button" class="btn btn-outline-secondary btn-sm" id="path-add"><i class="ri-add-line"></i> Add path</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm d-block mx-auto" id="path-add"><i class="ri-add-line"></i> Add path</button>
                     </div>
 
                     <div class="mb-3">
@@ -65,7 +65,7 @@
 
                     <div class="mb-3">
                         <label for="source_folder" class="form-label">Source folder</label>
-                        <input type="text" class="form-control" id="source_folder" name="source_folder" autocomplete="off" value="{{.Backup.SourceFolder}}" placeholder="backups/server-1">
+                        <input type="text" class="form-control" id="source_folder" name="source_folder" autocomplete="off" value="{{.Backup.SourceFolder}}" placeholder="backups/server">
                     </div>
 
                     <div id="local-fields" class="mb-3{{if not .Backup.IsLocal}} d-none{{end}}">
