@@ -18,7 +18,7 @@ import (
 	"aura/web"
 )
 
-var version = "1.0.2"
+var version = "1.0.3"
 
 func main() {
 	cfg, err := config.Load()
