@@ -109,6 +109,8 @@ func main() {
 
 	mux.Handle("GET /cron", protected(h.CronIndex))
 	mux.Handle("POST /cron", protected(h.CronStore))
+	mux.Handle("GET /cron/crontab", protected(h.CronCrontab))
+	mux.Handle("POST /cron/crontab", protected(h.CronCrontabSave))
 	mux.Handle("POST /cron/{id}", protected(h.CronUpdate))
 	mux.Handle("POST /cron/{id}/delete", protected(h.CronDelete))
 	mux.Handle("GET /cron/{id}/logs", protected(h.CronLogs))

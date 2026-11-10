@@ -1,5 +1,7 @@
 {{template "header" .}}
     <link href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/theme/material-darker.min.css" rel="stylesheet">
     <link href="/static/css/cron/index.css" rel="stylesheet">
     <main class="container py-4">
         <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-4">
@@ -8,7 +10,10 @@
                 {{if not .Data.CronMissing}}<span class="badge text-bg-secondary">{{len .Data.Jobs}}</span>{{end}}
             </div>
             {{if not .Data.CronMissing}}
-            <button type="button" class="btn btn-secondary btn-sm" id="cron-new">New job</button>
+            <div class="d-flex flex-wrap gap-2">
+                <a href="/cron/crontab?user=root" class="btn btn-outline-secondary btn-sm"><i class="ri-code-line"></i> Edit crontab</a>
+                <button type="button" class="btn btn-secondary btn-sm" id="cron-new">New job</button>
+            </div>
             {{end}}
         </div>
 
@@ -45,7 +50,7 @@
                                 <div class="small text-body-secondary">{{.ScheduleLabel}}</div>
                             </td>
                             <td class="cron-command"><code title="{{.Command}}">{{.Command}}</code></td>
-                            <td class="text-nowrap">{{.User}}</td>
+                            <td class="text-nowrap">{{if .System}}{{.User}}{{else}}<a href="/cron/crontab?user={{.User}}" class="link-body-emphasis" title="Edit {{.User}}'s crontab">{{.User}}</a>{{end}}</td>
                             <td class="text-nowrap">
                                 {{if .System}}
                                 <span class="badge text-bg-secondary" title="System cron file, read-only">{{.SourceLabel}}</span>
@@ -123,9 +128,11 @@
                             </div>
                             <div class="col-12">
                                 <label for="cron-command" class="form-label">Command</label>
-                                <textarea class="form-control cron-command-input{{if .Data.Errors.command}} is-invalid{{end}}" id="cron-command" name="command" rows="3" maxlength="1000" required autocomplete="off">{{.Data.Form.Command}}</textarea>
-                                <div class="invalid-feedback">{{.Data.Errors.command}}</div>
-                                <div class="form-text">Single line. Escape <code>%</code> as <code>\%</code>. Output is saved and shown in Logs.</div>
+                                <div class="cron-editor{{if .Data.Errors.command}} is-invalid{{end}}" id="cron-command-box">
+                                    <textarea id="cron-command" name="command" autocomplete="off">{{.Data.Form.Command}}</textarea>
+                                </div>
+                                <div class="invalid-feedback{{if .Data.Errors.command}} d-block{{end}}" id="cron-command-error">{{.Data.Errors.command}}</div>
+                                <div class="form-text">Single line. Escape <code>%</code> as <code>\%</code>. Ctrl+Enter to save. Output is saved and shown in Logs.</div>
                             </div>
                         </div>
                     </div>
@@ -158,6 +165,8 @@
 {{template "footer" .}}
     <script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/shell/shell.min.js"></script>
     <script>
         $(function () {
             var modalEl = document.getElementById('cron-modal');
@@ -166,6 +175,28 @@
             }
             var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
             var session = { id: null, term: null, fit: null, socket: null };
+
+            var editor = CodeMirror.fromTextArea(document.getElementById('cron-command'), {
+                mode: 'shell',
+                theme: 'material-darker',
+                lineWrapping: true,
+                indentUnit: 4,
+                extraKeys: {
+                    'Enter': function () {},
+                    'Ctrl-Enter': function () { $('#cron-form').trigger('submit'); },
+                    'Cmd-Enter': function () { $('#cron-form').trigger('submit'); }
+                }
+            });
+            editor.getInputField().setAttribute('autocomplete', 'off');
+            editor.on('beforeChange', function (cm, change) {
+                if (change.update && change.text.length > 1) {
+                    change.update(change.from, change.to, [change.text.join(' ')]);
+                }
+            });
+            editor.on('change', function () {
+                $('#cron-command-box').removeClass('is-invalid');
+                $('#cron-command-error').removeClass('d-block');
+            });
 
             function syncPreset() {
                 var value = $.trim($('#cron-schedule').val()).replace(/\s+/g, ' ');
@@ -177,6 +208,7 @@
 
             function clearErrors() {
                 $('#cron-form .is-invalid').removeClass('is-invalid');
+                $('#cron-command-error').removeClass('d-block');
                 $('#cron-form-error').addClass('d-none').text('');
             }
 
@@ -191,7 +223,8 @@
                 setMode(id);
                 $('#cron-user').val(user);
                 $('#cron-schedule').val(schedule);
-                $('#cron-command').val(command);
+                editor.setValue(command);
+                editor.clearHistory();
                 syncPreset();
                 modal.show();
             }
@@ -214,17 +247,14 @@
 
             $('#cron-schedule').on('input', syncPreset);
 
-            $('#cron-command').on('keydown', function (event) {
-                if (event.key === 'Enter') {
-                    event.preventDefault();
-                    if (event.ctrlKey || event.metaKey) {
-                        $('#cron-form').trigger('submit');
-                    }
-                }
+            $('#cron-form').on('submit', function () {
+                editor.save();
             });
 
             $('#cron-modal').on('shown.bs.modal', function () {
-                $('#cron-command').trigger('focus');
+                editor.refresh();
+                editor.focus();
+                editor.setCursor(editor.lineCount(), 0);
             });
 
             if ($('#cron-modal').attr('data-open') === '1') {

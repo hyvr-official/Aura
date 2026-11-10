@@ -4,6 +4,9 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"net/url"
+	"slices"
+	"strings"
 	"syscall"
 	"time"
 
@@ -22,6 +25,15 @@ type cronIndexData struct {
 	Errors      map[string]string
 	EditID      string
 	FormOpen    bool
+}
+
+type cronCrontabData struct {
+	User        string
+	Users       []string
+	Content     string
+	Error       string
+	Saved       bool
+	CronMissing bool
 }
 
 var cronFlashes = map[string]string{
@@ -139,6 +151,57 @@ func (h *Handlers) CronLogs(w http.ResponseWriter, r *http.Request) {
 	}()
 	cmd.Wait()
 	conn.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""), time.Now().Add(time.Second))
+}
+
+func (h *Handlers) CronCrontab(w http.ResponseWriter, r *http.Request) {
+	owner := strings.TrimSpace(r.URL.Query().Get("user"))
+	if owner == "" {
+		owner = "root"
+	}
+	data := cronCrontabData{User: owner}
+	content, err := cron.ReadCrontab(owner)
+	switch {
+	case errors.Is(err, cron.ErrCronMissing):
+		data.CronMissing = true
+	case errors.Is(err, cron.ErrUnknownUser):
+		http.NotFound(w, r)
+		return
+	case err != nil:
+		serverError(w, "read crontab", err)
+		return
+	}
+	data.Content = content
+	data.Saved = r.URL.Query().Get("status") == "saved"
+	h.renderCronCrontab(w, http.StatusOK, data)
+}
+
+func (h *Handlers) CronCrontabSave(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, cron.MaxCrontabLength*2)
+	owner := strings.TrimSpace(r.PostFormValue("user"))
+	content := r.PostFormValue("content")
+	err := cron.SaveCrontab(owner, content)
+	if errors.Is(err, cron.ErrUnknownUser) {
+		http.NotFound(w, r)
+		return
+	}
+	if err != nil {
+		log.Printf("save crontab %s: %v", owner, err)
+		h.renderCronCrontab(w, http.StatusUnprocessableEntity, cronCrontabData{User: owner, Content: content, Error: err.Error(), CronMissing: errors.Is(err, cron.ErrCronMissing)})
+		return
+	}
+	http.Redirect(w, r, "/cron/crontab?status=saved&user="+url.QueryEscape(owner), http.StatusSeeOther)
+}
+
+func (h *Handlers) renderCronCrontab(w http.ResponseWriter, status int, data cronCrontabData) {
+	data.Users = cron.Users()
+	if !slices.Contains(data.Users, data.User) {
+		data.Users = append(data.Users, data.User)
+	}
+	h.render(w, status, "cron/crontab.html", page{
+		Title:  "Crontab · " + data.User,
+		Active: "cron",
+		Data:   data,
+	})
 }
 
 func (h *Handlers) renderCronForm(w http.ResponseWriter, in cron.Input, id string, errs map[string]string) {

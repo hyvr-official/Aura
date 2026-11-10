@@ -20,6 +20,27 @@
     font-size: .875rem;
 }
 
+.cron-editor {
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+    overflow: hidden;
+}
+
+.cron-editor.is-invalid {
+    border-color: var(--bs-form-invalid-border-color);
+}
+
+.cron-editor .CodeMirror {
+    height: auto;
+    font-size: .875rem;
+    font-family: Menlo, Consolas, "DejaVu Sans Mono", monospace;
+}
+
+.cron-editor .CodeMirror-scroll {
+    min-height: 5rem;
+    max-height: 12rem;
+}
+
 @media (max-width: 767.98px) {
     .cron-command code {
         max-width: 14rem;

@@ -1,0 +1,110 @@
+{{template "header" .}}
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/theme/material-darker.min.css" rel="stylesheet">
+    <link href="/static/css/cron/crontab.css" rel="stylesheet">
+    <main class="container py-4" style="max-width: 1100px;">
+        <a href="/cron" class="link-secondary text-decoration-none small"><i class="ri-arrow-left-line"></i> Back to cron</a>
+
+        {{with .Data}}
+        <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mt-2 mb-4">
+            <h1 class="h5 mb-0">Crontab <span class="text-body-secondary small ms-1">{{.User}}</span></h1>
+            <div class="d-flex align-items-center gap-2">
+                <label for="crontab-user-select" class="form-label small text-body-secondary mb-0">User</label>
+                <select class="form-select form-select-sm w-auto" id="crontab-user-select" autocomplete="off">
+                    {{range .Users}}
+                    <option value="{{.}}"{{if eq . $.Data.User}} selected{{end}}>{{.}}</option>
+                    {{end}}
+                </select>
+            </div>
+        </div>
+
+        {{if .Saved}}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            Crontab saved.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {{end}}
+
+        {{with .Error}}
+        <div class="alert alert-danger" role="alert">
+            <div class="fw-medium mb-2">The crontab was not saved. The previous version is still active.</div>
+            <pre class="mb-0 small text-wrap">{{.}}</pre>
+        </div>
+        {{end}}
+
+        {{if .CronMissing}}
+        <div class="alert alert-warning" role="alert">
+            cron is not installed on this server. Install it with <code>apt-get install cron</code>.
+        </div>
+        {{else}}
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <form method="post" action="/cron/crontab" id="crontab-form" autocomplete="off">
+                    <input type="hidden" name="user" value="{{.User}}" autocomplete="off">
+                    <div class="mb-3">
+                        <div class="crontab-editor{{if .Error}} is-invalid{{end}}">
+                            <textarea id="crontab-content" name="content" autocomplete="off">{{.Content}}</textarea>
+                        </div>
+                        <div class="form-text">One job per line: <code>minute hour day-of-month month day-of-week command</code>. Lines ending in <code># aura-cron:&lt;id&gt;</code> are managed by Aura and the <code># aura-backup</code> line is recreated by Aura backups. The file is checked by <code>crontab</code> before it is installed.</div>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button type="submit" class="btn btn-secondary">Save crontab</button>
+                        <a href="/cron" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {{end}}
+        {{end}}
+    </main>
+{{template "footer" .}}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/shell/shell.min.js"></script>
+    <script>
+        $(function () {
+            var dirty = false;
+            var textarea = document.getElementById('crontab-content');
+            var editor = null;
+
+            if (textarea) {
+                editor = CodeMirror.fromTextArea(textarea, {
+                    mode: 'shell',
+                    theme: 'material-darker',
+                    lineNumbers: true,
+                    lineWrapping: false,
+                    indentUnit: 4,
+                    extraKeys: {
+                        'Ctrl-S': function () { $('#crontab-form').trigger('submit'); },
+                        'Cmd-S': function () { $('#crontab-form').trigger('submit'); }
+                    }
+                });
+                editor.getInputField().setAttribute('autocomplete', 'off');
+                editor.on('change', function () {
+                    dirty = true;
+                });
+            }
+
+            $('#crontab-form').on('submit', function () {
+                if (editor) {
+                    editor.save();
+                }
+                dirty = false;
+                $(this).find('button[type="submit"]').prop('disabled', true).text('Saving...');
+            });
+
+            $('#crontab-user-select').on('change', function () {
+                if (dirty && !confirm('Discard unsaved changes?')) {
+                    $(this).val($('input[name="user"]').val());
+                    return;
+                }
+                dirty = false;
+                location.href = '/cron/crontab?user=' + encodeURIComponent($(this).val());
+            });
+
+            $(window).on('beforeunload', function () {
+                if (dirty) {
+                    return 'You have unsaved changes.';
+                }
+            });
+        });
+    </script>

@@ -26,6 +26,7 @@ const (
 	SystemCronDir    = "/etc/cron.d"
 	SourceCrontab    = "crontab"
 	MaxCommandLength = 1000
+	MaxCrontabLength = 256 * 1024
 	marker           = "# aura-cron:"
 	backupMarker     = "# aura-backup"
 )
@@ -34,6 +35,7 @@ var (
 	ErrCronMissing = errors.New("cron is not installed")
 	ErrNotFound    = errors.New("cron job not found")
 	ErrReadOnly    = errors.New("cron job is read-only")
+	ErrUnknownUser = errors.New("user does not exist on this server")
 )
 
 var (
@@ -324,6 +326,43 @@ func Delete(id string) error {
 		removeLog(job.LogID)
 	}
 	return nil
+}
+
+func ReadCrontab(owner string) (string, error) {
+	if _, err := exec.LookPath("crontab"); err != nil {
+		return "", ErrCronMissing
+	}
+	if !userExists(owner) {
+		return "", ErrUnknownUser
+	}
+	return readCrontab(owner)
+}
+
+func SaveCrontab(owner, content string) error {
+	mu.Lock()
+	defer mu.Unlock()
+	if _, err := exec.LookPath("crontab"); err != nil {
+		return ErrCronMissing
+	}
+	if !userExists(owner) {
+		return ErrUnknownUser
+	}
+	if len(content) > MaxCrontabLength {
+		return fmt.Errorf("crontab must be at most %d bytes", MaxCrontabLength)
+	}
+	content = strings.ReplaceAll(content, "\r\n", "\n")
+	content = strings.TrimRight(content, "\n")
+	if content != "" {
+		content += "\n"
+	}
+	for _, j := range parseCrontab(content, SourceCrontab, owner) {
+		if j.LogID != "" {
+			if err := ensureLog(j.LogID, owner); err != nil {
+				return err
+			}
+		}
+	}
+	return writeCrontab(owner, content)
 }
 
 func Logs(j Job, lines int) *exec.Cmd {

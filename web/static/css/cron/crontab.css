@@ -1,0 +1,16 @@
+.crontab-editor {
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+    overflow: hidden;
+}
+
+.crontab-editor.is-invalid {
+    border-color: var(--bs-form-invalid-border-color);
+}
+
+.crontab-editor .CodeMirror {
+    height: 60vh;
+    min-height: 320px;
+    font-size: .875rem;
+    font-family: Menlo, Consolas, "DejaVu Sans Mono", monospace;
+}
