@@ -13,4 +13,3 @@
 - Use a consistent dark theme throughout the entire application, including all pages, components, and UI elements.
 - Add autocomplete="off" for all form input elements.
 - Ensure the entire UI is fully responsive and works smoothly across desktop, tablet, and mobile devices.
-- Ensure all database changes remain backward-compatible, allowing users to upgrade the application seamlessly.
