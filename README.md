@@ -10,6 +10,7 @@
 - **Git Repositories**: clone, pull and switch branches, with a separate SSH deploy key for each repository.
 - **Web Server (Nginx)**: create, edit, enable and disable sites, get free SSL certificates with Certbot and view site logs.
 - **Backups**: scheduled backups (daily at 00:00 in the configured timezone through cron) stored locally or on AWS S3, with automatic cleanup of old backups, run history and manual runs.
+- **Cron Jobs**: view all server cron jobs, create, edit and delete jobs in user crontabs, see live output logs for jobs saved through Aura, and edit crontabs directly in a raw editor with syntax highlighting.
 - **File Manager**: browse, create, rename, edit, delete and download files on the server.
 - **Console**: a web terminal for the server, plus saved commands you can run again later.
 - **Settings**: system checks that show the status of every required package and service.
@@ -37,6 +38,16 @@ The script will:
 2. Install it to `/opt/aura`.
 3. Create and start the `aura` systemd service.
 4. Print the URL to finish the setup.
+
+### Update
+
+To update Aura, run the same install script again:
+
+```bash
+wget -O install.sh https://raw.githubusercontent.com/hyvr-official/Aura/master/install.sh && sudo bash install.sh
+```
+
+The script detects the existing install and updates Aura in place. Your database, files and service settings are kept.
 
 ### Automatic dependency setup
 
@@ -67,8 +78,6 @@ systemctl status aura      # Check the service status
 journalctl -u aura -f      # Follow the logs
 systemctl restart aura     # Restart Aura
 ```
-
-To **update** Aura, run the install script again. Your data is kept.
 
 ## :hammer_and_wrench: How to build
 You can build the binaries or do development of Aura by following the below steps. Aura is build fully on Golang and Goreleaser is used for building releases. So you should install latest version of Go from [here](https://go.dev/doc/install).
