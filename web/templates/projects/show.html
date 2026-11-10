@@ -74,7 +74,7 @@
                             <dd class="col-sm-8"><code class="text-break">{{.}}</code></dd>
                             {{end}}
                             <dt class="col-sm-4">Created</dt>
-                            <dd class="col-sm-8 mb-0 text-body-secondary">{{.Project.CreatedAt.Local.Format "2006-01-02 15:04"}}</dd>
+                            <dd class="col-sm-8 mb-0 text-body-secondary">{{formatTime .Project.CreatedAt "2006-01-02 15:04"}}</dd>
                         </dl>
                         {{with .InfoError}}
                         <div class="alert alert-warning small mt-3 mb-0 text-break" role="alert">{{.}}</div>
@@ -141,7 +141,7 @@
                         <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
                             <h2 class="h5 mb-0">Last operation</h2>
                             {{if .Project.LastAction}}
-                            <span class="small text-body-secondary">{{.Project.LastActionLabel}}{{with .Project.LastFolder}} · <code>{{.}}</code>{{end}} · {{.Project.LastActionAt.Local.Format "2006-01-02 15:04:05"}}</span>
+                            <span class="small text-body-secondary">{{.Project.LastActionLabel}}{{with .Project.LastFolder}} · <code>{{.}}</code>{{end}} · {{formatTime .Project.LastActionAt "2006-01-02 15:04:05"}}</span>
                             {{end}}
                         </div>
                         {{if .Project.LastOutput}}

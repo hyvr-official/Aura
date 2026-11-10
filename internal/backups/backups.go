@@ -6,6 +6,8 @@ import (
 	"path"
 	"strings"
 	"time"
+
+	"aura/internal/timezone"
 )
 
 type Backup struct {
@@ -132,8 +134,8 @@ func (b Backup) IsDue(lastSuccess time.Time, hasSuccess bool, now time.Time) boo
 }
 
 func day(t time.Time) time.Time {
-	t = t.Local()
-	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.Local)
+	t = timezone.In(t)
+	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 }
 
 func (b *Backup) Normalize() {

@@ -6,6 +6,8 @@ import (
 	"io/fs"
 	"net/http"
 	"strings"
+
+	"aura/internal/timezone"
 )
 
 //go:embed templates
@@ -15,7 +17,10 @@ var templateFS embed.FS
 var staticFS embed.FS
 
 func Templates(version string) *template.Template {
-	root := template.New("").Funcs(template.FuncMap{"version": func() string { return version }})
+	root := template.New("").Funcs(template.FuncMap{
+		"version":    func() string { return version },
+		"formatTime": timezone.Format,
+	})
 	err := fs.WalkDir(templateFS, "templates", func(path string, entry fs.DirEntry, err error) error {
 		if err != nil {
 			return err

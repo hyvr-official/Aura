@@ -13,6 +13,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"aura/internal/timezone"
 )
 
 var ErrAlreadyRunning = errors.New("a backup for this task is already running")
@@ -87,7 +89,7 @@ func (r *Runner) RunOne(b Backup, trigger string) error {
 func (r *Runner) Execute(b Backup, run Run) (err error) {
 	var logs strings.Builder
 	logf := func(format string, args ...any) {
-		fmt.Fprintf(&logs, "[%s] %s\n", time.Now().Format("2006-01-02 15:04:05"), fmt.Sprintf(format, args...))
+		fmt.Fprintf(&logs, "[%s] %s\n", timezone.Now().Format("2006-01-02 15:04:05"), fmt.Sprintf(format, args...))
 	}
 
 	defer func() {
@@ -246,7 +248,7 @@ func slugify(s string) string {
 }
 
 func archiveName(b Backup, t time.Time) string {
-	t = t.Local()
+	t = timezone.In(t)
 	return fmt.Sprintf("%s-%s-%s-%d.7z", slugify(b.Name), strings.ToLower(t.Format("02-January-2006")), t.Format("03-04-PM"), t.Unix())
 }
 

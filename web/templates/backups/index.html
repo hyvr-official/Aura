@@ -33,7 +33,7 @@
                             <td><code>{{.Path}}</code></td>
                             <td>{{.FrequencyLabel}}</td>
                             <td>{{.SourceLabel}}</td>
-                            <td class="text-body-secondary text-nowrap"{{if not .LastRunAt.IsZero}} title="{{.LastRunAt.Local.Format "2006-01-02 15:04"}}"{{end}}>{{.LastRunLabel}}</td>
+                            <td class="text-body-secondary text-nowrap"{{if not .LastRunAt.IsZero}} title="{{formatTime .LastRunAt "2006-01-02 15:04"}}"{{end}}>{{.LastRunLabel}}</td>
                             <td class="text-end text-nowrap">
                                 <a href="/backups/{{.ID}}" class="btn btn-outline-primary btn-sm">View</a>
                                 <a href="/backups/{{.ID}}/edit" class="btn btn-outline-secondary btn-sm">Edit</a>

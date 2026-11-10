@@ -11,6 +11,8 @@ import (
 	"syscall"
 	"time"
 	"unicode/utf8"
+
+	"aura/internal/timezone"
 )
 
 const MaxEditSize = 2 * 1024 * 1024
@@ -44,7 +46,7 @@ func (e Entry) SizeLabel() string {
 }
 
 func (e Entry) ModTimeLabel() string {
-	return e.ModTime.Local().Format("2006-01-02 15:04")
+	return timezone.Format(e.ModTime, "2006-01-02 15:04")
 }
 
 type Crumb struct {

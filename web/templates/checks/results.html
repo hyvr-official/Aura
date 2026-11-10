@@ -26,7 +26,7 @@
                     </tbody>
                 </table>
             </div>
-            <p class="small text-body-secondary mt-2 mb-0">Last run: {{.RanAt.Format "2006-01-02 15:04:05"}}</p>
+            <p class="small text-body-secondary mt-2 mb-0">Last run: {{formatTime .RanAt "2006-01-02 15:04:05"}}</p>
             {{else}}
             <p class="text-body-secondary mb-0">Checks have not been run yet.</p>
             {{end}}

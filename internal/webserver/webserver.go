@@ -13,6 +13,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"aura/internal/timezone"
 )
 
 const (
@@ -90,7 +92,7 @@ func (s Site) ModifiedLabel() string {
 	if s.ModTime.IsZero() {
 		return "—"
 	}
-	return s.ModTime.Local().Format("2006-01-02 15:04")
+	return timezone.Format(s.ModTime, "2006-01-02 15:04")
 }
 
 func ValidName(name string) bool {

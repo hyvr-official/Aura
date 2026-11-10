@@ -14,6 +14,7 @@ import (
 	"aura/internal/handlers"
 	"aura/internal/projects"
 	"aura/internal/repositories"
+	"aura/internal/timezone"
 	"aura/web"
 )
 
@@ -30,6 +31,11 @@ func main() {
 		log.Fatalf("database: %v", err)
 	}
 	defer db.Close()
+
+	timezones := timezone.NewStore(db)
+	if err := timezones.Load(); err != nil {
+		log.Printf("timezone: %v", err)
+	}
 
 	store := backups.NewStore(db)
 	runner := backups.NewRunner(store)
@@ -48,7 +54,7 @@ func main() {
 	if err := repos.FailInterruptedWebhookLogs(); err != nil {
 		log.Printf("webhook logs: mark interrupted: %v", err)
 	}
-	h := handlers.New(cfg, sessions, passwords, web.Templates(version), store, runner, files.New(cfg.FilesRoot), repos, repositories.NewGit(), projects.NewStore(db), projects.NewDocker(), console.NewStore(db))
+	h := handlers.New(cfg, sessions, passwords, web.Templates(version), store, runner, files.New(cfg.FilesRoot), repos, repositories.NewGit(), projects.NewStore(db), projects.NewDocker(), console.NewStore(db), timezones)
 	protected := func(fn http.HandlerFunc) http.Handler { return auth.RequireAuth(sessions, fn) }
 
 	mux := http.NewServeMux()
@@ -149,6 +155,7 @@ func main() {
 
 	mux.Handle("GET /settings", protected(h.SettingsIndex))
 	mux.Handle("POST /settings/checks", protected(h.SettingsChecks))
+	mux.Handle("POST /settings/timezone", protected(h.SettingsTimezone))
 
 	hooks := http.NewServeMux()
 	hooks.HandleFunc("POST /hooks/{token}", h.WebhookReceive)

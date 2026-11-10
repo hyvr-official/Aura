@@ -4,6 +4,43 @@
             <h1 class="h5 mb-0">Settings</h1>
         </div>
 
+        {{with .Data.Flash}}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{.}}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {{end}}
+        {{with .Data.Error}}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{.}}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {{end}}
+
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body">
+                <h2 class="h5 mb-1">Timezone</h2>
+                <p class="text-body-secondary small mb-3">Timestamps across every module are shown in this timezone.</p>
+                <form method="post" action="/settings/timezone" autocomplete="off">
+                    <div class="row g-2 align-items-end">
+                        <div class="col-12 col-md-8 col-lg-6">
+                            <select class="form-select" id="timezone" name="timezone" autocomplete="off">
+                                <option value=""{{if eq .Data.Timezone ""}} selected{{end}}>Server default ({{.Data.ServerZone}})</option>
+                                {{$selected := .Data.Timezone}}
+                                {{range .Data.Timezones}}
+                                <option value="{{.}}"{{if eq . $selected}} selected{{end}}>{{.}}</option>
+                                {{end}}
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-auto">
+                            <button type="submit" class="btn btn-secondary w-100">Save</button>
+                        </div>
+                    </div>
+                    <div class="form-text">Current time: {{formatTime .Data.Now "2006-01-02 15:04:05 MST"}}</div>
+                </form>
+            </div>
+        </div>
+
         <div class="card shadow-sm border-0">
             <div class="card-body">
                 <div class="d-flex flex-wrap gap-2 align-items-start justify-content-between mb-3">

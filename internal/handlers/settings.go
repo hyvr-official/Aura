@@ -1,21 +1,62 @@
 package handlers
 
 import (
+	"errors"
+	"log"
 	"net/http"
+	"time"
 
 	"aura/internal/startup"
+	"aura/internal/timezone"
 )
 
 type settingsData struct {
-	Report startup.Report
+	Report     startup.Report
+	Timezone   string
+	Timezones  []string
+	ServerZone string
+	Now        time.Time
+	Flash      string
+	Error      string
+}
+
+var settingsFlashes = map[string]string{
+	"timezone_updated": "Timezone updated.",
+}
+
+var settingsErrors = map[string]string{
+	"timezone_invalid": "Choose a valid timezone.",
+	"timezone_failed":  "Could not save the timezone. Check the server logs.",
 }
 
 func (h *Handlers) SettingsIndex(w http.ResponseWriter, r *http.Request) {
+	status := r.URL.Query().Get("status")
 	h.render(w, http.StatusOK, "settings/index.html", page{
 		Title:  "Settings",
 		Active: "settings",
-		Data:   settingsData{Report: startup.Last()},
+		Data: settingsData{
+			Report:     startup.Last(),
+			Timezone:   timezone.Name(),
+			Timezones:  timezone.Options(),
+			ServerZone: timezone.ServerName(),
+			Now:        time.Now(),
+			Flash:      settingsFlashes[status],
+			Error:      settingsErrors[status],
+		},
 	})
+}
+
+func (h *Handlers) SettingsTimezone(w http.ResponseWriter, r *http.Request) {
+	if err := h.timezones.Save(r.PostFormValue("timezone")); err != nil {
+		if errors.Is(err, timezone.ErrInvalid) {
+			http.Redirect(w, r, "/settings?status=timezone_invalid", http.StatusSeeOther)
+			return
+		}
+		log.Printf("save timezone: %v", err)
+		http.Redirect(w, r, "/settings?status=timezone_failed", http.StatusSeeOther)
+		return
+	}
+	http.Redirect(w, r, "/settings?status=timezone_updated", http.StatusSeeOther)
 }
 
 func (h *Handlers) SettingsChecks(w http.ResponseWriter, r *http.Request) {

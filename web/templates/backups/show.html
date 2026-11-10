@@ -58,7 +58,7 @@
                     <dt class="col-sm-3">Pre run script</dt>
                     <dd class="col-sm-9">{{if .Backup.PreRunEnabled}}<pre class="small bg-body-tertiary p-2 mb-0 rounded">{{.Backup.PreRunScript}}</pre>{{else}}<span class="text-body-secondary">Disabled</span>{{end}}</dd>
                     <dt class="col-sm-3">Created</dt>
-                    <dd class="col-sm-9 mb-0 text-body-secondary">{{.Backup.CreatedAt.Local.Format "2006-01-02 15:04"}}</dd>
+                    <dd class="col-sm-9 mb-0 text-body-secondary">{{formatTime .Backup.CreatedAt "2006-01-02 15:04"}}</dd>
                 </dl>
             </div>
         </div>
@@ -82,14 +82,14 @@
                     <tbody>
                         {{range .Runs}}
                         <tr>
-                            <td class="text-nowrap">{{.StartedAt.Local.Format "2006-01-02 15:04:05"}}</td>
+                            <td class="text-nowrap">{{formatTime .StartedAt "2006-01-02 15:04:05"}}</td>
                             <td class="text-capitalize">{{.Trigger}}</td>
                             <td><span class="badge {{.StatusBadge}} text-capitalize">{{.Status}}</span></td>
                             <td>{{.Duration}}</td>
                             <td>{{.SizeLabel}}</td>
                             <td>{{if .FileName}}<code title="{{.FilePath}}">{{.FileName}}</code>{{else}}<span class="text-body-secondary">—</span>{{end}}</td>
                             <td class="text-end">
-                                <button type="button" class="btn btn-outline-secondary btn-sm text-nowrap" data-bs-toggle="modal" data-bs-target="#run-log-modal" data-log-target="#run-log-{{.ID}}" data-log-title="{{.StartedAt.Local.Format "2006-01-02 15:04:05"}}">View Logs</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm text-nowrap" data-bs-toggle="modal" data-bs-target="#run-log-modal" data-log-target="#run-log-{{.ID}}" data-log-title="{{formatTime .StartedAt "2006-01-02 15:04:05"}}">View Logs</button>
                                 <textarea class="d-none" id="run-log-{{.ID}}" autocomplete="off">{{if .Log}}{{.Log}}{{else}}No log yet.{{end}}</textarea>
                             </td>
                         </tr>

@@ -11,6 +11,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"aura/internal/timezone"
 )
 
 const (
@@ -86,7 +88,7 @@ func (c Commit) DateLabel() string {
 	if c.Date.IsZero() {
 		return "—"
 	}
-	return c.Date.Local().Format("2006-01-02 15:04")
+	return timezone.Format(c.Date, "2006-01-02 15:04")
 }
 
 type Info struct {

@@ -7,6 +7,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"aura/internal/timezone"
 )
 
 var ErrNotFound = errors.New("container not found")
@@ -267,7 +269,7 @@ func timeLabel(value string) string {
 	if err != nil || t.Year() <= 1 {
 		return ""
 	}
-	return t.Local().Format("2006-01-02 15:04:05")
+	return timezone.Format(t, "2006-01-02 15:04:05")
 }
 
 func Inspect(id string) (*Details, error) {
