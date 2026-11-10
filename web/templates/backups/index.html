@@ -31,7 +31,7 @@
                         {{range .Data.Backups}}
                         <tr>
                             <td class="fw-medium"><a href="/backups/{{.ID}}" class="link-body-emphasis text-decoration-none">{{.Name}}</a></td>
-                            <td class="text-nowrap"{{if .Paths}} title="{{.PathsTitle}}"{{end}}>{{if .Paths}}<code>{{index .Paths 0}}</code>{{if .PathsMore}} <span class="badge text-bg-secondary">+{{.PathsMore}} more</span>{{end}}{{else}}<span class="text-body-secondary">—</span>{{end}}</td>
+                            <td class="text-nowrap"{{if .Paths}} title="{{.PathsTitle}}"{{end}}>{{if .Paths}}<code>{{index .Paths 0}}</code>{{if .PathsMore}} <span class="badge text-bg-secondary">+{{.PathsMore}}</span>{{end}}{{else}}<span class="text-body-secondary">—</span>{{end}}</td>
                             <td>{{.FrequencyLabel}}</td>
                             <td>{{if .IsManual}}<span class="text-body-secondary">—</span>{{else}}<span class="badge {{if .IsActive}}text-bg-success{{else}}text-bg-secondary{{end}}">{{.StatusLabel}}</span>{{end}}</td>
                             <td>{{.SourceLabel}}</td>
