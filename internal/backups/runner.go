@@ -159,7 +159,23 @@ func (r *Runner) Execute(b Backup, run Run) (err error) {
 	defer os.Remove(out)
 	logf("Archive: %s", out)
 
-	args := append([]string{sevenZip, "a", "-t7z", "-mx=1", "-mmt=1", "-snl", "-bd", "-y", out}, b.Paths...)
+	base, entries, err := archiveEntries(b.Paths, func(path, reason string) {
+		logf("Skipped %s: %s", reason, path)
+	})
+	if err != nil {
+		return err
+	}
+	if len(entries) == 0 {
+		return errors.New("nothing to back up")
+	}
+
+	listFile := out + ".list"
+	defer os.Remove(listFile)
+	if err := os.WriteFile(listFile, []byte(strings.Join(entries, "\n")+"\n"), 0o600); err != nil {
+		return fmt.Errorf("write file list: %w", err)
+	}
+
+	args := []string{sevenZip, "a", "-t7z", "-mx=1", "-mmt=1", "-snl", "-spd", "-scsUTF-8", "-bd", "-y", out, "@" + listFile}
 	if ionice, lerr := exec.LookPath("ionice"); lerr == nil {
 		args = append([]string{ionice, "-c", "3"}, args...)
 	} else {
@@ -171,8 +187,10 @@ func (r *Runner) Execute(b Backup, run Run) (err error) {
 		logf("Warning: nice not found, running without low CPU priority")
 	}
 	logf("Command: %s", strings.Join(args, " "))
+	logf("Working folder: %s", base)
 
 	cmd := exec.Command(args[0], args[1:]...)
+	cmd.Dir = base
 	output, err := cmd.CombinedOutput()
 	if s := strings.TrimSpace(string(output)); s != "" {
 		logs.WriteString(s + "\n")
