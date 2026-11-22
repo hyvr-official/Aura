@@ -477,3 +477,10 @@ input::placeholder{
         max-width: none;
     }
 }
+
+/*-- empty icon --*/
+
+.empty-icon{
+    height: 46px;
+    margin-bottom: 8px;
+}
