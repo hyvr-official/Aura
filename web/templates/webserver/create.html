@@ -5,10 +5,7 @@
 
         {{with .Data}}
         {{with .TestOutput}}
-        <div class="alert alert-danger" role="alert">
-            <div class="fw-medium mb-2">The site could not be created.</div>
-            <pre class="mb-0 small text-wrap">{{.}}</pre>
-        </div>
+        <span hidden data-toast="danger" data-toast-icon="ri-error-warning-fill" data-toast-title="The site could not be created.">{{.}}</span>
         {{end}}
 
         <div class="card shadow-sm border-0">

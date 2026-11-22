@@ -4,18 +4,8 @@
             <h1 class="h5 mb-0">Settings</h1>
         </div>
 
-        {{with .Data.Flash}}
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {{.}}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        {{end}}
-        {{with .Data.Error}}
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            {{.}}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        {{end}}
+        {{with .Data.Flash}}<span hidden data-toast="success" data-toast-icon="ri-checkbox-circle-fill">{{.}}</span>{{end}}
+        {{with .Data.Error}}<span hidden data-toast="danger" data-toast-icon="ri-error-warning-fill">{{.}}</span>{{end}}
 
         <div class="card shadow-sm border-0 mb-4">
             <div class="card-body">
@@ -73,7 +63,6 @@
                         <span id="run-checks-label">Run checks</span>
                     </button>
                 </div>
-                <div class="alert alert-danger py-2 d-none" id="checks-error" role="alert">Could not run checks. Check the server logs.</div>
                 <div id="checks-results">
                     {{template "checks_results" .Data.Report}}
                 </div>
@@ -88,7 +77,6 @@
                 $btn.prop('disabled', true);
                 $('#run-checks-spinner').removeClass('d-none');
                 $('#run-checks-label').text('Running…');
-                $('#checks-error').addClass('d-none');
                 $.ajax({ url: '/settings/checks', method: 'POST', cache: false })
                     .done(function (html, status, xhr) {
                         if (!xhr.getResponseHeader('X-Checks-Results')) {
@@ -98,7 +86,7 @@
                         $('#checks-results').html(html);
                     })
                     .fail(function () {
-                        $('#checks-error').removeClass('d-none');
+                        showToast('Could not run checks. Check the server logs.', 'danger', 'ri-error-warning-fill');
                     })
                     .always(function () {
                         $btn.prop('disabled', false);

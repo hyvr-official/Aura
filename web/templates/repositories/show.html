@@ -26,17 +26,10 @@
             </div>
         </div>
 
-        {{with .Flash}}
-        <div class="alert alert-{{$.Data.FlashType}} alert-dismissible fade show" role="alert">
-            {{.}}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        {{end}}
+        {{with .Flash}}<span hidden data-toast="{{$.Data.FlashType}}">{{.}}</span>{{end}}
 
         {{if .State.IsBlocked}}
-        <div class="alert alert-warning" role="alert">
-            The folder <code>{{.Repository.Path}}</code> {{if eq .State "not_dir"}}is a file, not a folder{{else}}is not empty and is not a git repository{{end}}. Empty it or change the folder path to clone this repository.
-        </div>
+        <span hidden data-toast="warning" data-toast-icon="ri-alert-fill">The folder {{.Repository.Path}} {{if eq .State "not_dir"}}is a file, not a folder{{else}}is not empty and is not a git repository{{end}}. Empty it or change the folder path to clone this repository.</span>
         {{end}}
 
         <div class="row g-4">
@@ -76,7 +69,7 @@
                             <dd class="col-sm-8 mb-0 text-body-secondary">{{formatTime .Repository.CreatedAt "2006-01-02 15:04"}}</dd>
                         </dl>
                         {{with .InfoError}}
-                        <div class="alert alert-warning small mt-3 mb-0 text-break" role="alert">{{.}}</div>
+                        <span hidden data-toast="warning" data-toast-icon="ri-alert-fill">{{.}}</span>
                         {{end}}
                     </div>
                 </div>
@@ -86,7 +79,7 @@
                     <div class="card-body p-4">
                         <h2 class="h5 mb-3">Change branch</h2>
                         {{with .BranchError}}
-                        <div class="alert alert-warning small text-break" role="alert">Could not list remote branches: {{.}}</div>
+                        <span hidden data-toast="warning" data-toast-icon="ri-alert-fill">Could not list remote branches: {{.}}</span>
                         {{end}}
                         {{if .Branches}}
                         <form method="post" action="/repositories/{{.Repository.ID}}/checkout" class="js-operation" data-busy="Switching…" data-confirm="Discard all local changes to tracked files and switch to the selected branch?">
@@ -150,7 +143,7 @@
                             <button type="button" class="btn btn-outline-primary js-copy" data-copy-target="#webhook-url">Copy</button>
                         </div>
                         {{else}}
-                        <div class="alert alert-warning small" role="alert">The webhook URL could not be generated. Check the server logs.</div>
+                        <span hidden data-toast="warning" data-toast-icon="ri-alert-fill">The webhook URL could not be generated. Check the server logs.</span>
                         {{end}}
                         <ul class="small text-body-secondary ps-3">
                             <li><strong>GitHub:</strong> Repository → Settings → Webhooks → Add webhook. Set content type to <code>application/json</code> and select <em>Just the push event</em>.</li>

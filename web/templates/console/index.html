@@ -46,7 +46,6 @@
                                 <button type="button" class="btn btn-secondary btn-sm" id="command-new">New command</button>
                             </div>
                         </div>
-                        <div class="px-3 pt-2 empty-hide" id="list-feedback"></div>
                         <div class="list-group list-group-flush saved-commands flex-grow-1" id="saved-commands">
                             <div class="list-group-item text-body-secondary small">Loading…</div>
                         </div>
@@ -187,29 +186,14 @@
 
             function feedback(text, style, target) {
                 if (target !== 'form' && target !== 'scratch') {
-                    listAlert(text, style);
+                    var toastIcons = {success: 'ri-checkbox-circle-fill', danger: 'ri-error-warning-fill', warning: 'ri-alert-fill'};
+                    showToast(text, style === 'body-secondary' ? 'secondary' : style, toastIcons[style] || 'ri-information-fill');
                     return;
                 }
                 var box = $(target === 'scratch' ? '#scratch-feedback' : '#form-feedback');
                 box.removeClass('d-none text-success text-danger text-body-secondary').addClass('text-' + style).text(text);
                 clearTimeout(box.data('timer'));
                 box.data('timer', setTimeout(function () { box.addClass('d-none'); }, 4000));
-            }
-
-            function listAlert(text, style) {
-                var box = $('#list-feedback');
-                var type = style === 'body-secondary' ? 'secondary' : style;
-                box.empty();
-                var alert = $('<div class="alert alert-dismissible fade show small py-2 mb-0" role="alert"></div>')
-                    .addClass('alert-' + type)
-                    .append($('<span></span>').text(text))
-                    .append($('<button type="button" class="btn-close btn-sm py-2" data-bs-dismiss="alert" aria-label="Close"></button>'));
-                box.append(alert);
-                setTimeout(function () {
-                    if (alert.parent().length) {
-                        bootstrap.Alert.getOrCreateInstance(alert[0]).close();
-                    }
-                }, 4000);
             }
 
             function splitCommands(text) {

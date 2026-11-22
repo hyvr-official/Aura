@@ -5,12 +5,7 @@
             <a href="/projects/create" class="btn btn-secondary"><i class="ri-add-line"></i> New project</a>
         </div>
 
-        {{with .Data.Flash}}
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {{.}}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        {{end}}
+        {{with .Data.Flash}}<span hidden data-toast="success" data-toast-icon="ri-checkbox-circle-fill">{{.}}</span>{{end}}
 
         <div class="card shadow-sm border-0">
             {{if .Data.Projects}}

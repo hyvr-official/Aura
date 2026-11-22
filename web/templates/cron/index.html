@@ -17,17 +17,10 @@
             {{end}}
         </div>
 
-        {{with .Data.Flash}}
-        <div class="alert alert-{{$.Data.FlashType}} alert-dismissible fade show" role="alert">
-            {{.}}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        {{end}}
+        {{with .Data.Flash}}<span hidden data-toast="{{$.Data.FlashType}}">{{.}}</span>{{end}}
 
         {{if .Data.CronMissing}}
-        <div class="alert alert-warning" role="alert">
-            cron is not installed on this server. Install it with <code>apt-get install cron</code>.
-        </div>
+        <span hidden data-toast="warning" data-toast-icon="ri-alert-fill">cron is not installed on this server. Install it with apt-get install cron.</span>
         {{else}}
         <div class="card shadow-sm border-0">
             {{if .Data.Jobs}}
@@ -100,7 +93,7 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <div class="alert alert-danger small{{if not .Data.Errors.form}} d-none{{end}}" id="cron-form-error" role="alert">{{.Data.Errors.form}}</div>
+                        {{with .Data.Errors.form}}<span hidden data-toast="danger" data-toast-icon="ri-error-warning-fill">{{.}}</span>{{end}}
                         <div class="row g-3">
                             <div class="col-md-4">
                                 <label for="cron-user" class="form-label">User</label>
@@ -212,7 +205,6 @@
             function clearErrors() {
                 $('#cron-form .is-invalid').removeClass('is-invalid');
                 $('#cron-command-error').removeClass('d-block');
-                $('#cron-form-error').addClass('d-none').text('');
             }
 
             function setMode(id) {

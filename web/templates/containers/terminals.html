@@ -4,16 +4,13 @@
 
         <div class="modal fade" id="logs-modal" tabindex="-1" aria-labelledby="logs-modal-label" aria-hidden="true">
             <div class="modal-dialog modal-xl modal-dialog-centered">
-                <div class="modal-content">
+                <div class="modal-content overflow-hidden">
                     <div class="modal-header">
-                        <h2 class="modal-title h5" id="logs-modal-label">Logs <span class="text-body-secondary small ms-2" id="logs-modal-name"></span><span class="badge text-bg-success ms-2 d-none" id="logs-live">Live</span></h2>
+                        <h2 class="modal-title h6" id="logs-modal-label">Logs <span class="text-body-secondary small ms-2" id="logs-modal-name"></span><span class="badge text-bg-success ms-2 d-none" id="logs-live">Live</span></h2>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <div class="modal-body">
-                        <div class="xterm-box" id="logs-terminal"></div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                    <div class="modal-body p-0">
+                        <div class="xterm-box border-0 rounded-0" id="logs-terminal"></div>
                     </div>
                 </div>
             </div>
@@ -21,16 +18,13 @@
 
         <div class="modal fade" id="shell-modal" tabindex="-1" aria-labelledby="shell-modal-label" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
             <div class="modal-dialog modal-xl modal-dialog-centered">
-                <div class="modal-content">
+                <div class="modal-content overflow-hidden">
                     <div class="modal-header">
-                        <h2 class="modal-title h5" id="shell-modal-label">Shell <span class="text-body-secondary small ms-2" id="shell-modal-name"></span></h2>
+                        <h2 class="modal-title h6" id="shell-modal-label">Shell <span class="text-body-secondary small ms-2" id="shell-modal-name"></span></h2>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <div class="modal-body">
-                        <div class="xterm-box" id="shell-terminal"></div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                    <div class="modal-body p-0">
+                        <div class="xterm-box border-0 rounded-0" id="shell-terminal"></div>
                     </div>
                 </div>
             </div>

@@ -13,10 +13,7 @@
         </div>
 
         {{with .TestOutput}}
-        <div class="alert alert-danger" role="alert">
-            <div class="fw-medium mb-2">The config was not saved. The previous version is still active.</div>
-            <pre class="mb-0 small text-wrap">{{.}}</pre>
-        </div>
+        <span hidden data-toast="danger" data-toast-icon="ri-error-warning-fill" data-toast-title="The config was not saved. The previous version is still active.">{{.}}</span>
         {{end}}
 
         <div class="card shadow-sm border-0">
@@ -49,9 +46,7 @@
                 {{end}}
 
                 {{with .SSLError}}
-                <div class="alert alert-danger" role="alert">
-                    <pre class="mb-0 small text-wrap">{{.}}</pre>
-                </div>
+                <span hidden data-toast="danger" data-toast-icon="ri-error-warning-fill">{{.}}</span>
                 {{end}}
 
                 <form method="post" action="/web-server/{{.Site.Name}}/ssl" id="ssl-form" class="row g-2 align-items-end"{{if .Site.SSL}} data-confirm="Request a new SSL certificate for this site?"{{end}}>

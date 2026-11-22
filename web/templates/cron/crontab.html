@@ -18,24 +18,12 @@
             </div>
         </div>
 
-        {{if .Saved}}
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            Crontab saved.
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        {{end}}
+        {{if .Saved}}<span hidden data-toast="success" data-toast-icon="ri-checkbox-circle-fill">Crontab saved.</span>{{end}}
 
-        {{with .Error}}
-        <div class="alert alert-danger" role="alert">
-            <div class="fw-medium mb-2">The crontab was not saved. The previous version is still active.</div>
-            <pre class="mb-0 small text-wrap">{{.}}</pre>
-        </div>
-        {{end}}
+        {{with .Error}}<span hidden data-toast="danger" data-toast-icon="ri-error-warning-fill" data-toast-title="The crontab was not saved. The previous version is still active.">{{.}}</span>{{end}}
 
         {{if .CronMissing}}
-        <div class="alert alert-warning" role="alert">
-            cron is not installed on this server. Install it with <code>apt-get install cron</code>.
-        </div>
+        <span hidden data-toast="warning" data-toast-icon="ri-alert-fill">cron is not installed on this server. Install it with apt-get install cron.</span>
         {{else}}
         <div class="card shadow-sm border-0">
             <div class="card-body p-4">

@@ -46,10 +46,6 @@
     min-width: 0;
 }
 
-.empty-hide:empty {
-    display: none;
-}
-
 @media (max-width: 1199.98px) {
     .console-box {
         height: 60vh;

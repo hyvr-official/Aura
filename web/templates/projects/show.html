@@ -16,21 +16,12 @@
             </div>
         </div>
 
-        {{with .Flash}}
-        <div class="alert alert-{{$.Data.FlashType}} alert-dismissible fade show" role="alert">
-            {{.}}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        {{end}}
+        {{with .Flash}}<span hidden data-toast="{{$.Data.FlashType}}">{{.}}</span>{{end}}
 
         {{if .RepositoryMissing}}
-        <div class="alert alert-warning" role="alert">
-            The repository linked to this project no longer exists. <a href="/projects/{{.Project.ID}}/edit" class="alert-link">Edit the project</a> to select another repository.
-        </div>
+        <span hidden data-toast="warning" data-toast-icon="ri-git-repository-line" data-toast-href="/projects/{{.Project.ID}}/edit">The repository linked to this project no longer exists. Click here to edit the project and select another repository.</span>
         {{else if and .Project.IsRepository (not .State.IsRepo)}}
-        <div class="alert alert-warning" role="alert">
-            The repository <strong>{{.Repository.Name}}</strong> has not been cloned yet. <a href="/repositories/{{.Repository.ID}}" class="alert-link">Open the repository</a> to clone it.
-        </div>
+        <span hidden data-toast="warning" data-toast-icon="ri-git-repository-line" data-toast-href="/repositories/{{.Repository.ID}}">The repository {{.Repository.Name}} has not been cloned yet. Click here to open the repository and clone it.</span>
         {{end}}
 
         <div class="row g-4">
@@ -77,7 +68,7 @@
                             <dd class="col-sm-8 mb-0 text-body-secondary">{{formatTime .Project.CreatedAt "2006-01-02 15:04"}}</dd>
                         </dl>
                         {{with .InfoError}}
-                        <div class="alert alert-warning small mt-3 mb-0 text-break" role="alert">{{.}}</div>
+                        <span hidden data-toast="warning" data-toast-icon="ri-alert-fill">{{.}}</span>
                         {{end}}
                     </div>
                 </div>
@@ -88,7 +79,7 @@
                     <div class="card-body p-4">
                         <h2 class="h5 mb-3">Docker folders</h2>
                         {{with .FoldersError}}
-                        <div class="alert alert-warning small text-break" role="alert">Could not read the project folder: {{.}}</div>
+                        <span hidden data-toast="warning" data-toast-icon="ri-alert-fill">Could not read the project folder: {{.}}</span>
                         {{end}}
                         {{if .Folders}}
                         <div class="table-responsive">

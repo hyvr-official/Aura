@@ -9,17 +9,10 @@
             {{end}}
         </div>
 
-        {{with .Data.Flash}}
-        <div class="alert alert-{{$.Data.FlashType}} alert-dismissible fade show" role="alert">
-            {{.}}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        {{end}}
+        {{with .Data.Flash}}<span hidden data-toast="{{$.Data.FlashType}}">{{.}}</span>{{end}}
 
         {{if .Data.NginxMissing}}
-        <div class="alert alert-warning" role="alert">
-            nginx is not installed on this server. Restart Aura to install it automatically, or install it with <code>apt-get install nginx</code>.
-        </div>
+        <span hidden data-toast="warning" data-toast-icon="ri-alert-fill">nginx is not installed on this server. Restart Aura to install it automatically, or install it with apt-get install nginx.</span>
         {{else}}
         <div class="card shadow-sm border-0">
             {{if .Data.Sites}}

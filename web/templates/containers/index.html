@@ -5,12 +5,7 @@
             <span class="badge text-bg-secondary" id="containers-live">Live</span>
         </div>
 
-        {{with .Data.Flash}}
-        <div class="alert alert-{{$.Data.FlashType}} alert-dismissible fade show" role="alert">
-            {{.}}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        {{end}}
+        {{with .Data.Flash}}<span hidden data-toast="{{$.Data.FlashType}}">{{.}}</span>{{end}}
 
         <div class="card shadow-sm border-0" id="containers-list">
 {{template "containers_list" .Data.List}}

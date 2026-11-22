@@ -8,10 +8,93 @@ html, body{
     --bs-tertiary-bg-rgb: 7, 7, 7;
     --bs-body-bg-rgb: 19, 19, 19;
     --bs-border-color: #3a3a3aa1;
+    --bs-success: #00c363;
     --bs-success-rgb: 0, 195, 99;
+    --bs-success-text-emphasis: #66dca2;
+    --bs-success-bg-subtle: #052e1a;
+    --bs-success-border-subtle: #0a6b3a;
     --bs-tertiary-bg: #131313;
+    --bs-warning: #ffee49;
     --bs-warning-rgb: 255, 238, 73;
+    --bs-warning-text-emphasis: #fff5a3;
+    --bs-warning-bg-subtle: #332f0f;
+    --bs-warning-border-subtle: #99902c;
+    --bs-danger: #ff524b;
+    --bs-danger-rgb: 255, 82, 75;
+    --bs-danger-text-emphasis: #ff9a96;
+    --bs-danger-bg-subtle: #331514;
+    --bs-danger-border-subtle: #99312d;
+    --bs-form-valid-color: #00c363;
+    --bs-form-valid-border-color: #00c363;
+    --bs-form-invalid-color: #ff524b;
+    --bs-form-invalid-border-color: #ff524b;
     --bs-code-color: #ffbfde;
+}
+
+.btn-success{
+    --bs-btn-bg: #00c363;
+    --bs-btn-border-color: #00c363;
+    --bs-btn-hover-bg: #00a554;
+    --bs-btn-hover-border-color: #00a554;
+    --bs-btn-active-bg: #009a4f;
+    --bs-btn-active-border-color: #009a4f;
+    --bs-btn-disabled-bg: #00c363;
+    --bs-btn-disabled-border-color: #00c363;
+}
+
+.btn-warning{
+    --bs-btn-bg: #ffee49;
+    --bs-btn-border-color: #ffee49;
+    --bs-btn-hover-bg: #e6d441;
+    --bs-btn-hover-border-color: #e6d441;
+    --bs-btn-active-bg: #d9c83e;
+    --bs-btn-active-border-color: #d9c83e;
+    --bs-btn-disabled-bg: #ffee49;
+    --bs-btn-disabled-border-color: #ffee49;
+}
+
+.btn-danger{
+    --bs-btn-bg: #ff524b;
+    --bs-btn-border-color: #ff524b;
+    --bs-btn-hover-bg: #e64a43;
+    --bs-btn-hover-border-color: #e64a43;
+    --bs-btn-active-bg: #d9453f;
+    --bs-btn-active-border-color: #d9453f;
+    --bs-btn-disabled-bg: #ff524b;
+    --bs-btn-disabled-border-color: #ff524b;
+}
+
+.btn-outline-success{
+    --bs-btn-color: #00c363;
+    --bs-btn-border-color: #00c363;
+    --bs-btn-hover-bg: #00c363;
+    --bs-btn-hover-border-color: #00c363;
+    --bs-btn-active-bg: #00c363;
+    --bs-btn-active-border-color: #00c363;
+    --bs-btn-disabled-color: #00c363;
+    --bs-btn-disabled-border-color: #00c363;
+}
+
+.btn-outline-warning{
+    --bs-btn-color: #ffee49;
+    --bs-btn-border-color: #ffee49;
+    --bs-btn-hover-bg: #ffee49;
+    --bs-btn-hover-border-color: #ffee49;
+    --bs-btn-active-bg: #ffee49;
+    --bs-btn-active-border-color: #ffee49;
+    --bs-btn-disabled-color: #ffee49;
+    --bs-btn-disabled-border-color: #ffee49;
+}
+
+.btn-outline-danger{
+    --bs-btn-color: #ff524b;
+    --bs-btn-border-color: #ff524b;
+    --bs-btn-hover-bg: #ff524b;
+    --bs-btn-hover-border-color: #ff524b;
+    --bs-btn-active-bg: #ff524b;
+    --bs-btn-active-border-color: #ff524b;
+    --bs-btn-disabled-color: #ff524b;
+    --bs-btn-disabled-border-color: #ff524b;
 }
 
 /*-- table --*/
@@ -62,6 +145,19 @@ html, body{
 
 .table-context-dropdown .dropdown-toggle::after{
     display: none !important;
+}
+
+.table-row-action-btn{
+	font-size: 18px;
+	margin-right: 10px;
+	color: #a4a7ae;
+	cursor: pointer;
+	text-decoration: none;
+	transition-duration: 0.3s;
+}
+
+.table-row-action-btn:hover{
+	color: #535862;
 }
 
 /*-- btn --*/
@@ -265,4 +361,74 @@ input::placeholder{
 .dropdown-item.disabled, .dropdown-item:disabled{
     color: #ffffff;
     opacity: 0.5 !important;
+}
+
+/*-- toastify --*/
+
+.toastify{
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    max-width: min(26rem, calc(100vw - 1.5rem));
+    padding: 0.75rem 1rem;
+    border: 1px solid #2b3035;
+    border-radius: 8px;
+    background: #212529;
+    color: #ffffff;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.5);
+    word-break: break-word;
+    white-space: pre-wrap;
+    padding-left: 46px;
+}
+
+.toastify .toast-close{
+    flex: 0 0 auto;
+    color: #ffffff;
+    opacity: 0.6;
+    padding: 0;
+}
+
+.toastify .toast-close:hover{
+    opacity: 1;
+}
+
+.toastify-icon{
+    display: block;
+    width: 32px;
+    height: 32px;
+    position: absolute;
+    left: 6px;
+    top: 6px;
+    border-radius: 8px;
+    line-height: 31px;
+    font-size: 21px;
+    text-align: center;
+    color: #ffffff;
+    background: #ffffff20;
+}
+
+.toast-success i{
+    color: #00c363;
+    background: #00c36330;
+}
+
+.toast-danger i{
+    color: #ff524b;
+    background: #ff524b30;
+}
+
+.toast-warning i{
+    color: #ffee49;
+    background: #ffee4930;
+}
+
+@media (max-width: 575.98px){
+    .toastify{
+        left: 0.75rem !important;
+        right: 0.75rem !important;
+        max-width: none;
+    }
 }
