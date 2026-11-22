@@ -79,6 +79,13 @@ wget -O install.sh https://raw.githubusercontent.com/hyvr-official/Aura/master/i
 
 The script detects the existing install and updates Aura in place. Your database, files and service settings are kept.
 
+## :lock: Security
+
+Aura gives full control over your server, so it is important to protect the panel. We recommend the following:
+
+1. **Allow only your own IP address to access the panel.** Restrict the panel port in your firewall (or cloud provider security group) so that only your trusted IP can reach it. This greatly reduces the chance of unauthorized access and brute-force attempts.
+2. **Use HTTPS with an Nginx reverse proxy.** Put Nginx in front of Aura and serve the panel over HTTPS (for example with a free Let's Encrypt certificate) so that your login and all traffic are encrypted.
+
 ## :hammer_and_wrench: How to build
 You can build the binaries or do development of Aura by following the below steps. Aura is build fully on Golang and Goreleaser is used for building releases. So you should install latest version of Go from [here](https://go.dev/doc/install).
 
