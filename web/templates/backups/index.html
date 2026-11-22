@@ -24,7 +24,7 @@
                             <th>Status</th>
                             <th>Source</th>
                             <th>Last run on</th>
-                            <th class="text-end">Actions</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -37,11 +37,18 @@
                             <td>{{.SourceLabel}}</td>
                             <td class="text-body-secondary text-nowrap"{{if not .LastRunAt.IsZero}} title="{{formatTime .LastRunAt "2006-01-02 15:04"}}"{{end}}>{{.LastRunLabel}}</td>
                             <td class="text-end text-nowrap">
-                                <a href="/backups/{{.ID}}" class="btn btn-outline-primary btn-sm">View</a>
-                                <a href="/backups/{{.ID}}/edit" class="btn btn-outline-secondary btn-sm">Edit</a>
-                                <form method="post" action="/backups/{{.ID}}/delete" class="d-inline" onsubmit="return confirm('Delete this backup task?');">
-                                    <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
-                                </form>
+                                <div class="dropdown table-context-dropdown">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"><i class="ri-more-2-line"></i></button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><a class="dropdown-item" href="/backups/{{.ID}}"><i class="ri-eye-line me-2"></i>View</a></li>
+                                        <li><a class="dropdown-item" href="/backups/{{.ID}}/edit"><i class="ri-edit-line me-2"></i>Edit</a></li>
+                                        <li>
+                                            <form method="post" action="/backups/{{.ID}}/delete" onsubmit="return confirm('Delete this backup task?');">
+                                                <button type="submit" class="dropdown-item dropdown-item-danger"><i class="ri-delete-bin-line me-2"></i>Delete</button>
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </div>
                             </td>
                         </tr>
                         {{end}}

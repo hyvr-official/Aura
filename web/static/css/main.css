@@ -261,3 +261,8 @@ input::placeholder{
 .dropdown-item-warning i{
     color: #ffee49 !important;
 }
+
+.dropdown-item.disabled, .dropdown-item:disabled{
+    color: #ffffff;
+    opacity: 0.5 !important;
+}

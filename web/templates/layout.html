@@ -99,6 +99,10 @@
                 $('.aura-logo-icon').removeClass('loading');
             }
         });
+
+        $(document).on('pointerdown focusin', '.table-context-dropdown [data-bs-toggle="dropdown"]', function () {
+            bootstrap.Dropdown.getOrCreateInstance(this, { popperConfig: { strategy: 'fixed' } });
+        });
     </script>
     {{if ne .Active "metrics"}}
     <script>

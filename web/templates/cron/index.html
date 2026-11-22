@@ -39,7 +39,7 @@
                             <th>Command</th>
                             <th>User</th>
                             <th>Source</th>
-                            <th class="text-end">Actions</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -61,20 +61,23 @@
                                 {{if .HasOwnLog}}<span class="badge text-bg-success">Output logged</span>{{end}}
                             </td>
                             <td class="text-end text-nowrap">
-                                <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#logs-modal" data-job-id="{{.ID}}" data-job-name="{{.User}}: {{.Command}}">Logs</button>
-                                {{if .Editable}}
-                                <button type="button" class="btn btn-outline-secondary btn-sm cron-edit" data-job-id="{{.ID}}" data-job-user="{{.User}}" data-job-schedule="{{.Schedule}}" data-job-command="{{.Command}}">Edit</button>
-                                <form method="post" action="/cron/{{.ID}}/delete" class="d-inline" onsubmit="return confirm('Delete this cron job?');">
-                                    <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
-                                </form>
-                                {{else}}
-                                <span class="d-inline-block" tabindex="0" title="{{if .Protected}}Managed by Aura backups{{else}}System cron jobs are read-only{{end}}">
-                                    <button type="button" class="btn btn-outline-secondary btn-sm" disabled>Edit</button>
-                                </span>
-                                <span class="d-inline-block" tabindex="0" title="{{if .Protected}}Managed by Aura backups{{else}}System cron jobs are read-only{{end}}">
-                                    <button type="button" class="btn btn-outline-danger btn-sm" disabled>Delete</button>
-                                </span>
-                                {{end}}
+                                <div class="dropdown table-context-dropdown">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"><i class="ri-more-2-line"></i></button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#logs-modal" data-job-id="{{.ID}}" data-job-name="{{.User}}: {{.Command}}"><i class="ri-file-list-3-line me-2"></i>Logs</button></li>
+                                        {{if .Editable}}
+                                        <li><button type="button" class="dropdown-item cron-edit" data-job-id="{{.ID}}" data-job-user="{{.User}}" data-job-schedule="{{.Schedule}}" data-job-command="{{.Command}}"><i class="ri-edit-line me-2"></i>Edit</button></li>
+                                        <li>
+                                            <form method="post" action="/cron/{{.ID}}/delete" onsubmit="return confirm('Delete this cron job?');">
+                                                <button type="submit" class="dropdown-item dropdown-item-danger"><i class="ri-delete-bin-line me-2"></i>Delete</button>
+                                            </form>
+                                        </li>
+                                        {{else}}
+                                        <li title="{{if .Protected}}Managed by Aura backups{{else}}System cron jobs are read-only{{end}}"><button type="button" class="dropdown-item" disabled><i class="ri-edit-line me-2"></i>Edit</button></li>
+                                        <li title="{{if .Protected}}Managed by Aura backups{{else}}System cron jobs are read-only{{end}}"><button type="button" class="dropdown-item" disabled><i class="ri-delete-bin-line me-2"></i>Delete</button></li>
+                                        {{end}}
+                                    </ul>
+                                </div>
                             </td>
                         </tr>
                         {{end}}

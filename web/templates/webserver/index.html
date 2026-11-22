@@ -33,7 +33,7 @@
                             <th>SSL</th>
                             <th>Status</th>
                             <th>Modified</th>
-                            <th class="text-end">Actions</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -46,20 +46,29 @@
                             <td>{{if .Enabled}}<span class="badge text-bg-success">Enabled</span>{{else}}<span class="badge text-bg-secondary">Disabled</span>{{end}}</td>
                             <td class="text-body-secondary text-nowrap">{{.ModifiedLabel}}</td>
                             <td class="text-end text-nowrap">
-                                <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#logs-modal" data-site-name="{{.Name}}">Logs</button>
-                                <a href="/web-server/{{.Name}}/edit" class="btn btn-outline-secondary btn-sm">Edit</a>
-                                {{if .Enabled}}
-                                <form method="post" action="/web-server/{{.Name}}/disable" class="d-inline" onsubmit="return confirm('Disable this site?');">
-                                    <button type="submit" class="btn btn-outline-warning btn-sm">Disable</button>
-                                </form>
-                                {{else}}
-                                <form method="post" action="/web-server/{{.Name}}/enable" class="d-inline">
-                                    <button type="submit" class="btn btn-outline-success btn-sm">Enable</button>
-                                </form>
-                                {{end}}
-                                <form method="post" action="/web-server/{{.Name}}/delete" class="d-inline" onsubmit="return confirm('Delete this site? Its config file will be removed.');">
-                                    <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
-                                </form>
+                                <div class="dropdown table-context-dropdown">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"><i class="ri-more-2-line"></i></button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#logs-modal" data-site-name="{{.Name}}"><i class="ri-file-list-3-line me-2"></i>Logs</button></li>
+                                        <li><a class="dropdown-item" href="/web-server/{{.Name}}/edit"><i class="ri-edit-line me-2"></i>Edit</a></li>
+                                        <li>
+                                            {{if .Enabled}}
+                                            <form method="post" action="/web-server/{{.Name}}/disable" onsubmit="return confirm('Disable this site?');">
+                                                <button type="submit" class="dropdown-item dropdown-item-warning"><i class="ri-pause-circle-line me-2"></i>Disable</button>
+                                            </form>
+                                            {{else}}
+                                            <form method="post" action="/web-server/{{.Name}}/enable">
+                                                <button type="submit" class="dropdown-item dropdown-item-success"><i class="ri-play-circle-line me-2"></i>Enable</button>
+                                            </form>
+                                            {{end}}
+                                        </li>
+                                        <li>
+                                            <form method="post" action="/web-server/{{.Name}}/delete" onsubmit="return confirm('Delete this site? Its config file will be removed.');">
+                                                <button type="submit" class="dropdown-item dropdown-item-danger"><i class="ri-delete-bin-line me-2"></i>Delete</button>
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </div>
                             </td>
                         </tr>
                         {{end}}

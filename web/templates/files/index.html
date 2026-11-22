@@ -41,7 +41,7 @@
                             <th>Size</th>
                             <th>Permissions</th>
                             <th>Modified</th>
-                            <th class="text-end">Actions</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -64,15 +64,22 @@
                             <td class="text-nowrap"><code>{{.Mode}}</code></td>
                             <td class="text-body-secondary text-nowrap">{{.ModTimeLabel}}</td>
                             <td class="text-end text-nowrap">
-                                {{if not .IsDir}}
-                                <a href="/files?path={{.Path}}" class="btn btn-outline-primary btn-sm file-open" data-path="{{.Path}}">Edit</a>
-                                <a href="/files/download?path={{.Path}}" class="btn btn-outline-info btn-sm" title="Download" download><i class="ri-download-2-line"></i></a>
-                                {{end}}
-                                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#rename-modal" data-path="{{.Path}}" data-name="{{.Name}}">Rename</button>
-                                <form method="post" action="/files/delete" class="d-inline file-delete-form" data-name="{{.Name}}" data-dir="{{if .IsDir}}1{{end}}">
-                                    <input type="hidden" name="path" value="{{.Path}}" autocomplete="off">
-                                    <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
-                                </form>
+                                <div class="dropdown table-context-dropdown">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"><i class="ri-more-2-line"></i></button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        {{if not .IsDir}}
+                                        <li><a class="dropdown-item file-open" href="/files?path={{.Path}}" data-path="{{.Path}}"><i class="ri-edit-line me-2"></i>Edit</a></li>
+                                        <li><a class="dropdown-item" href="/files/download?path={{.Path}}" download><i class="ri-download-2-line me-2"></i>Download</a></li>
+                                        {{end}}
+                                        <li><button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#rename-modal" data-path="{{.Path}}" data-name="{{.Name}}"><i class="ri-edit-2-line me-2"></i>Rename</button></li>
+                                        <li>
+                                            <form method="post" action="/files/delete" class="file-delete-form" data-name="{{.Name}}" data-dir="{{if .IsDir}}1{{end}}">
+                                                <input type="hidden" name="path" value="{{.Path}}" autocomplete="off">
+                                                <button type="submit" class="dropdown-item dropdown-item-danger"><i class="ri-delete-bin-line me-2"></i>Delete</button>
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </div>
                             </td>
                         </tr>
                         {{end}}

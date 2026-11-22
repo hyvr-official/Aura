@@ -21,7 +21,7 @@
                             <th>Name</th>
                             <th>Type</th>
                             <th>Source</th>
-                            <th class="text-end">Actions</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -42,11 +42,18 @@
                                 {{end}}
                             </td>
                             <td class="text-end text-nowrap">
-                                <a href="/projects/{{.Project.ID}}" class="btn btn-outline-primary btn-sm">View</a>
-                                <a href="/projects/{{.Project.ID}}/edit" class="btn btn-outline-secondary btn-sm">Edit</a>
-                                <form method="post" action="/projects/{{.Project.ID}}/delete" class="d-inline" onsubmit="return confirm('Delete this project? The files on disk and running containers will not be removed.');">
-                                    <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
-                                </form>
+                                <div class="dropdown table-context-dropdown">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"><i class="ri-more-2-line"></i></button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><a class="dropdown-item" href="/projects/{{.Project.ID}}"><i class="ri-eye-line me-2"></i>View</a></li>
+                                        <li><a class="dropdown-item" href="/projects/{{.Project.ID}}/edit"><i class="ri-edit-line me-2"></i>Edit</a></li>
+                                        <li>
+                                            <form method="post" action="/projects/{{.Project.ID}}/delete" onsubmit="return confirm('Delete this project? The files on disk and running containers will not be removed.');">
+                                                <button type="submit" class="dropdown-item dropdown-item-danger"><i class="ri-delete-bin-line me-2"></i>Delete</button>
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </div>
                             </td>
                         </tr>
                         {{end}}

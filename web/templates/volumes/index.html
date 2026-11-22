@@ -29,7 +29,7 @@
                             <th>Scope</th>
                             <th>Used by</th>
                             <th>Mountpoint</th>
-                            <th class="text-end">Actions</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -47,22 +47,25 @@
                             </td>
                             <td class="small text-nowrap"><code>{{.Mountpoint}}</code></td>
                             <td class="text-end text-nowrap">
-                                {{if .FilesURL}}
-                                <a href="{{.FilesURL}}" class="btn btn-outline-info btn-sm">Open</a>
-                                {{else}}
-                                <span class="d-inline-block" tabindex="0" title="Folder is outside the File Manager root">
-                                    <button type="button" class="btn btn-outline-info btn-sm" disabled>Open</button>
-                                </span>
-                                {{end}}
-                                <form method="post" action="/volumes/{{.Name}}/delete" class="d-inline" onsubmit="return confirm('Delete this volume? All data in it will be lost.');">
-                                    {{if .InUse}}
-                                    <span class="d-inline-block" tabindex="0" title="Volume is in use by a container">
-                                        <button type="submit" class="btn btn-outline-danger btn-sm" disabled>Delete</button>
-                                    </span>
-                                    {{else}}
-                                    <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
-                                    {{end}}
-                                </form>
+                                <div class="dropdown table-context-dropdown">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"><i class="ri-more-2-line"></i></button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        {{if .FilesURL}}
+                                        <li><a class="dropdown-item" href="{{.FilesURL}}"><i class="ri-folder-open-line me-2"></i>Open</a></li>
+                                        {{else}}
+                                        <li title="Folder is outside the File Manager root"><button type="button" class="dropdown-item" disabled><i class="ri-folder-open-line me-2"></i>Open</button></li>
+                                        {{end}}
+                                        <li>
+                                            <form method="post" action="/volumes/{{.Name}}/delete" onsubmit="return confirm('Delete this volume? All data in it will be lost.');">
+                                                {{if .InUse}}
+                                                <button type="submit" class="dropdown-item dropdown-item-danger" disabled title="Volume is in use by a container"><i class="ri-delete-bin-line me-2"></i>Delete</button>
+                                                {{else}}
+                                                <button type="submit" class="dropdown-item dropdown-item-danger"><i class="ri-delete-bin-line me-2"></i>Delete</button>
+                                                {{end}}
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </div>
                             </td>
                         </tr>
                         {{end}}
