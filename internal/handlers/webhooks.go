@@ -212,7 +212,7 @@ func writeWebhookResponse(w http.ResponseWriter, status int, message string) {
 }
 
 func (h *Handlers) webhookURL(r *http.Request, repo repositories.Repository) string {
-	return "http://" + net.JoinHostPort(requestHost(r), h.cfg.WebhookPort) + "/hooks/" + repo.WebhookToken
+	return "https://" + net.JoinHostPort(requestHost(r), h.cfg.WebhookPort) + "/hooks/" + repo.WebhookToken
 }
 
 func requestHost(r *http.Request) string {

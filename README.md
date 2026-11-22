@@ -55,7 +55,7 @@ It also makes sure the Nginx and Docker services are running. You can see the re
 
 ### First-time setup
 
-1. Open `http://<your-server-ip>:8445/setup` in your browser.
+1. Open `https://<your-server-ip>:8445/setup` in your browser. Aura generates a self-signed certificate on first start and stores it in its database, so your browser will show a certificate warning that you need to accept. Plain `http://` requests are redirected to `https://`.
 2. Create your admin password.
 3. Log in and start managing your server.
 
@@ -84,7 +84,7 @@ The script detects the existing install and updates Aura in place. Your database
 Aura gives full control over your server, so it is important to protect the panel. We recommend the following:
 
 1. **Allow only your own IP address to access the panel.** Restrict the panel port in your firewall (or cloud provider security group) so that only your trusted IP can reach it. This greatly reduces the chance of unauthorized access and brute-force attempts.
-2. **Use HTTPS with an Nginx reverse proxy.** Put Nginx in front of Aura and serve the panel over HTTPS (for example with a free Let's Encrypt certificate) so that your login and all traffic are encrypted.
+2. **Use a trusted certificate.** Aura serves HTTPS with a self-signed certificate. For a certificate browsers trust, put Nginx in front of Aura and serve the panel with a free Let's Encrypt certificate.
 
 ## :hammer_and_wrench: How to build
 You can build the binaries or do development of Aura by following the below steps. Aura is build fully on Golang and Goreleaser is used for building releases. So you should install latest version of Go from [here](https://go.dev/doc/install).

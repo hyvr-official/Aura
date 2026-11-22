@@ -15,6 +15,7 @@ import (
 	"aura/internal/projects"
 	"aura/internal/repositories"
 	"aura/internal/timezone"
+	"aura/internal/tlsconfig"
 	"aura/web"
 )
 
@@ -46,6 +47,11 @@ func main() {
 			log.Printf("backup cron: %v", err)
 		}
 		return
+	}
+
+	tlsCfg, err := tlsconfig.NewStore(db).Config()
+	if err != nil {
+		log.Fatalf("tls: %v", err)
 	}
 
 	sessions := auth.NewSessionStore(db)
@@ -166,13 +172,13 @@ func main() {
 	hooks.HandleFunc("POST /hooks/{token}", h.WebhookReceive)
 	webhookAddr := ":" + cfg.WebhookPort
 	go func() {
-		log.Printf("Aura webhooks listening on http://localhost%s", webhookAddr)
-		if err := http.ListenAndServe(webhookAddr, hooks); err != nil {
+		log.Printf("Aura webhooks listening on https://localhost%s", webhookAddr)
+		if err := tlsconfig.Serve(webhookAddr, hooks, tlsCfg); err != nil {
 			log.Printf("webhook server: %v", err)
 		}
 	}()
 
 	addr := ":" + cfg.Port
-	log.Printf("Aura %s listening on http://localhost%s", version, addr)
-	log.Fatal(http.ListenAndServe(addr, mux))
+	log.Printf("Aura %s listening on https://localhost%s", version, addr)
+	log.Fatal(tlsconfig.Serve(addr, mux, tlsCfg))
 }

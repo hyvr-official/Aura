@@ -156,7 +156,7 @@
                             <li><strong>GitHub:</strong> Repository → Settings → Webhooks → Add webhook. Set content type to <code>application/json</code> and select <em>Just the push event</em>.</li>
                             <li><strong>GitLab:</strong> Project → Settings → Webhooks → Add new webhook. Select <em>Push events</em>.</li>
                         </ul>
-                        <p class="small text-body-secondary">Port <code>{{$.Data.WebhookPort}}</code> must be reachable from GitHub or GitLab. Change the host in the URL if this server is reached through a different address.</p>
+                        <p class="small text-body-secondary">Port <code>{{$.Data.WebhookPort}}</code> must be reachable from GitHub or GitLab. The URL uses Aura's self-signed certificate, so turn off SSL verification in the webhook settings.Change the host in the URL if this server is reached through a different address.</p>
                         <div class="d-flex flex-wrap gap-2">
                             <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#post-pull-modal">Post pull commands</button>
                             <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#activity-modal">View Activities</button>

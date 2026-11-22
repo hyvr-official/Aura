@@ -130,7 +130,7 @@ if [ -z "${HOST_IP}" ]; then
 fi
 
 printf '\n\033[32mAura has been installed and is running.\033[0m\n\n'
-printf 'Open \033[1mhttp://%s:%s/setup\033[0m in your browser to complete the setup.\n\n' "${HOST_IP}" "${PORT}"
+printf 'Open \033[1mhttps://%s:%s/setup\033[0m in your browser to complete the setup.\n\n' "${HOST_IP}" "${PORT}"
 printf 'Repository webhooks are received on port \033[1m%s\033[0m. Open this port in your firewall to use them.\n\n' "${WEBHOOK_PORT}"
 printf 'Check status:systemctl status %s\n' "${SERVICE_NAME}"
 printf 'View logs:    journalctl -u %s -f\n' "${SERVICE_NAME}"
