@@ -25,8 +25,8 @@
                             <td><code class="text-nowrap">{{.Image}}</code></td>
                             <td><span class="badge text-bg-{{.StateClass}}">{{.State}}</span></td>
                             <td class="text-body-secondary text-nowrap">{{.Status}}</td>
-                            <td class="text-nowrap">{{with .Stats}}{{.CPUPerc}}{{else}}<span class="text-body-secondary">—</span>{{end}}</td>
-                            <td class="text-nowrap">{{with .Stats}}{{.MemUsage}}<div class="small text-body-secondary text-nowrap">{{.MemPerc}}</div>{{else}}<span class="text-body-secondary">—</span>{{end}}</td>
+                            <td class="text-nowrap">{{with .Stats}}{{.CPUPerc}}{{end}}</td>
+                            <td class="text-nowrap">{{with .Stats}}{{.MemUsage}}<div class="small text-body-secondary text-nowrap">{{.MemPerc}}</div>{{end}}</td>
                             <td>{{range .PublishedPorts}}<a href="http://{{$.Host}}:{{.}}" target="_blank" rel="noopener" class="text-decoration-none"><span class="badge text-bg-info me-1">{{.}}</span></a>{{end}}</td>
                             <td class="text-end text-nowrap">
                                 <div class="dropdown table-context-dropdown">

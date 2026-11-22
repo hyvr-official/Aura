@@ -17,35 +17,46 @@
                 <span class="badge text-bg-{{$c.StateClass}}">{{$c.State.Status}}</span>
                 {{with $c.State.Health}}<span class="badge text-bg-{{$c.HealthClass}}">{{.Status}}</span>{{end}}
             </div>
-            <div class="d-flex flex-wrap gap-2">
-                {{if $c.Running}}
-                <button type="button" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#shell-modal" data-container-id="{{$c.ID}}" data-container-name="{{$c.Name}}">Shell</button>
-                {{end}}
-                {{with $.Data.FilesURL}}
-                <a href="{{.}}" class="btn btn-outline-secondary">Open files</a>
-                {{else}}
-                <button type="button" class="btn btn-outline-secondary" disabled title="{{if $c.Running}}The container folder is outside the file manager root.{{else}}Start the container to browse its files.{{end}}">Open files</button>
-                {{end}}
-                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#logs-modal" data-container-id="{{$c.ID}}" data-container-name="{{$c.Name}}">Logs</button>
-                {{if $c.Running}}
-                <form method="post" action="/containers/{{$c.ID}}/restart" class="js-operation" data-busy="Restarting…" data-confirm="Restart this container?">
-                    <input type="hidden" name="return" value="show" autocomplete="off">
-                    <button type="submit" class="btn btn-outline-primary">Restart</button>
-                </form>
-                <form method="post" action="/containers/{{$c.ID}}/stop" class="js-operation" data-busy="Stopping…" data-confirm="Stop this container?">
-                    <input type="hidden" name="return" value="show" autocomplete="off">
-                    <button type="submit" class="btn btn-outline-danger">Stop</button>
-                </form>
-                {{else}}
-                <form method="post" action="/containers/{{$c.ID}}/start" class="js-operation" data-busy="Starting…">
-                    <input type="hidden" name="return" value="show" autocomplete="off">
-                    <button type="submit" class="btn btn-outline-success">Start</button>
-                </form>
-                <form method="post" action="/containers/{{$c.ID}}/delete" class="js-operation" data-busy="Removing…" data-confirm="Remove this container? This cannot be undone.">
-                    <input type="hidden" name="return" value="show" autocomplete="off">
-                    <button type="submit" class="btn btn-outline-danger">Remove</button>
-                </form>
-                {{end}}
+            <div class="dropdown header-context-dropdown">
+                <button type="button" class="btn btn-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"><i class="ri-more-2-line"></i></button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    {{if $c.Running}}
+                    <li><button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#shell-modal" data-container-id="{{$c.ID}}" data-container-name="{{$c.Name}}"><i class="ri-terminal-box-line me-2"></i>Shell</button></li>
+                    {{end}}
+                    {{with $.Data.FilesURL}}
+                    <li><a class="dropdown-item" href="{{.}}"><i class="ri-folder-open-line me-2"></i>Open files</a></li>
+                    {{else}}
+                    <li><button type="button" class="dropdown-item disabled" disabled title="{{if $c.Running}}The container folder is outside the file manager root.{{else}}Start the container to browse its files.{{end}}"><i class="ri-folder-open-line me-2"></i>Open files</button></li>
+                    {{end}}
+                    <li><button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#logs-modal" data-container-id="{{$c.ID}}" data-container-name="{{$c.Name}}"><i class="ri-file-list-3-line me-2"></i>Logs</button></li>
+                    {{if $c.Running}}
+                    <li>
+                        <form method="post" action="/containers/{{$c.ID}}/restart" class="js-operation" data-busy="Restarting…" data-confirm="Restart this container?">
+                            <input type="hidden" name="return" value="show" autocomplete="off">
+                            <button type="submit" class="dropdown-item"><i class="ri-restart-line me-2"></i>Restart</button>
+                        </form>
+                    </li>
+                    <li>
+                        <form method="post" action="/containers/{{$c.ID}}/stop" class="js-operation" data-busy="Stopping…" data-confirm="Stop this container?">
+                            <input type="hidden" name="return" value="show" autocomplete="off">
+                            <button type="submit" class="dropdown-item dropdown-item-danger"><i class="ri-stop-circle-line me-2"></i>Stop</button>
+                        </form>
+                    </li>
+                    {{else}}
+                    <li>
+                        <form method="post" action="/containers/{{$c.ID}}/start" class="js-operation" data-busy="Starting…">
+                            <input type="hidden" name="return" value="show" autocomplete="off">
+                            <button type="submit" class="dropdown-item dropdown-item-success"><i class="ri-play-circle-line me-2"></i>Start</button>
+                        </form>
+                    </li>
+                    <li>
+                        <form method="post" action="/containers/{{$c.ID}}/delete" class="js-operation" data-busy="Removing…" data-confirm="Remove this container? This cannot be undone.">
+                            <input type="hidden" name="return" value="show" autocomplete="off">
+                            <button type="submit" class="dropdown-item dropdown-item-danger"><i class="ri-delete-bin-line me-2"></i>Remove</button>
+                        </form>
+                    </li>
+                    {{end}}
+                </ul>
             </div>
         </div>
 
@@ -200,7 +211,7 @@
                         <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
                             <h2 class="h6 py-2 mb-0">Environment</h2>
                             {{if $c.EnvList}}
-                            <button type="button" class="btn btn-outline-secondary btn-sm" id="env-toggle">Show values</button>
+                            <button type="button" class="btn btn-icon btn-sm" id="env-toggle"><i class="ri-eye-line"></i></button>
                             {{end}}
                         </div>
                     </div>
@@ -272,7 +283,7 @@
                 var hidden = $('.env-value').first().hasClass('d-none');
                 $('.env-value').toggleClass('d-none', !hidden);
                 $('.env-mask').toggleClass('d-none', hidden);
-                $(this).text(hidden ? 'Hide values' : 'Show values');
+                $(this).html(hidden ? `<i class="ri-eye-off-line"></i>` : `<i class="ri-eye-line"></i>`);
             });
         });
     </script>
