@@ -17,50 +17,72 @@
                 <div class="console-box" id="console-terminal"></div>
             </div>
             <div class="col-xl-4">
-                <div class="card shadow-sm border-0 saved-panel d-flex flex-column">
-                    <div class="card-header bg-transparent d-flex align-items-center justify-content-between gap-2">
-                        <div class="d-flex align-items-center flex-wrap gap-2">
-                            <h2 class="h6 mb-0">Saved commands</h2>
-                            <span class="badge text-bg-secondary" id="saved-count">0</span>
-                            <span class="badge text-bg-warning d-none" id="command-progress"></span>
+                <div class="side-column d-flex flex-column gap-3">
+                    <div class="card shadow-sm border-0 flex-shrink-0">
+                        <div class="card-header bg-transparent">
+                            <h2 class="h6 py-2 mb-0">Scratchpad</h2>
                         </div>
-                        <div class="d-flex flex-shrink-0 gap-2">
-                            <button type="button" class="btn btn-danger btn-sm d-none" id="command-stop">Stop</button>
-                            <button type="button" class="btn btn-secondary btn-sm" id="command-new" aria-expanded="false" aria-controls="command-form">New command</button>
-                        </div>
-                    </div>
-                    <div class="collapse flex-shrink-0" id="command-form">
-                        <div class="p-3 border-bottom">
-                            <div class="d-flex align-items-center justify-content-between mb-2">
-                                <h3 class="h6 mb-0" id="command-form-title">New command</h3>
-                                <button type="button" class="btn-close btn-sm" id="command-close" aria-label="Close"></button>
+                        <div class="card-body p-3">
+                            <div class="command-editor scratch-editor mb-3">
+                                <textarea id="scratch-input" autocomplete="off"></textarea>
                             </div>
-                            <div class="mb-2">
-                                <input type="text" class="form-control form-control-sm" id="command-name" placeholder="Name (optional)" maxlength="100" autocomplete="off">
-                                <div class="invalid-feedback" id="command-name-error"></div>
-                            </div>
-                            <div class="command-editor" id="command-editor-box">
-                                <textarea id="command-input" autocomplete="off"></textarea>
-                            </div>
-                            <div class="invalid-feedback d-block small" id="command-error"></div>
-                            <div class="form-text mb-2">Ctrl+Enter to run. Multiple lines run one by one.</div>
                             <div class="d-flex flex-wrap gap-2">
-                                <button type="button" class="btn btn-secondary btn-sm" id="command-run">Run</button>
-                                <button type="button" class="btn btn-outline-success btn-sm" id="command-save">Save</button>
-                                <button type="button" class="btn btn-outline-secondary btn-sm" id="command-copy">Copy</button>
-                                <button type="button" class="btn btn-outline-secondary btn-sm ms-auto" id="command-cancel">Cancel</button>
+                                <button type="button" class="btn btn-secondary btn-sm" id="scratch-run">Run</button>
+                                <button type="button" class="btn btn-outline-success btn-sm" id="scratch-save">Save</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="scratch-copy">Copy</button>
                             </div>
-                            <div class="small mt-2 d-none" id="form-feedback"></div>
+                            <div class="small mt-2 d-none" id="scratch-feedback"></div>
                         </div>
                     </div>
-                    <div class="px-3 pt-2 empty-hide" id="list-feedback"></div>
-                    <div class="list-group list-group-flush saved-commands flex-grow-1" id="saved-commands">
-                        <div class="list-group-item text-body-secondary small">Loading…</div>
+                    <div class="card shadow-sm border-0 saved-panel d-flex flex-column flex-grow-1">
+                        <div class="card-header bg-transparent d-flex align-items-center justify-content-between gap-2">
+                            <div class="d-flex align-items-center flex-wrap gap-2">
+                                <h2 class="h6 mb-0">Saved commands</h2>
+                                <span class="badge text-bg-secondary" id="saved-count">0</span>
+                                <span class="badge text-bg-warning d-none" id="command-progress"></span>
+                            </div>
+                            <div class="d-flex flex-shrink-0 gap-2">
+                                <button type="button" class="btn btn-danger btn-sm d-none" id="command-stop">Stop</button>
+                                <button type="button" class="btn btn-secondary btn-sm" id="command-new">New command</button>
+                            </div>
+                        </div>
+                        <div class="px-3 pt-2 empty-hide" id="list-feedback"></div>
+                        <div class="list-group list-group-flush saved-commands flex-grow-1" id="saved-commands">
+                            <div class="list-group-item text-body-secondary small">Loading…</div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </main>
+
+    <div class="modal fade" id="command-modal" tabindex="-1" aria-labelledby="command-modal-label" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title h5" id="command-modal-label">New command</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label" for="command-name">Name</label>
+                        <input type="text" class="form-control" id="command-name" placeholder="Optional" maxlength="100" autocomplete="off">
+                        <div class="invalid-feedback" id="command-name-error"></div>
+                    </div>
+                    <label class="form-label" for="command-input">Command</label>
+                    <div class="command-editor" id="command-editor-box">
+                        <textarea id="command-input" autocomplete="off"></textarea>
+                    </div>
+                    <div class="invalid-feedback d-block small" id="command-error"></div>
+                    <div class="small mt-2 d-none" id="form-feedback"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" id="command-save">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
 {{template "footer" .}}
     <script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.min.js"></script>
@@ -89,21 +111,29 @@
             fit.fit();
             term.focus();
 
-            var editor = CodeMirror.fromTextArea(document.getElementById('command-input'), {
-                mode: 'shell',
-                theme: 'material-darker',
-                lineNumbers: true,
-                lineWrapping: true,
-                indentUnit: 4,
-                extraKeys: {
-                    'Ctrl-Enter': function () { runFromForm(); },
-                    'Cmd-Enter': function () { runFromForm(); }
+            function createEditor(id, onRun) {
+                var keys = {};
+                if (onRun) {
+                    keys['Ctrl-Enter'] = onRun;
+                    keys['Cmd-Enter'] = onRun;
                 }
-            });
-            editor.getInputField().setAttribute('autocomplete', 'off');
+                var instance = CodeMirror.fromTextArea(document.getElementById(id), {
+                    mode: 'shell',
+                    theme: 'material-darker',
+                    lineNumbers: true,
+                    lineWrapping: true,
+                    indentUnit: 4,
+                    extraKeys: keys
+                });
+                instance.getInputField().setAttribute('autocomplete', 'off');
+                return instance;
+            }
 
-            var formEl = document.getElementById('command-form');
-            var form = bootstrap.Collapse.getOrCreateInstance(formEl, { toggle: false });
+            var scratch = createEditor('scratch-input', function () { runFromScratch(); });
+            var editor = createEditor('command-input', null);
+
+            var modalEl = document.getElementById('command-modal');
+            var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
 
             function setStatus(text, style) {
                 $('#console-status')
@@ -156,11 +186,11 @@
             }
 
             function feedback(text, style, target) {
-                if (target !== 'form') {
+                if (target !== 'form' && target !== 'scratch') {
                     listAlert(text, style);
                     return;
                 }
-                var box = $('#form-feedback');
+                var box = $(target === 'scratch' ? '#scratch-feedback' : '#form-feedback');
                 box.removeClass('d-none text-success text-danger text-body-secondary').addClass('text-' + style).text(text);
                 clearTimeout(box.data('timer'));
                 box.data('timer', setTimeout(function () { box.addClass('d-none'); }, 4000));
@@ -205,7 +235,7 @@
             function updateProgress() {
                 var active = run.total > 0;
                 $('#command-stop').toggleClass('d-none', !active);
-                $('#command-run').prop('disabled', active);
+                $('#scratch-run').prop('disabled', active);
                 $('#saved-commands .saved-run').prop('disabled', active);
                 $('#command-progress')
                     .toggleClass('d-none', !active)
@@ -273,16 +303,16 @@
                 return true;
             }
 
-            function runFromForm() {
-                runText(editor.getValue(), 'form');
+            function runFromScratch() {
+                runText(scratch.getValue(), 'scratch');
             }
 
             function copyText(text, button) {
                 function done(ok) {
-                    var original = button.data('label') || button.text();
+                    var original = button.data('label') || button.html();
                     button.data('label', original).text(ok ? 'Copied' : 'Failed');
                     clearTimeout(button.data('timer'));
-                    button.data('timer', setTimeout(function () { button.text(original); }, 1500));
+                    button.data('timer', setTimeout(function () { button.html(original); }, 1500));
                 }
                 if (navigator.clipboard && window.isSecureContext) {
                     navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(fallbackCopy(text)); });
@@ -326,17 +356,6 @@
                 }
             }
 
-            function isFormOpen() {
-                return formEl.classList.contains('show');
-            }
-
-            function highlightEditing() {
-                $('#saved-commands .list-group-item').removeClass('border-start border-3 border-success');
-                if (editingId !== null) {
-                    $('#saved-commands [data-id="' + editingId + '"]').addClass('border-start border-3 border-success');
-                }
-            }
-
             function focusForm() {
                 editor.refresh();
                 if (editingId === null) {
@@ -347,29 +366,24 @@
                 }
             }
 
-            function openForm(id) {
+            function openForm(id, prefill) {
                 var c = id ? commands[id] : null;
                 if (id && !c) {
                     return;
                 }
                 editingId = c ? id : null;
                 $('#command-name').val(c ? c.name : '');
-                editor.setValue(c ? c.command : '');
+                editor.setValue(c ? c.command : (prefill || ''));
                 editor.clearHistory();
                 clearErrors();
                 $('#form-feedback').addClass('d-none');
-                $('#command-form-title').text(c ? 'Edit command' : 'New command');
+                $('#command-modal-label').text(c ? 'Edit command' : 'New command');
                 $('#command-save').text(c ? 'Update' : 'Save');
-                highlightEditing();
-                if (isFormOpen()) {
-                    focusForm();
-                } else {
-                    form.show();
-                }
+                modal.show();
             }
 
             function closeForm() {
-                form.hide();
+                modal.hide();
             }
 
             function titleFor(c) {
@@ -390,24 +404,20 @@
                 }
                 ids.forEach(function (id) {
                     var c = commands[id];
-                    var lines = c.command.split('\n').length;
-                    var item = $('<div class="list-group-item"></div>').attr('data-id', id);
-                    var head = $('<div class="d-flex align-items-start justify-content-between gap-2 mb-1"></div>');
-                    var title = $('<div class="saved-command-title"></div>');
-                    title.append($('<div class="fw-semibold text-truncate"></div>').text(titleFor(c)));
-                    if (lines > 1) {
-                        title.append($('<span class="badge text-bg-secondary"></span>').text(lines + ' lines'));
-                    }
-                    var actions = $('<div class="d-flex flex-shrink-0 gap-1"></div>')
-                        .append($('<button type="button" class="btn btn-secondary btn-sm saved-run">Run</button>'))
-                        .append($('<button type="button" class="btn btn-outline-secondary btn-sm saved-copy">Copy</button>'))
-                        .append($('<button type="button" class="btn btn-outline-secondary btn-sm saved-edit">Edit</button>'))
-                        .append($('<button type="button" class="btn btn-outline-danger btn-sm saved-delete">Delete</button>'));
-                    head.append(title).append(actions);
-                    item.append(head).append($('<pre class="saved-command-code"></pre>').text(c.command));
+                    var item = $('<div class="list-group-item d-flex align-items-center justify-content-between gap-2"></div>').attr('data-id', id);
+                    var title = $('<button type="button" class="btn btn-link text-start text-decoration-none text-body fw-semibold text-truncate p-0 saved-command-title saved-paste"></button>')
+                        .text(titleFor(c))
+                        .attr('title', 'Paste into scratchpad');
+                    var menu = $('<div class="dropdown table-context-dropdown flex-shrink-0"></div>')
+                        .append($('<button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown" data-bs-popper-config=\'{"strategy":"fixed"}\' aria-expanded="false"><i class="ri-more-2-line"></i></button>'))
+                        .append($('<ul class="dropdown-menu dropdown-menu-end"></ul>')
+                            .append($('<li><button type="button" class="dropdown-item saved-run"><i class="ri-play-line me-2"></i>Run</button></li>'))
+                            .append($('<li><button type="button" class="dropdown-item saved-copy"><i class="ri-file-copy-line me-2"></i>Copy</button></li>'))
+                            .append($('<li><button type="button" class="dropdown-item saved-edit"><i class="ri-edit-line me-2"></i>Edit</button></li>'))
+                            .append($('<li><button type="button" class="dropdown-item dropdown-item-danger saved-delete"><i class="ri-delete-bin-line me-2"></i>Delete</button></li>')));
+                    item.append(title).append(menu);
                     list.append(item);
                 });
-                highlightEditing();
                 updateProgress();
             }
 
@@ -428,40 +438,38 @@
             }
 
             $('#command-new').on('click', function () {
-                if (isFormOpen() && editingId === null) {
-                    closeForm();
-                    return;
-                }
                 openForm(null);
             });
 
-            $('#command-cancel, #command-close').on('click', function () {
-                closeForm();
-            });
-
-            formEl.addEventListener('shown.bs.collapse', function () {
-                $('#command-new').attr('aria-expanded', 'true');
+            modalEl.addEventListener('shown.bs.modal', function () {
                 focusForm();
             });
 
-            formEl.addEventListener('hidden.bs.collapse', function () {
-                $('#command-new').attr('aria-expanded', 'false');
+            modalEl.addEventListener('hidden.bs.modal', function () {
                 editingId = null;
-                highlightEditing();
                 term.focus();
             });
 
-            $('#command-run').on('click', function () {
-                runFromForm();
+            $('#scratch-run').on('click', function () {
+                runFromScratch();
+            });
+
+            $('#scratch-save').on('click', function () {
+                var text = scratch.getValue();
+                if ($.trim(text) === '') {
+                    feedback('Nothing to save.', 'danger', 'scratch');
+                    return;
+                }
+                openForm(null, text);
+            });
+
+            $('#scratch-copy').on('click', function () {
+                copyText(scratch.getValue(), $(this));
             });
 
             $('#command-stop').on('click', function () {
                 stopRun();
                 feedback('Remaining commands cancelled.', 'body-secondary', 'list');
-            });
-
-            $('#command-copy').on('click', function () {
-                copyText(editor.getValue(), $(this));
             });
 
             $('#command-save').on('click', function () {
@@ -514,6 +522,15 @@
                 var c = commands[$(this).closest('[data-id]').data('id')];
                 if (c) {
                     copyText(c.command, $(this));
+                }
+            });
+
+            $('#saved-commands').on('click', '.saved-paste', function () {
+                var c = commands[$(this).closest('[data-id]').data('id')];
+                if (c) {
+                    scratch.setValue(c.command);
+                    scratch.focus();
+                    scratch.setCursor(scratch.lineCount(), 0);
                 }
             });
 

@@ -24,25 +24,22 @@
     font-family: Menlo, Consolas, "DejaVu Sans Mono", monospace;
 }
 
-.saved-panel {
+.command-editor.scratch-editor .CodeMirror {
+    height: 120px;
+}
+
+.side-column {
     height: calc(100vh - 200px);
     min-height: 360px;
+}
+
+.saved-panel {
+    min-height: 200px;
 }
 
 .saved-commands {
     overflow-y: auto;
     min-height: 0;
-}
-
-.saved-command-code {
-    font-family: Menlo, Consolas, "DejaVu Sans Mono", monospace;
-    font-size: .8rem;
-    white-space: pre;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-height: 3.9em;
-    color: var(--bs-secondary-color);
-    margin: 0;
 }
 
 .saved-command-title {
@@ -58,9 +55,14 @@
         height: 60vh;
     }
 
-    .saved-panel {
+    .side-column {
         height: auto;
         min-height: 0;
+    }
+
+    .saved-panel {
+        min-height: 0;
+        max-height: 60vh;
     }
 }
 
