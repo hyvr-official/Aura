@@ -40,6 +40,24 @@ func (c Container) Running() bool {
 	return c.State == "running"
 }
 
+func (c Container) PublishedPorts() []string {
+	var ports []string
+	seen := map[string]bool{}
+	for _, entry := range strings.Split(c.Ports, ",") {
+		binding, _, found := strings.Cut(strings.TrimSpace(entry), "->")
+		if !found {
+			continue
+		}
+		port := binding[strings.LastIndex(binding, ":")+1:]
+		if port == "" || seen[port] {
+			continue
+		}
+		seen[port] = true
+		ports = append(ports, port)
+	}
+	return ports
+}
+
 func (c Container) StateClass() string {
 	return stateClass(c.State)
 }

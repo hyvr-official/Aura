@@ -18,6 +18,7 @@ import (
 type containersListData struct {
 	Containers    []containers.Container
 	DockerMissing bool
+	Host          string
 }
 
 type containersIndexData struct {
@@ -26,8 +27,8 @@ type containersIndexData struct {
 	FlashType string
 }
 
-func loadContainersList() (containersListData, error) {
-	data := containersListData{}
+func loadContainersList(r *http.Request) (containersListData, error) {
+	data := containersListData{Host: requestHost(r)}
 	list, err := containers.ListWithStats()
 	if errors.Is(err, containers.ErrDockerMissing) {
 		data.DockerMissing = true
@@ -112,7 +113,7 @@ func (h *Handlers) ContainersShow(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) ContainersIndex(w http.ResponseWriter, r *http.Request) {
-	list, err := loadContainersList()
+	list, err := loadContainersList(r)
 	if err != nil {
 		serverError(w, "list containers", err)
 		return
@@ -132,7 +133,7 @@ func (h *Handlers) ContainersIndex(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) ContainersList(w http.ResponseWriter, r *http.Request) {
-	list, err := loadContainersList()
+	list, err := loadContainersList(r)
 	if err != nil {
 		serverError(w, "list containers", err)
 		return
