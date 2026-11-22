@@ -15,7 +15,7 @@
                             <th>CPU</th>
                             <th>RAM</th>
                             <th>Ports</th>
-                            <th class="text-end">Actions</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -29,20 +29,27 @@
                             <td class="text-nowrap">{{with .Stats}}{{.MemUsage}}<div class="small text-body-secondary text-nowrap">{{.MemPerc}}</div>{{else}}<span class="text-body-secondary">—</span>{{end}}</td>
                             <td class="text-body-secondary text-nowrap small">{{.Ports}}</td>
                             <td class="text-end text-nowrap">
-                                <a href="/containers/{{.ID}}" class="btn btn-outline-primary btn-sm">Details</a>
-                                {{if .Running}}
-                                <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#shell-modal" data-container-id="{{.ID}}" data-container-name="{{.Name}}">Shell</button>
-                                {{end}}
-                                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#logs-modal" data-container-id="{{.ID}}" data-container-name="{{.Name}}">Logs</button>
-                                {{if .Running}}
-                                <form method="post" action="/containers/{{.ID}}/stop" class="d-inline" onsubmit="return confirm('Stop this container?');">
-                                    <button type="submit" class="btn btn-outline-warning btn-sm">Stop</button>
-                                </form>
-                                {{else}}
-                                <form method="post" action="/containers/{{.ID}}/start" class="d-inline">
-                                    <button type="submit" class="btn btn-outline-success btn-sm">Start</button>
-                                </form>
-                                {{end}}
+                                <div class="dropdown table-context-dropdown">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"><i class="ri-more-2-line"></i></button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><a class="dropdown-item" href="/containers/{{.ID}}"><i class="ri-information-line me-2"></i>Details</a></li>
+                                        {{if .Running}}
+                                        <li><button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#shell-modal" data-container-id="{{.ID}}" data-container-name="{{.Name}}"><i class="ri-terminal-box-line me-2"></i>Shell</button></li>
+                                        {{end}}
+                                        <li><button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#logs-modal" data-container-id="{{.ID}}" data-container-name="{{.Name}}"><i class="ri-file-list-3-line me-2"></i>Logs</button></li>
+                                        <li>
+                                            {{if .Running}}
+                                            <form method="post" action="/containers/{{.ID}}/stop" onsubmit="return confirm('Stop this container?');">
+                                                <button type="submit" class="dropdown-item dropdown-item-danger"><i class="ri-stop-circle-line me-2"></i>Stop</button>
+                                            </form>
+                                            {{else}}
+                                            <form method="post" action="/containers/{{.ID}}/start">
+                                                <button type="submit" class="dropdown-item dropdown-item-success"><i class="ri-play-circle-line me-2"></i>Start</button>
+                                            </form>
+                                            {{end}}
+                                        </li>
+                                    </ul>
+                                </div>
                             </td>
                         </tr>
                         {{end}}
