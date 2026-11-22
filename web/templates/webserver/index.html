@@ -40,7 +40,7 @@
                         {{range .Data.Sites}}
                         <tr>
                             <td class="fw-medium"><a href="/web-server/{{.Name}}/edit" class="link-body-emphasis text-decoration-none">{{.Name}}</a></td>
-                            <td>{{.DomainsLabel}}</td>
+                            <td>{{$site := .}}{{range .Domains}}<a href="{{if $site.SSL}}https{{else}}http{{end}}://{{.}}" target="_blank" rel="noopener" class="text-decoration-none"><span class="badge text-bg-info me-1">{{.}}</span></a>{{else}}—{{end}}</td>
                             <td>{{if .Upstream}}<code>{{.Upstream}}</code>{{else}}<span class="text-body-secondary">—</span>{{end}}</td>
                             <td>{{if .SSL}}<span class="badge text-bg-success">SSL</span>{{else}}<span class="badge text-bg-secondary">None</span>{{end}}</td>
                             <td>{{if .Enabled}}<span class="badge text-bg-success">Enabled</span>{{else}}<span class="badge text-bg-secondary">Disabled</span>{{end}}</td>
