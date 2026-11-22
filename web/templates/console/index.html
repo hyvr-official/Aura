@@ -552,22 +552,6 @@
             });
             term.onResize(sendResize);
 
-            $('#console-terminal').on('contextmenu', function (event) {
-                event.preventDefault();
-                term.focus();
-                if (!navigator.clipboard || !navigator.clipboard.readText || !window.isSecureContext) {
-                    feedback('Right click paste needs HTTPS. Use Ctrl+V to paste.', 'danger', 'list');
-                    return;
-                }
-                navigator.clipboard.readText().then(function (text) {
-                    if (text) {
-                        term.paste(text);
-                    }
-                }, function () {
-                    feedback('Clipboard access was blocked. Allow it in the browser or use Ctrl+V.', 'danger', 'list');
-                });
-            });
-
             $(window).on('resize', function () {
                 fit.fit();
             });
