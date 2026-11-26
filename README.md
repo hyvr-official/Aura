@@ -7,7 +7,7 @@
 - **Docker Containers**: list, start, stop, restart and delete containers, view logs and open an interactive shell.
 - **Docker Volumes**: create and delete volumes.
 - **Projects**: deploy Docker Compose projects from your repositories with pull, deploy and down actions.
-- **Git Repositories**: clone, pull and switch branches, with a separate SSH deploy key for each repository.
+- **Git Repositories**: clone, pull and switch branches, with a separate SSH deploy key for each private repository, and HTTPS cloning for public repositories.
 - **Web Server (Nginx)**: create, edit, enable and disable sites, get free SSL certificates with Certbot and view site logs.
 - **Backups**: scheduled backups (daily at 00:00 in the configured timezone through cron) stored locally or on AWS S3, with automatic cleanup of old backups, run history and manual runs.
 - **Cron Jobs**: view all server cron jobs, create, edit and delete jobs in user crontabs, see live output logs for jobs saved through Aura, and edit crontabs directly in a raw editor with syntax highlighting.

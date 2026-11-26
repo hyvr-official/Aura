@@ -9,11 +9,17 @@ import (
 	"time"
 )
 
+const (
+	VisibilityPrivate = "private"
+	VisibilityPublic  = "public"
+)
+
 type Repository struct {
 	ID         int64
 	Name       string
 	URL        string
 	Path       string
+	Visibility string
 	PublicKey  string
 	PrivateKey string
 
@@ -29,12 +35,20 @@ type Repository struct {
 }
 
 var (
-	scpURLPattern = regexp.MustCompile(`^[A-Za-z0-9._-]+@[A-Za-z0-9.-]+:[^\s]+$`)
-	sshURLPattern = regexp.MustCompile(`^ssh://[^\s]+$`)
-	nonSlug       = regexp.MustCompile(`[^a-z0-9]+`)
+	scpURLPattern  = regexp.MustCompile(`^[A-Za-z0-9._-]+@[A-Za-z0-9.-]+:[^\s]+$`)
+	sshURLPattern  = regexp.MustCompile(`^ssh://[^\s]+$`)
+	httpURLPattern = regexp.MustCompile(`^https?://[^\s]+$`)
+	nonSlug        = regexp.MustCompile(`[^a-z0-9]+`)
 )
 
+func (r Repository) IsPublic() bool {
+	return r.Visibility == VisibilityPublic
+}
+
 func (r *Repository) Normalize() {
+	if r.Visibility != VisibilityPublic {
+		r.Visibility = VisibilityPrivate
+	}
 	r.Name = strings.TrimSpace(r.Name)
 	r.URL = strings.TrimSpace(r.URL)
 	r.Path = strings.TrimSpace(r.Path)
@@ -50,6 +64,10 @@ func (r Repository) Validate() map[string]string {
 	}
 	if r.URL == "" {
 		errs["URL"] = "Repository URL is required."
+	} else if r.IsPublic() {
+		if !httpURLPattern.MatchString(r.URL) {
+			errs["URL"] = "Use an HTTPS URL, for example https://github.com/owner/repo.git."
+		}
 	} else if !scpURLPattern.MatchString(r.URL) && !sshURLPattern.MatchString(r.URL) {
 		errs["URL"] = "Use an SSH URL, for example git@github.com:owner/repo.git."
 	}
@@ -97,7 +115,7 @@ func NewStore(db *sql.DB) *Store {
 	return &Store{db: db}
 }
 
-const columns = "id, name, url, path, public_key, private_key, webhook_token, post_pull_commands, last_action, last_output, last_action_at, created_at, updated_at"
+const columns = "id, name, url, path, visibility, public_key, private_key, webhook_token, post_pull_commands, last_action, last_output, last_action_at, created_at, updated_at"
 
 type scanner interface {
 	Scan(dest ...any) error
@@ -107,7 +125,7 @@ func scan(row scanner) (Repository, error) {
 	var r Repository
 	var lastActionAt sql.NullTime
 	err := row.Scan(
-		&r.ID, &r.Name, &r.URL, &r.Path,
+		&r.ID, &r.Name, &r.URL, &r.Path, &r.Visibility,
 		&r.PublicKey, &r.PrivateKey,
 		&r.WebhookToken, &r.PostPullCommands,
 		&r.LastAction, &r.LastOutput, &lastActionAt,
@@ -156,9 +174,9 @@ func (s *Store) Create(r *Repository) error {
 	}
 	r.WebhookToken = token
 	res, err := s.db.Exec(
-		`INSERT INTO repositories (name, url, path, public_key, private_key, webhook_token, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-		r.Name, r.URL, r.Path, r.PublicKey, r.PrivateKey, r.WebhookToken, now, now,
+		`INSERT INTO repositories (name, url, path, visibility, public_key, private_key, webhook_token, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		r.Name, r.URL, r.Path, r.Visibility, r.PublicKey, r.PrivateKey, r.WebhookToken, now, now,
 	)
 	if err != nil {
 		return err
@@ -171,8 +189,8 @@ func (s *Store) Create(r *Repository) error {
 func (s *Store) Update(r *Repository) error {
 	now := time.Now().UTC()
 	res, err := s.db.Exec(
-		"UPDATE repositories SET name = ?, url = ?, path = ?, updated_at = ? WHERE id = ?",
-		r.Name, r.URL, r.Path, now, r.ID,
+		"UPDATE repositories SET name = ?, url = ?, path = ?, visibility = ?, updated_at = ? WHERE id = ?",
+		r.Name, r.URL, r.Path, r.Visibility, now, r.ID,
 	)
 	if err != nil {
 		return err

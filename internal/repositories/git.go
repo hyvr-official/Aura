@@ -161,10 +161,14 @@ func (g *Git) start(r Repository, timeout time.Duration, locked bool) (*session,
 		}
 		unlock = u
 	}
-	keyPath, removeKey, err := writeKey(r.PrivateKey)
-	if err != nil {
-		unlock()
-		return nil, nil, fmt.Errorf("write ssh key: %w", err)
+	keyPath, removeKey := "", func() {}
+	if !r.IsPublic() {
+		var err error
+		keyPath, removeKey, err = writeKey(r.PrivateKey)
+		if err != nil {
+			unlock()
+			return nil, nil, fmt.Errorf("write ssh key: %w", err)
+		}
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	s := &session{repo: r, keyPath: keyPath, ctx: ctx}
@@ -180,10 +184,10 @@ func (s *session) run(dir string, args ...string) (string, error) {
 	fmt.Fprintf(&s.log, "$ git %s\n", strings.Join(args, " "))
 	cmd := exec.CommandContext(s.ctx, "git", full...)
 	cmd.Dir = dir
-	cmd.Env = append(os.Environ(),
-		"GIT_TERMINAL_PROMPT=0",
-		"GIT_SSH_COMMAND=ssh -i '"+s.keyPath+"' -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=accept-new",
-	)
+	cmd.Env = append(os.Environ(), "GIT_TERMINAL_PROMPT=0")
+	if !s.repo.IsPublic() {
+		cmd.Env = append(cmd.Env, "GIT_SSH_COMMAND=ssh -i '"+s.keyPath+"' -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=accept-new")
+	}
 	out, err := cmd.CombinedOutput()
 	if text := strings.TrimRight(string(out), "\n"); text != "" {
 		s.log.WriteString(text + "\n")
@@ -223,6 +227,9 @@ func (s *session) persistKey() (string, error) {
 }
 
 func (s *session) configureSSH() error {
+	if s.repo.IsPublic() {
+		return nil
+	}
 	keyPath, err := s.persistKey()
 	if err != nil {
 		return err
@@ -253,11 +260,15 @@ func (g *Git) Clone(r Repository) (string, error) {
 	if err := os.MkdirAll(filepath.Dir(r.Path), 0o755); err != nil {
 		return s.finish(fmt.Errorf("create parent folder: %w", err))
 	}
-	keyPath, err := s.persistKey()
-	if err != nil {
-		return s.finish(err)
+	args := []string{"clone", "--depth", "1", r.URL, r.Path}
+	if !r.IsPublic() {
+		keyPath, err := s.persistKey()
+		if err != nil {
+			return s.finish(err)
+		}
+		args = append([]string{"clone", "-c", "core.sshCommand=" + SSHCommand(keyPath)}, args[1:]...)
 	}
-	_, err = s.run(filepath.Dir(r.Path), "clone", "-c", "core.sshCommand="+SSHCommand(keyPath), "--depth", "1", r.URL, r.Path)
+	_, err = s.run(filepath.Dir(r.Path), args...)
 	return s.finish(err)
 }
 
@@ -377,7 +388,7 @@ func (g *Git) SetRemote(r Repository) error {
 }
 
 func (g *Git) MoveKey(old, r Repository) error {
-	if old.KeyFileName() == r.KeyFileName() {
+	if r.IsPublic() || (!old.IsPublic() && old.KeyFileName() == r.KeyFileName()) {
 		return nil
 	}
 	s, done, err := g.start(r, listTimeout, true)
@@ -391,6 +402,9 @@ func (g *Git) MoveKey(old, r Repository) error {
 		}
 	} else if _, err := s.persistKey(); err != nil {
 		return err
+	}
+	if old.IsPublic() || old.KeyFileName() == r.KeyFileName() {
+		return nil
 	}
 	return RemoveKeyFile(old)
 }

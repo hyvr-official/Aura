@@ -139,6 +139,7 @@ func migrate(db *sql.DB) error {
 	if err := addColumns(db, "repositories", []string{
 		"webhook_token TEXT NOT NULL DEFAULT ''",
 		"post_pull_commands TEXT NOT NULL DEFAULT ''",
+		"visibility TEXT NOT NULL DEFAULT 'private'",
 	}); err != nil {
 		return err
 	}

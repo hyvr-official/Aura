@@ -44,6 +44,7 @@ type repositoriesUpsertData struct {
 
 var repositoryFlashes = map[string]string{
 	"created":             "Repository created. Add the deploy key below to GitHub before cloning.",
+	"created_public":      "Repository created. You can clone it now.",
 	"updated":             "Repository updated.",
 	"remote_failed":       "Repository updated, but changing the remote URL of the cloned folder failed. Check the server logs.",
 	"deleted":             "Repository deleted. The files on disk were not removed.",
@@ -139,7 +140,7 @@ func (h *Handlers) RepositoriesShow(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) RepositoriesCreate(w http.ResponseWriter, r *http.Request) {
-	h.renderRepositoryForm(w, http.StatusOK, repositories.Repository{}, nil)
+	h.renderRepositoryForm(w, http.StatusOK, repositories.Repository{Visibility: repositories.VisibilityPrivate}, nil)
 }
 
 func (h *Handlers) RepositoriesStore(w http.ResponseWriter, r *http.Request) {
@@ -157,19 +158,23 @@ func (h *Handlers) RepositoriesStore(w http.ResponseWriter, r *http.Request) {
 		h.renderRepositoryForm(w, http.StatusUnprocessableEntity, repo, errs)
 		return
 	}
-	public, private, err := repositories.GenerateKey("aura-" + repo.Slug())
-	if err != nil {
-		log.Printf("generate ssh key for repository %q: %v", repo.Name, err)
-		h.renderRepositoryForm(w, http.StatusUnprocessableEntity, repo, map[string]string{"General": "Generating the SSH key failed: " + err.Error()})
-		return
+	if !repo.IsPublic() {
+		public, private, err := repositories.GenerateKey("aura-" + repo.Slug())
+		if err != nil {
+			log.Printf("generate ssh key for repository %q: %v", repo.Name, err)
+			h.renderRepositoryForm(w, http.StatusUnprocessableEntity, repo, map[string]string{"General": "Generating the SSH key failed: " + err.Error()})
+			return
+		}
+		repo.PublicKey, repo.PrivateKey = public, private
 	}
-	repo.PublicKey, repo.PrivateKey = public, private
 	if err := h.repos.Create(&repo); err != nil {
 		serverError(w, "create repository", err)
 		return
 	}
 	status := "created"
-	if _, err := repositories.SaveKeyFile(repo); err != nil {
+	if repo.IsPublic() {
+		status = "created_public"
+	} else if _, err := repositories.SaveKeyFile(repo); err != nil {
 		log.Printf("save ssh key file for repository %q: %v", repo.Name, err)
 		status = "key_file_failed"
 	}
@@ -204,8 +209,32 @@ func (h *Handlers) RepositoriesUpdate(w http.ResponseWriter, r *http.Request) {
 		serverError(w, "update repository", err)
 		return
 	}
-	repo.PrivateKey = existing.PrivateKey
+	repo.PublicKey, repo.PrivateKey = existing.PublicKey, existing.PrivateKey
 	status := "updated"
+	if repo.IsPublic() && !existing.IsPublic() {
+		if err := h.repos.UpdateKey(repo.ID, "", ""); err != nil {
+			serverError(w, "clear repository key", err)
+			return
+		}
+		repo.PublicKey, repo.PrivateKey = "", ""
+		if err := repositories.RemoveKeyFile(existing); err != nil {
+			log.Printf("remove ssh key file for repository %q: %v", repo.Name, err)
+		}
+	}
+	if !repo.IsPublic() && existing.IsPublic() {
+		public, private, err := repositories.GenerateKey("aura-" + repo.Slug())
+		if err != nil {
+			log.Printf("generate ssh key for repository %q: %v", repo.Name, err)
+			h.renderRepositoryForm(w, http.StatusUnprocessableEntity, repo, map[string]string{"General": "Generating the SSH key failed: " + err.Error()})
+			return
+		}
+		if err := h.repos.UpdateKey(repo.ID, public, private); err != nil {
+			serverError(w, "update repository key", err)
+			return
+		}
+		repo.PublicKey, repo.PrivateKey = public, private
+		status = "key_generated"
+	}
 	if repo.URL != existing.URL && repositories.State(repo.Path).IsRepo() {
 		if err := h.git.SetRemote(repo); err != nil {
 			log.Printf("set remote for repository %q: %v", repo.Name, err)
@@ -225,6 +254,10 @@ func (h *Handlers) RepositoriesKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	target := fmt.Sprintf("/repositories/%d", repo.ID)
+	if repo.IsPublic() {
+		http.Redirect(w, r, target, http.StatusSeeOther)
+		return
+	}
 	public, private, err := repositories.GenerateKey("aura-" + repo.Slug())
 	if err != nil {
 		log.Printf("generate ssh key for repository %q: %v", repo.Name, err)
@@ -328,6 +361,8 @@ func repositoryFromForm(r *http.Request) repositories.Repository {
 		Name: r.PostFormValue("name"),
 		URL:  r.PostFormValue("url"),
 		Path: r.PostFormValue("path"),
+
+		Visibility: r.PostFormValue("visibility"),
 	}
 	repo.Normalize()
 	return repo

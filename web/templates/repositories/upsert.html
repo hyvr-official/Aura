@@ -14,26 +14,31 @@
                     <div class="mb-3">
                         <label for="name" class="form-label">Name <span class="text-danger">*</span></label>
                         <input type="text" class="form-control{{if index .Errors "Name"}} is-invalid{{end}}" id="name" name="name" autocomplete="off" value="{{.Repository.Name}}" required autofocus>
-                        {{with index .Errors "Name"}}<div class="invalid-feedback">{{.}}</div>{{end}}
+                        {{with index .Errors "Name"}}<div class="invalid-feedback"><i class="ri-information-line"></i> {{.}}</div>{{end}}
                     </div>
 
                     <div class="mb-3">
                         <label for="url" class="form-label">Repository URL <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control{{if index .Errors "URL"}} is-invalid{{end}}" id="url" name="url" autocomplete="off" value="{{.Repository.URL}}" placeholder="git@github.com:owner/repo.git" required>
-                        {{with index .Errors "URL"}}<div class="invalid-feedback">{{.}}</div>{{end}}
-                        <div class="form-text">Use the SSH URL, deploy keys only work over SSH.</div>
+                        <div class="input-group{{if index .Errors "URL"}} is-invalid{{end}}">
+                            <input type="text" class="form-control{{if index .Errors "URL"}} is-invalid{{end}}" id="url" name="url" autocomplete="off" value="{{.Repository.URL}}" placeholder="{{if .Repository.IsPublic}}https://github.com/owner/repo.git{{else}}git@github.com:owner/repo.git{{end}}" required>
+                            <input type="radio" class="btn-check" name="visibility" id="visibility-private" value="private" autocomplete="off"{{if not .Repository.IsPublic}} checked{{end}}>
+                            <label class="btn btn-outline-secondary" for="visibility-private"><i class="ri-lock-line"></i> Private</label>
+                            <input type="radio" class="btn-check" name="visibility" id="visibility-public" value="public" autocomplete="off"{{if .Repository.IsPublic}} checked{{end}}>
+                            <label class="btn btn-outline-secondary" for="visibility-public"><i class="ri-global-line"></i> Public</label>
+                        </div>
+                        {{with index .Errors "URL"}}<div class="invalid-feedback"><i class="ri-information-line"></i> {{.}}</div>{{end}}
+                        <p class="form-helper-text" id="url-helper"><i class="ri-information-line"></i> <span>{{if .Repository.IsPublic}}Use the HTTPS URL, no SSH key is needed for public repositories.{{else}}Use the SSH URL, deploy keys only work over SSH.{{end}}</span></p>
                     </div>
 
                     <div class="mb-4">
                         <label for="path" class="form-label">Folder path <span class="text-danger">*</span></label>
                         <input type="text" class="form-control{{if index .Errors "Path"}} is-invalid{{end}}" id="path" name="path" autocomplete="off" value="{{.Repository.Path}}" placeholder="/var/www/app" required>
-                        {{with index .Errors "Path"}}<div class="invalid-feedback">{{.}}</div>{{end}}
-                        <div class="form-text">{{if .Repository.ID}}Changing the path does not move existing files.{{else}}The repository is cloned into this folder. It must be empty or not exist yet.{{end}}</div>
+                        {{with index .Errors "Path"}}<div class="invalid-feedback"><i class="ri-information-line"></i> {{.}}</div>{{end}}
+                        <p class="form-helper-text"><i class="ri-information-line"></i> {{if .Repository.ID}}Changing the path does not move existing files.{{else}}The repository is cloned into this folder. It must be empty or not exist yet.{{end}}</p>
                     </div>
 
                     <div class="d-flex flex-wrap gap-2">
-                        <button type="submit" class="btn btn-secondary">{{if .Repository.ID}}Save changes{{else}}Create repository{{end}}</button>
-                        <a href="{{if .Repository.ID}}/repositories/{{.Repository.ID}}{{else}}/repositories{{end}}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-secondary ms-auto">{{if .Repository.ID}}Save changes{{else}}Create repository{{end}}</button>
                     </div>
                 </form>
             </div>
@@ -41,3 +46,22 @@
         {{end}}
     </main>
 {{template "footer" .}}
+    <script>
+        $(function () {
+            var texts = {
+                private: {
+                    placeholder: 'git@github.com:owner/repo.git',
+                    helper: 'Use the SSH URL, deploy keys only work over SSH.'
+                },
+                public: {
+                    placeholder: 'https://github.com/owner/repo.git',
+                    helper: 'Use the HTTPS URL, no SSH key is needed for public repositories.'
+                }
+            };
+            $('input[name="visibility"]').on('change', function () {
+                var text = texts[$('input[name="visibility"]:checked').val()];
+                $('#url').attr('placeholder', text.placeholder);
+                $('#url-helper span').text(text.helper);
+            });
+        });
+    </script>
