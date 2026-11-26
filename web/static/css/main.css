@@ -29,6 +29,7 @@ html, body{
     --bs-form-invalid-color: #ff524b;
     --bs-form-invalid-border-color: #ff524b;
     --bs-code-color: #ffbfde;
+    --bs-secondary-rgb: 158, 158, 158;
 }
 
 .btn-success{
@@ -169,6 +170,8 @@ html, body{
 	cursor: pointer;
 	text-decoration: none;
 	transition-duration: 0.3s;
+    background: transparent !important;
+    border: none !important;
 }
 
 .table-row-action-btn:hover{
@@ -203,7 +206,9 @@ html, body{
 }
 
 .btn i{
-	font-weight: 500;
+    font-weight: 500;
+    display: inline-block;
+    scale: 1.1;
 }
 
 .btn-secondary{
@@ -227,6 +232,30 @@ html, body{
 .btn-outline-secondary:focus-visible, .btn-outline-secondary:hover, .btn-outline-secondary:active, .btn-outline-secondary:focus{
     background: #ffffff !important;
     color: #070707 !important;
+}
+
+.btn-input{
+    border-color: #3a3a3aa1 !important;
+    background: transparent;
+}
+
+.btn-modal-header{
+    background: transparent;
+    border: none !important;
+    font-size: 14px;
+    color: #898989;
+    position: relative;
+    top: 1px;
+    transition-duration: 0.3s;
+}
+
+.btn-modal-header i{
+    display: block;
+    scale: 1.2;
+}
+
+.btn-modal-header:hover{
+    color: #c4c4c4;
 }
 
 /*-- badge --*/
@@ -284,6 +313,11 @@ input::placeholder{
 	font-size: 12px;
 	margin-top: 5px;
 	opacity: 0.7;
+}
+
+.invalid-feedback{
+    font-weight: 500;
+	font-size: 12px;
 }
 
 /*-- card --*/
@@ -483,4 +517,63 @@ input::placeholder{
 .empty-icon{
     height: 46px;
     margin-bottom: 8px;
+}
+
+/*-- action list --*/
+
+.action-list{
+    border-radius: 8px;
+    border: 1px solid #3a3a3aa1;
+    overflow: hidden;
+}
+
+.action-list-item{
+    display: block;
+    width: 100%;
+    text-align: left;
+    border: none;
+    border-bottom: 1px solid #3a3a3aa1;
+    background: transparent;
+    padding: 12px 15px;
+    color: #ffffff !important;
+    text-decoration: none !important;
+    position: relative;
+    transition-duration: 0.3s;
+}
+
+.action-list-item:hover{
+    background: #3a3a3aa1;
+}
+
+.action-list-item:last-child{
+    border: none !important;
+}
+
+.action-list-item-icon{
+    position: absolute;
+    left: 16px;
+    top: 10px;
+}
+
+.action-list-item-title{
+    font-size: 14px;
+    font-weight: 500;
+    margin-left: 27px;
+    display: block;
+}
+
+.action-list-item-arrow{
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    color: #ffffff;
+    opacity: 0.5;
+    font-size: 18px;
+}
+
+/*-- modal --*/
+
+.modal-header .btn-close{
+    font-size: 12px;
+    transition-duration: 0.3s;
 }
